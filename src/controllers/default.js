@@ -29,7 +29,7 @@
         strokeWidth: 4
       });
 
-      // add the triangle shape to the layer
+      // add the contention to the layer
       layer.add(contention);
 
       // add the layer to the stage
