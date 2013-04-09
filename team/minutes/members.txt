@@ -1,0 +1,10 @@
+	Members of TeamC
+
+Name				email						Phone Numbers
+----				-----						-------------
+Anthony Blount		asb5615@truman.edu			(636)-697-5849
+Anni Deshar			ad8228@truman.edu			(240)-339-3785
+Ben Luo				bl1428@truman.edu			(314)-445-9418
+Kyle Penniston		krp530@truman.edu			(816)-261-6369
+Zach Schwartz		zrs5182@truman.edu			(314)-960-9949
+Anup Shreshta		anup@truman.edu				(660)-234-5412

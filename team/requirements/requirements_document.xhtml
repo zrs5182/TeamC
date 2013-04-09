@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="Zach Schwartz" http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<style media="screen" type="text/css">
+ul
+{
+    list-style-type: none;
+}
+</style>
+<title>Argument Mapping Software Requirements</title>
+</head>
+
+<body>
+
+<h1>Argument Mapping Software Requirements</h1>
+
+<p>
+<b>Team C</b>
+<br />
+<b>Created: 18 March 2013</b>
+</p>
+
+<hr />
+
+<h2>Status of This Document</h2>
+<p>
+This draft is under review by Truman State University: CS 370: Team C, for use by Truman State University for the purpose of increasing the critical thinking abilities of students through the use of argument mapping. This document is subject to change at any time, and may be updated, replaced, or obsoleted at any time.
+</p>
+
+<p>
+This document defines the high-level requirements for the Argument Mapping Software being designed for Truman State University. The requirements are categorized as follows:
+<ul>
+	<li><a href="#general_requirements">1. General Requirements</a></li>
+	<li><a href="#appearance">2. Appearance</a></li>
+	<li><a href="#user_interface">3. User Interface</a></li>
+	<li><a href="#utility">4. Utility</a></li>
+		<li><a href="#optional">5. Optional</a></li>
+</ul>
+</p>
+
+<hr />
+
+<h2><a id="general_requirements">1. General Requirements</a></h2>
+<p>
+(a) A new file contains a single claim box (1.7)<br />
+(b) The system must be able to add support and contradiction premises to any claim from the canvas (3.1, 3.7)<br />
+(c) Child claims and their sub-arguments must be able to change parents (1.7) <br />
+(d) Claims must be removable (1.7)<br />
+(e) When claims are deleted, their children are also deleted (1.7)<br />
+(f) The system must be able to add co-premises (1.7)<br />
+(g) The system must be able to join premises together to make co-premises (1.7)<br />
+(h) The system must be able to separate co-premises into individual premises (1.7)<br />
+(i) The system must be able to change the type of a claim (3.7)<br />
+(j) Refutations of refutations must be automatically displayed as rebuttals (1.7)<br />
+(k) All claims other than the original argument must connect to parent claims (3.6)<br />
+</p>
+
+<h2><a id="appearance">2. Appearance</a></h2>
+<p>
+(a) The system must label claims (1.3, 3.1, 3.9)<br />
+(b) Connections must be curvy(1.3, 3.5)<br />
+(c) All corners must be rounded (3.5)<br />
+(d) Claims must not overlap visually (1.3)<br />
+(e) The system must be able to visually identify co-premises (1.3)<br />
+(f) The system must have different connections for support and refutation (1.3)<br />
+(g) The rebuttal type must be identified by a unique color (1.3)<br />
+(h) Spatial arrangement of claims must be handled by the software automatically (3.1) <br />
+</p>
+
+<h2><a id="user_interface">3. User Interface</a></h2>
+<p>
+(a) The system must support mouse control for moving claims to a new parent (3.4)<br />
+(b) The system must support mouse control for view control (3.4)<br />
+(c) The system must support mouse control for administrative tasks (3.4)<br />
+(d) The system must support keyboard control for text entry for claims (3.4)<br />
+(e) The diagram must persist even when outside the viewable area (3.4, 3.7)<br />
+(f) The view must be scalable and pannable (3.4)<br />
+</p>
+
+<h2><a id="utility">4. Utility</a></h2>
+<p>
+(a) The system must be cross platform (1.5,  1.7, 2.1)<br />
+(b) The system must be able to complete the <a href="http://austhink.com/reason/tutorials/index.htm">Rationale tutorials</a> using the system (1.7)<br />
+(c) State of the diagram must be able to be saved in a persistent, sharable format (1.6, 1.7, 3.1, 3.3, 3.7)<br />
+(d) Saved maps must be able to be re-opened and edited (1.6, 3.3)<br />
+(e) The system must be able to export the map to a scalable, printable format (1.7, 2.2, 3.3)<br />
+(f) The system must run on the Truman network infrastructure (1.2, 2.1, 2.5)<br />
+(g) The system must provide color customization options to accomodate colorblind users. (1.7, 3.1)<br />
+</p>
+
+<h2><a id="optional">5. Optional</a></h2>
+<p>
+(a) The system must be able to support multiple users at a single time. (3.2)<br />
+(b) The system must have a support manual that explains how to use each component of the system. (3.10)<br />
+(c) The system must output the file in an ASCII file format. (3.3)<br />
+(d) The system must support the ability to annotate a project file. (1.8, 3.3)<br />
+(e) The system must be able to run on mobile devices. (2.1.a)<br />
+</p>
+
+<hr />
+
+<p>
+Editors: Anup Shreshta, Anni Deshar, Kyle Penniston, Zach Schwartz, Ben Luo <br />
+$Date: 2013-03-26 19:50:08 $
+</p>
+
+</body>
+</html>

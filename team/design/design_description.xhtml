@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="Zach Schwartz" http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style media="screen" type="text/css">
+ul.no_bullets
+{
+    list-style-type: none;
+}
+</style>
+<title>Design Document</title>
+</head>
+
+<body>
+
+<h1>Design Description</h1>
+
+<p>
+<b>Team C</b>
+<br />
+<b>Created: 02 April 2013</b>
+</p>
+
+<br />
+
+<hr />
+<p>
+
+This is Team C's design document. Details covered include design architecture, programming languages, and a general walkthrough of the system. Note: this class diagram does not necessarily reflect the exact structure of our eventual implementation. The intent of the diagram is to give a very general, abstract overview of the intended structure.
+
+</p>
+
+<p>
+	<a href="./team_c_class_diagram.dia"><img src="design_picture.png" /></a> 
+</p>
+
+<hr />
+
+<h2>Languages: Javascript and HTML5</h2>
+
+<p>
+	We think using HTML 5 and JavaScript for this project are good choices primarily because
+	a database would not be required if using HTML 5 and its sessions. Our group deemed networked storage as overkill for this project. HTML 5 handles
+	the drag-and-drop functional pieces very well for moving objects on the canvas.
+	Also, JavaScript is a very common client-side scripting langauge which would make our application
+	more universal in use. Another main benefit of these languages is our team's familiarity with
+	them and the low learning curve for those who are less familiar.
+</p>
+
+<h2>Design Architecture: MVC</h2>
+<p>
+	<ul class="no_bullets">
+	<li>We are using MVC.</li>
+	<li>Languages: HTML5, JavaScript, CSS</li>
+	</ul>	
+</p>
+
+<p>
+	We chose our model and view with the primary requirement, cross-platform compatibility (reqts. doc. section 4: "Utility"), in mind. 
+	Using a browser as our view and the browser's local session storage as the model ensures platform independence. 
+	Modern browsers can accomodate local session storage and eliminate dependence on platform-specific features (this includes even virtual platforms such as Java). Our group deemed networked storage via a database as unnecessary based on the project's requirements. An additional advantage of local session storage is that it provides a convenient working project file format, allowing for sharing of projects and persistent saving of progress. This satisfies 
+	Controllers are easily implemented in a browser environment using Javascript or other scripting languages.
+</p>
+
+<h3>Models</h3>
+	<ul>
+		<li>local session storage object</li>
+		<li>working project filetype</li>
+	</ul>
+
+<h3>View</h3>
+	<ul>
+		<li>Browser (Which Displays Objects Below)
+			<ul>
+				<li>Claim</li>
+				<li>Canvas</li>
+			</ul>
+		</li>
+	</ul>
+
+<h3>Controllers</h3>
+	<ul>
+		<li>ClaimController</li>
+		<li>FileController</li>
+		<li>CanvasController</li>
+	</ul>
+
+<hr />
+
+<h2>Design Details</h2>
+<p>
+	At the start of a new project, the user is presented with a single claim box. 
+	The user can generate new claims from existing ones and edit the text contents of each claim. Each claim has two buttons, which spawn supporting and refuting child claims, respectively. 
+	The type of each claim is determined at its creation. Once created, a claim can be deleted, moved (via click and drag), attached to a different parent, and edited (contents and type), as per our requirements (section 1: "General Requirements"). These operations are handled by ClaimController.
+</p>
+
+<p>
+	Aside from the argument map, composed of claims and the connectors between them, the only other interface feature will be an options menu. From this menu, the user will be able to perform file operations such as new file, save, load, revert changes, and export to different file formats. These functionalities satisfy our file operations requirements (section 4:"Utility")and are handled by the FileController.
+</p>
+
+<p>
+	The CanvasController renders claims, the connectors between, and the backdrop. It will also handle mouse and keyboard user input, which are requirements listed in section 3: "User Interface". Our design does not require that claim connectors be represented as objects. The types and colors of connectors are determined and rendered by CanvasController at runtime based on the types of claims that they connect.
+</p>
+
+<p>
+	The only objects responsible for storing data are Claim objects and the Canvas object.
+</p>
+
+<p>
+	We structured our design this way in order to satisfy the requirements (sections 2: "Appearance" and 3: "User Interface") for an intutitive, polished user interface. The minimalist interface will be devoid of elements aside from the map and options menu. The graphical presentation of the map will feature rounded corners and curved connectors.
+</p>
+
+<hr />
+
+<p>
+Editor(s): Zach Schwartz, Ben Luo, Anup Shrestha, Anni Deshar<br />
+$Date: 2013-04-04 18:23:13 $
+</p>
+
+</body>
+</html>

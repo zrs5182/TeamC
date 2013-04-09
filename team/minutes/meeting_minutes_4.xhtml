@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="Zach Schwartz" http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style media="screen" type="text/css">
+ul.no_bullets
+{
+    list-style-type: none;
+}
+</style>
+<title>Meeting Minutes</title>
+</head>
+
+<body>
+
+<h1>Minutes: 27 March 2013</h1>
+
+<p>
+<b>Team C</b>
+<br />
+<b>Created: 28 March 2013</b>
+</p>
+
+<hr />
+
+<h2>Attendance</h2>
+
+<ul class="no_bullets">
+	<li>Anup</li>
+	<li>Anni</li>
+	<li>Anthony</li>
+	<li>Ben</li>
+	<li>Kyle</li>
+	<li>Zach</li>
+</ul>
+
+
+<hr />
+
+<h2>Absent</h2>
+<p>N/A</p>
+<ul class="no_bullets">
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+</ul>
+
+<br />
+
+
+<hr />
+
+<h2>Action Items</h2>
+<ul>
+	<li>Discussed what architecture to use for our system?
+		<ul>
+			<li>We decided to use Model View Controller (MVC) Architecture</li>
+			<li>Browser will work as the view</li>
+			<li>JavaScript will most likely be the controller</li>
+			<li>Using HTML 5 cookies as the model</li>
+			<li>Have persistent external storage in the local file system that you can "export" to</li>
+		</ul>
+	</li>
+	<li>Controllers:
+		<ul>
+			<li>FileController:
+				<ul>
+					<li>New Button - creates a new session for a new project</li>
+					<li>Save Button - creates a file from a project session</li>
+					<li>Load Button - creates a sess from a project file</li>
+					<li>Revert Button - creates/replaces the current session with a backup session</li>
+					<li>ToPDF Button - creates a new window/PDF from a project session</li>
+				</ul>
+			</li>
+			<li>Claim Controller:
+				<ul>
+					<li>Adding claims to the canvas/claim tree</li>
+					<li>Removing claims from the canvas/claim tree</li>
+					<li>Colors claims according to default or user defined colors</li>
+					<li>Handles editing claim text and types</li>
+					<li>Combining co-premises together</li>
+					<li>Separate combined co-premises</li>
+					<li>Move supporting claims and rebutals to new parent claims</li>
+				</ul>
+			</li>
+			<li>Canvas  Controller:
+				<ul>
+					<li>Should align claims along a grid or level-by-level system</li>
+					<li>Set the canvas background color by a default or user defined color</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li>Views:
+		<ul>
+			<li>Canvas:
+				<ul>
+					<li>Aggregate Claims</li>
+					<li>Associatees With the File Controller</li>
+					<li>Associates with Canvas Controller</li>
+				</ul>
+			</li>
+			<li>Claim:
+				<ul>
+					<li>Three Types of Claim Classes: Support, Refute, Rebuttal</li>
+					<li>Implements a ClaimInterface that defines data elements of a claim
+						<ul>
+							<li>Have the text be in a list of length 1 to implment a general interface</li>
+						</ul>
+					</li>
+					<li>Associates with a claim interface</li>
+					<li>Claim Interface
+						<ul>
+							<li>Defines all data needed in the claim object</li>
+							<li>Type of the claim (refutation, support, rebuttal)</li>
+							<li>List of text boxes in a claim to support co-premise claims, single premise claims are just of length 1</li>
+							<li>List of children in the claim</li>
+						</ul>
+					</li>
+					<li>Co-Caim Class
+						<ul>
+							<li>Is a claim</li>
+							<li>Text List[n] where n is the number of claims in the co-claim</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li>UML Discussion (Brief)
+		<ul>
+			<li>We decided that there would be an interface for claims</li>
+			<li>The ClaimController would handle classes taht implemented that interface</li>
+			<li>There will be at least three Classes that implment claim interface: support, refuttation, and rebuttal claims</li>
+			<li>Not sure how co-premises will exist, but if they are a class then they will probably implement the interface as well</li>
+		</ul>
+	</li>
+</ul>
+
+<hr />
+
+<p>
+Editor(s): Zach Schwartz<br />
+$Date: 2013-03-30 14:12:08 $
+</p>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+
+	We are using MVC. The models are a local session storage object and a working project filetype. The controllers are ClaimController, FileController, and CanvasController. The view is the browser, which renders the canvas and claims. 
+
+	At the start of a new project, the user is presented with a single claim box. The user can generate new claims from existing claims and edit the text contents of each claim. The type of each claim is determined at its creation. ClaimController handles operations involving creation, deletion, and editing of claims.
+
+	The CanvasController renders claims and the connectors between them according to their types. It will also handle mouse and keyboard user input. 
+
+	The user can access file operations through an options menu. Operations include starting a new project, saving the current session in a persistent format, loading a new session from a persistent format, reverting to a previous version of a project, and exporting a session to a printable format. These operations are handled by the FileController.
+
+	We chose our model and view with the primary requirement, cross-platform compatibility, in mind. Using a browser as our view and the browser's local session storage as the model ensures platform independence. Modern browsers can accomodate local session storage and eliminate dependence on platform-specific features (this includes even virtual platforms such as Java). Controllers are easily implemented in a browser environment using Javascript or other scripting languages. 
