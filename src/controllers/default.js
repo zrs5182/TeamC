@@ -1,4 +1,4 @@
-      var container=document.getElementById("container");
+      var container = document.getElementById("container");
       var stage = new Kinetic.Stage({
         container: 'container',
         width: container.clientWidth,
