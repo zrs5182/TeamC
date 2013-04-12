@@ -1,7 +1,7 @@
 var testClaim = Object.create(claim);
 
 test('testClaim.getText()', function() { 
-    ok(testClaim.getText()==="", 'claim has a text field');
+    ok(testClaim.getText()!=='null', 'claim has a text field');
 })
 
 test('testClaim.setText()', function() {
@@ -10,7 +10,7 @@ test('testClaim.setText()', function() {
 })
 
 test('testClaim.getType()', function() {
-	ok(testClaim.getType()==="support", 'claim has a type field');
+	ok(testClaim.getType()!=='null', 'claim has a type field');
 })
 
 test('testClaim.setType()', function() {
