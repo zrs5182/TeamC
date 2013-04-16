@@ -46,7 +46,6 @@ var supportButton = new Kinetic.Shape({
     context.closePath();
     canvas.fillStroke(this);
   },
-  draggable: true,
   fill: 'green',
   stroke: 'black',
   strokeWidth: 2,
