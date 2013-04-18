@@ -18,11 +18,21 @@
         top: 0;
         z-index: 10;
       }
+      .textArea {
+      	position: relative;
+      	width: 300px;
+      	height: 200px;
+      	z-index: 20;
+      }
     </style>
     <script src="../controllers/kineticJS.js"></script>
+    <script type="text/javascript" src="../controllers/canvasController.js"></script>
+    <script type="text/javascript" src="../controllers/claimController.js"></script>  
+    <script type="text/javascript" src="../models/claim.js"></script>
   </head>
   <body>
     <div class=overlay id="container" ></div>
+    <div class=textArea id="myTextArea"></div>
     <script src="../controllers/default.js"></script>
   </body>
 </html>
