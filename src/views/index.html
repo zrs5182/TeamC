@@ -1,38 +1,85 @@
 <!DOCTYPE HTML>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      body {
-        margin: 0px;
-        padding: 0px;
-      }
-      #myCanvas {
-        border: 1px solid #9C9898;
-      }
-      .overlay {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
-        z-index: 10;
-      }
-      .textArea {
-      	position: relative;
-      	width: 300px;
-      	height: 200px;
-      	z-index: 20;
-      }
-    </style>
-    <script src="../controllers/kineticJS.js"></script>
-    <script type="text/javascript" src="../controllers/canvasController.js"></script>
-    <script type="text/javascript" src="../controllers/claimController.js"></script>  
-    <script type="text/javascript" src="../models/claim.js"></script>
-  </head>
-  <body>
-    <div class=overlay id="container" ></div>
-    <div class=textArea id="myTextArea"></div>
-    <script src="../controllers/default.js"></script>
-  </body>
+	<head>
+		<meta charset="UTF-8">
+		<style>
+			body {
+				margin: 0px;
+				padding: 0px;
+				background-image: url('http://www.html5canvastutorials.com/demos/assets/map-background.png');
+				background-size: 100%;
+			}
+			#myCanvas {
+				border: 1px solid #9C9898;
+			}
+			.overlay {
+				position: fixed;
+				width: 100%;
+				height: 100%;
+				left: 0;
+				top: 0;
+				z-index: 10;
+			}
+			.textArea {
+				position: relative;
+				width: 300px;
+				height: 200px;
+				z-index: 20;
+			}
+		</style>
+		<script src="../controllers/kineticJS.js"></script>
+		<script type="text/javascript" src="../controllers/canvasController.js"></script>
+		<script type="text/javascript" src="../controllers/claimController.js"></script>
+		<script type="text/javascript" src="../models/claim.js"></script>
+		<script type="text/javascript" src="../controllers/store.js"></script>
+	</head>
+	<body>
+		<div class=overlay id="container" ></div>
+		<div class=textArea id="myTextArea"></div>
+		<script defer="defer" type="text/javascript">
+		var stage = new Kinetic.Stage({
+			container : 'container',
+			width : container.clientWidth,
+			height : container.clientHeight,
+			draggable : true
+		});
+		var layer = new Kinetic.Layer();
+
+		var rect = new Kinetic.Rect({
+			x : 300,
+			y : 200,
+			width : 200,
+			height : 100,
+			cornerRadius : 11,
+			fill : 'white',
+			stroke : 'black',
+			strokeWidth : 4
+		});
+		localStorage.clear();
+		store.set(0, {
+			id : 0,
+			type : 'support',
+			text : "",
+			parent : 900,
+			x : 500,
+			y : 100
+		});
+		var testId = claimController.makeNewClaim(0, 'refutation');
+		var text = claimController.getClaimText(testId);
+		var claim = store.get(testId);
+		claimController.setClaimText(testId, "foobar");
+
+		layer.on('dblclick', function(event) {
+			var node = event.targetNode;
+			var shapeX = event.targetNode.getAbsolutePosition().x;
+			var shapeY = event.targetNode.getAbsolutePosition().y;
+			var div = document.getElementById('myTextArea');
+			div.innerHTML = canvasController.makeTextArea(testId, shapeX, shapeY);
+			document.getElementById('working').focus();
+		});
+
+		layer.add(rect);
+		stage.add(layer);
+		</script>
+	</body>
 </html>
