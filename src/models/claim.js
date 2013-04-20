@@ -1,7 +1,7 @@
 var claim = {
 	text : "",
 	type : "",
-	uniqueId : 0,
+	uniqueId : null,
 	getText : function() {
 		return this.text;
 	},
