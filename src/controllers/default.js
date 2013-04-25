@@ -28,11 +28,10 @@ layer.on('click', function(event) {
       var myY = store.get(myId).y;
       // console.log(event.targetNode.getAbsoluteTransform().getTranslation());
       if(myName==="complexText"||myName==="claimTextArea"){
-        var shapeX = event.targetNode.getAbsolutePosition().x;
-        var shapeY = event.targetNode.getAbsolutePosition().y;
-        // console.log(shapeX+","+shapeY);
+        // var shapeX = event.targetNode.getAbsolutePosition().x;
+        // var shapeY = event.targetNode.getAbsolutePosition().y;
         var div = document.getElementById('myTextArea');
-        div.innerHTML = canvasController.makeTextArea(myId, shapeX, shapeY);
+        div.innerHTML = canvasController.makeTextArea(myId, myX, myY);
         document.getElementById('working').focus();
       }else if(myName==="supportButton"){
         canvasController.addClaim("support", myX, parseInt(myY)+1, myId);
