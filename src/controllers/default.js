@@ -1,76 +1,78 @@
-var container = document.getElementById("container");
+var container=document.getElementById("container");
+document.getElementById("menuArea").left=window.innerWidth-50;
+var myText = 'foo';
 var stage = new Kinetic.Stage({
-	container : 'container',
-	width : container.clientWidth,
-	height : container.clientHeight,
-	draggable : true
+  container: 'container',
+  width: window.innerWidth,
+  height: window.innerHeight,
+  getWidth : function(){
+    return this.width;
+  },
+  getHeight : function(){
+    return this.height;
+  },
+  draggable: true
 });
 var layer = new Kinetic.Layer();
 
-var contention = new Kinetic.Shape({
-	drawFunc : function(canvas) {
-		var context = canvas.getContext();
-		context.beginPath();
-		x = parseInt(claim.x);
-		y = parseInt(claim.y);
-		w = 200;
-		h = 100;
-		r = 11;
-		context.moveTo(x - 0.5 * w + r, y - 0.5 * h);
-		context.arcTo(x + 0.5 * w, y - 0.5 * h, x + 0.5 * w, y + 0.5 * h, r);
-		context.arcTo(x + 0.5 * w, y + 0.5 * h, x - 0.5 * w, y + 0.5 * h, r);
-		context.arcTo(x - 0.5 * w, y + 0.5 * h, x - 0.5 * w, y - 0.5 * h, r);
-		context.arcTo(x - 0.5 * w, y - 0.5 * h, x + 0.5 * w, y - 0.5 * h, r);
-		context.closePath();
-		canvas.fillStroke(this);
-	},
-	fill : 'white',
-	stroke : 'black',
-	draggable : true,
-	strokeWidth : 4,
-	drawHitFunc : function(canvas) {
-		var context = canvas.getContext();
-		context.beginPath();
-		x = parseInt(claim.x) - 100;
-		y = parseInt(claim.y) - 50;
-		w = 150;
-		h = 75;
-		r = 11;
-		context.moveTo(x - 0.5 * w + r, y - 0.5 * h);
-		context.arcTo(x + 0.5 * w, y - 0.5 * h, x + 0.5 * w, y + 0.5 * h, r);
-		context.arcTo(x + 0.5 * w, y + 0.5 * h, x - 0.5 * w, y + 0.5 * h, r);
-		context.arcTo(x - 0.5 * w, y + 0.5 * h, x - 0.5 * w, y - 0.5 * h, r);
-		context.arcTo(x - 0.5 * w, y - 0.5 * h, x + 0.5 * w, y - 0.5 * h, r);
-		context.closePath();
-		canvas.fillStroke(this);
-	}
-});
+canvasController.newCanvas();
 
-//var testClaim = Object.create(claim);
-//var testCounter = Object.create(counter);
-//testClaim.setId(testCounter);
-//claimController.setClaimText(testClaim,'foooooooobar');
-localStorage.clear();
-store.set(0, {id: 0, type: 'support', text: "", parent: 900, x: 500,y: 100});
-var testId = claimController.makeNewClaim(0, 'refutation');
-var text=claimController.getClaimText(testId);
-var claim = store.get(testId);
+stage.add(layer);
 
 layer.on('click', function(event) {
-	alert(event.targetNode.getAbsolutePosition().x+","+event.targetNode.getAbsolutePosition().y);
-	var node = event.targetNode;
-	var div = document.getElementById('myTextArea');
-	div.innerHTML=canvasController.makeTextArea(testId);
-	document.getElementById('working').focus();
-	//document.getElementById('working').textContent = "changed text";
-	//document.getElementById('working').innerText = "changed text";
-});
+      var node = event.targetNode;
+      var myName = node.attrs.name;
+      var myId = node.attrs.id;
+      var myType = store.get(myId).type;
+      var myX = store.get(myId).x;
+      var myY = store.get(myId).y;
+      // console.log(event.targetNode.getAbsoluteTransform().getTranslation());
+      if(myName==="complexText"||myName==="claimTextArea"){
+        var shapeX = event.targetNode.getAbsolutePosition().x;
+        var shapeY = event.targetNode.getAbsolutePosition().y;
+        // console.log(shapeX+","+shapeY);
+        var div = document.getElementById('myTextArea');
+        div.innerHTML = canvasController.makeTextArea(myId, shapeX, shapeY);
+        document.getElementById('working').focus();
+      }else if(myName==="supportButton"){
+        canvasController.addClaim("support", myX, parseInt(myY)+1, myId);
+      }else if(myName==="refuteButton"){
+        if(myType==="refute"){
+          canvasController.addClaim("rebut", myX, parseInt(myY)+1, myId);
+        }else{
+          canvasController.addClaim("refute", myX, parseInt(myY)+1, myId);
+        }
+      }else if(myName==="deleteButton"){
+        
+      }
+      // console.log(localStorage);
+    });
 
-// add the contention to the layer
-layer.add(contention);
-// add the layer to the stage
-stage.add(layer); 
-alert(contention.getAbsolutePosition().x+","+contention.getAbsolutePosition().y);
-/*for (var i = 0; i < localStorage.length; i++){	//iterate through every index of localStorage
-    localStorage.setItem(localStorage.key(i),null);
-}*/
+window.onload = function()
+{
+    //adding the event listener for Mozilla
+    if(window.addEventListener)
+        document.addEventListener('DOMMouseScroll', zoom, false);
+    //for IE/OPERA etc
+    document.onmousewheel = zoom;
+}
+function zoom(event)
+{
+    var delta = 0;
+    if (!event) event = window.event;
+    // normalize the delta
+    if (event.wheelDelta) {
+        // IE and Opera
+        delta = event.wheelDelta;
+    } else if (event.detail) {
+        // W3C
+        delta = -event.detail;
+    }
+    var zoomAmount = delta*0.05;
+    var scalar=layer.getScale().x+zoomAmount;
+    //store.get(canvas).offset = parseFloat(store.get(canvas).offset)+layer.getAbsoluteTransform().getMatrix()[0]*zoomAmount*100;
+    if(scalar<0) scalar=.1;
+    layer.setScale(scalar);
+    //layer.setOffset(parseFloat(store.get(canvas).offset),parseFloat(store.get(canvas).offset));   //figure out how to manipulate the offset correctly!!!
+    layer.draw();
+}
