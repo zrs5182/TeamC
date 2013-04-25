@@ -14,9 +14,16 @@ var canvasController = {
     canvasController.newClaim("contention", 0, 0, null);
     //stage.draw();
   },
-  makeTextArea : function(myId, shapeX, shapeY) {
-    // document.getElementById('myTextArea').style.left = shapeX + 7 + "px";
-    // document.getElementById('myTextArea').style.top = shapeY + 15 + "px";
+  makeTextArea : function(myId,myX,myY) {
+    // (myX*gridX*1.5)+center+30,(myY*gridY*1.5)+30)
+    var gridX=parseInt(store.get("canvas").gridX);
+    var gridY=parseInt(store.get("canvas").gridY);
+    var center=parseInt(store.get("canvas").center);
+    var realX= myX*gridX*1.5+center+37;
+    var realY= myY*gridY*1.5+37;
+    console.log(realX+","+realY);
+    document.getElementById('myTextArea').style.left = realX + "px";
+    document.getElementById('myTextArea').style.top =  realY + "px";
     document.getElementById('myTextArea').style.zIndex = 2;
     // document.getElementById('myTextArea').style.zIndex = 40;
     return "<textarea rows='7' cols='25' id='working' onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
@@ -112,7 +119,7 @@ var canvasController = {
       canvas.maxY=myY;
       store.set("canvas",canvas);
     }
-    document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId,0,0);
+    document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId,myX,myY);
     document.getElementById('working').focus();
   },
   drawClaim : function(myId){
