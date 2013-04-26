@@ -1,11 +1,21 @@
 var fileController = {
-	saveMap: function(map){
-		localStorage[map.name]=JSON.stringify(map);
-		return localStorage[map.name] !== null;
+	saveMap: function(){
+		var data = [];
+		for (var i = 0; i < store.get("canvas").claimCount; i++) {
+			
+			data[i] = store.get(i);
+			
+		}
+		dataString = JSON.stringify(data);
+		return dataString;
 	},
-	loadMap: function(mapname){
-		console.log(mapname);
-		JSON.parse(localStorage[mapname]);
+	loadMap: function(dataString){
+		var data = JSON.parse(dataString);
+		for (var i = 0; i < store.get("canvas").claimCount; i++) {
+			
+			store.set(data[i]);
+			
+		}
 		return true;
 	}
 };
