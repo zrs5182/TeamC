@@ -15,6 +15,7 @@ var stage = new Kinetic.Stage({
 });
 var layer = new Kinetic.Layer();
 
+
 canvasController.newCanvas();
 
 stage.add(layer);
@@ -42,7 +43,9 @@ layer.on('click', function(event) {
           canvasController.addClaim("refute", myX, parseInt(myY)+1, myId);
         }
       }else if(myName==="deleteButton"){
-        
+      	//console.log(myId);
+      	claimController.removeClaim(myId);
+      	      		
       }
       // console.log(localStorage);
     });

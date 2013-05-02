@@ -25,3 +25,4 @@ test('removeTextArea()', function() {
 	canvasController.removeTextArea(testId);
 	ok(document.getElementById('myTextArea').innerHTML==='');
 })
+
