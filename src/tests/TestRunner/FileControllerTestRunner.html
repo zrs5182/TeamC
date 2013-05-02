@@ -1,20 +1,37 @@
 <!DOCTYPE html>  
 <html>  
 <head>  
+	<style>
+		.overlay {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        z-index: 1;
+      }
+	</style>
     <title>QUnit Test Suite</title>  
     <meta charset="UTF-8"> 
     <link rel="stylesheet" href="../TestAssets/qunit.css" type="text/css" media="screen">  
-    <script type="text/javascript" src="../TestAssets/qunit.js"></script>  
-    <!-- Your project file goes here -->  
-    <script type="text/javascript" src="../../controllers/fileController.js"></script>  
-    <!-- Your tests file goes here -->  
-    <script type="text/javascript" src="../TestCode/fileControllerTest.js"></script>  
+    <script type="text/javascript" src="../TestAssets/qunit.js"></script> 
+    <script src="../../controllers/store.js"></script> 
+    <script src="../../controllers/kineticJS.js"></script>
+    <script src="../../controllers/canvasController.js"></script>
+      
 </head>  
 <body>  
     <h1 id="qunit-header">QUnit Test Suite</h1>  
     <h2 id="qunit-banner"></h2>  
     <div id="qunit-testrunner-toolbar"></div>  
     <h2 id="qunit-userAgent"></h2>  
-    <ol id="qunit-tests"></ol>  
+    <ol id="qunit-tests"></ol>
+    <div class=overlay id="container" ></div>  
 </body>  
 </html> 
+<footer>
+	<!-- Your project file goes here -->  
+    <script type="text/javascript" src="../../controllers/fileController.js"></script>  
+    <!-- Your tests file goes here -->  
+    <script type="text/javascript" src="../TestCode/fileControllerTest.js"></script>
+</footer>
