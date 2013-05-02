@@ -67,13 +67,20 @@ function zoom(event)
         delta = -event.detail;
     }
     var zoomAmount = delta*0.05;
+    var oldScalar = layer.getScale().x;
     var scalar=layer.getScale().x+zoomAmount;
-    //store.get(canvas).offset = parseFloat(store.get(canvas).offset)+layer.getAbsoluteTransform().getMatrix()[0]*zoomAmount*100;
     if(scalar<0) scalar=.1;
     layer.setScale(scalar);
     if(document.getElementById("working")!==null){
-      document.getElementById("working").style.width=(parseInt(store.get("canvas").gridX)*scalar*.73)+"px";
-      document.getElementById("working").style.height=(parseInt(store.get("canvas").gridY)*scalar*.6)+"px";
+      var workingArea = document.getElementById("working");
+      var textArea = document.getElementById("myTextArea");
+      var canvas = store.get("canvas");
+      textArea.style.top = parseInt(textArea.style.top)/oldScalar+"px";
+      textArea.style.left = parseInt(textArea.style.left)/oldScalar+"px";     
+      textArea.style.top = parseInt(textArea.style.top)*scalar+"px";
+      textArea.style.left = parseInt(textArea.style.left)*scalar+"px";
+      workingArea.style.width=(parseInt(canvas.gridX)*scalar*.73)+"px";
+      workingArea.style.height=(parseInt(canvas.gridY)*scalar*.6)+"px";
     }
     //layer.setOffset(parseFloat(store.get(canvas).offset),parseFloat(store.get(canvas).offset));   //figure out how to manipulate the offset correctly!!!
     layer.draw();
