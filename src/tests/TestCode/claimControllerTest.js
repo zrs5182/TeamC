@@ -35,3 +35,15 @@ test('claimController.makeNewClaim()', function() {
 	ok(parseInt(testClaim2.x)===500, "2nd x is placed correctly");
 	ok(parseInt(testClaim2.y)===500, "2nd y is placed correctly");
 })
+
+
+test('claimController.removeclaim()', function() { 
+	localStorage.clear();
+	store.set(0, {id: 0, type: 'support', text: "", parent: 900, x: 300,y: 300});
+	var testId = claimController.removeClaim(0);
+	var claim = store.get(testId); 
+	claimController.removeClaim(claim);
+    ok(claimController.removeClaim(claim)== null, "controller's setClaimText works");
+})
+
+
