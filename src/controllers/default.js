@@ -26,12 +26,11 @@ layer.on('click', function(event) {
       var myType = store.get(myId).type;
       var myX = store.get(myId).x;
       var myY = store.get(myId).y;
-      // console.log(event.targetNode.getAbsoluteTransform().getTranslation());
+      console.log("layer: " + event.targetNode.getAbsoluteTransform().getTranslation().x + ", " + event.targetNode.getAbsoluteTransform().getTranslation().y);
+      //console.log(event.targetNode.getAbsoluteTransform().getTranslation());
       if(myName==="complexText"||myName==="claimTextArea"){
-        // var shapeX = event.targetNode.getAbsolutePosition().x;
-        // var shapeY = event.targetNode.getAbsolutePosition().y;
         var div = document.getElementById('myTextArea');
-        div.innerHTML = canvasController.makeTextArea(myId, myX, myY);
+        div.innerHTML = canvasController.makeTextArea(myId);
         document.getElementById('working').focus();
       }else if(myName==="supportButton"){
         canvasController.addClaim("support", myX, parseInt(myY)+1, myId);
@@ -72,6 +71,10 @@ function zoom(event)
     //store.get(canvas).offset = parseFloat(store.get(canvas).offset)+layer.getAbsoluteTransform().getMatrix()[0]*zoomAmount*100;
     if(scalar<0) scalar=.1;
     layer.setScale(scalar);
+    if(document.getElementById("working")!==null){
+      document.getElementById("working").style.width=(parseInt(store.get("canvas").gridX)*scalar*.73)+"px";
+      document.getElementById("working").style.height=(parseInt(store.get("canvas").gridY)*scalar*.6)+"px";
+    }
     //layer.setOffset(parseFloat(store.get(canvas).offset),parseFloat(store.get(canvas).offset));   //figure out how to manipulate the offset correctly!!!
     layer.draw();
 }

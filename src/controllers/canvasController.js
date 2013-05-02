@@ -14,19 +14,19 @@ var canvasController = {
     canvasController.newClaim("contention", 0, 0, null);
     //stage.draw();
   },
-  makeTextArea : function(myId,myX,myY) {
-    // (myX*gridX*1.5)+center+30,(myY*gridY*1.5)+30)
-    var gridX=parseInt(store.get("canvas").gridX);
-    var gridY=parseInt(store.get("canvas").gridY);
-    var center=parseInt(store.get("canvas").center);
-    var realX= myX*gridX*1.5+center+37;
-    var realY= myY*gridY*1.5+37;
-    console.log(realX+","+realY);
+  makeTextArea : function(myId) {
+    var claim = store.get(myId);
+    var canvas = store.get("canvas");
+    var gridX=parseInt(canvas.gridX);
+    var gridY=parseInt(canvas.gridY);
+    var center=parseInt(canvas.center);
+    var realX=parseInt(claim.x)*parseInt(canvas.gridX)*1.5+center+37+stage.getAbsoluteTransform().getTranslation().x;
+    var realY=parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37+stage.getAbsoluteTransform().getTranslation().y;
+    var scale=layer.getScale().x;
     document.getElementById('myTextArea').style.left = realX + "px";
     document.getElementById('myTextArea').style.top =  realY + "px";
     document.getElementById('myTextArea').style.zIndex = 2;
-    // document.getElementById('myTextArea').style.zIndex = 40;
-    return "<textarea rows='7' cols='25' id='working' onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
+    return "<textarea style='width: "+(store.get("canvas").gridX*scale*.73)+"px; height: "+(store.get("canvas").gridY*scale*.6)+"px;' id='working' onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
   },
   extractText : function() {
     return document.getElementById('working').value;
@@ -39,10 +39,9 @@ var canvasController = {
     thisText.setText(store.get(myId).text);
   },
   addClaim : function(myType, myX, myY, myParent){
-    // console.log("trying new claim:"+myType+","+myX+","+myY+","+myParent);
     if(!store.get("grid["+myX+","+myY+"]")){  //empty slot: insert claim
       canvasController.newClaim(myType,myX,myY, myParent);
-      //store.set("grid["+myX+","+myY+"]",myId);
+      console.log(store.get("canvas").minX);
     }else if(store.get(store.get("grid["+myX+","+myY+"]")).parent===myParent){  //full slot,same parent: move left/right(support/refute) and try again
       if(myType==="support"){
         canvasController.addClaim(myType,myX-1,myY,myParent);
@@ -50,38 +49,95 @@ var canvasController = {
         canvasController.addClaim(myType,myX+1,myY,myParent);
       }
     }else{  //full slot, different parents: shift everything above and outside outwards, then insert
-      // console.log("encountered problem section");
       if(myType==="support"){
-        for(var i=store.get("canvas").minX; i<myX;i++){
-          for(var j=store.get("canvas").maxY;j>0;j--){
-            // console.log(store.get("grid["+i+","+j+"]"));
-            if(store.get("grid["+i+","+j+"]")!==null){
-              // var movedClaim = store.get(store.get("grid["+(i)+","+j+"]"));
-              // console.log("first check");
-              store.set("grid["+(i-1)+","+j+"]",store.get("grid["+i+","+j+"]"));
-              var newCanvas = store.get("canvas");
-              newCanvas.minX=parseInt(newCanvas.minX)-1;
-              store.set("canvas",newCanvas);
-              // console.log(movedClaim);
-              // movedClaim.x = i-1;
-              // store.set(movedClaim.id,movedClaim);
-              localStorage.removeItem("grid["+i+","+j+"]");
+        myX+=1;
+        if(myX<=0){
+          for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
+            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
+              if(store.get("grid["+i+","+j+"]")!=null){
+                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
+                store.set ("grid["+(i-1)+","+j+"]",oldClaim.id)
+                oldClaim.x = parseInt(oldClaim.x)-1;
+                if(oldClaim.x<parseInt(store.get("canvas").minX)){
+                  var oldCanvas = store.get("canvas");
+                  oldCanvas.minX = parseInt(oldCanvas.minX)-1;
+                  store.set("canvas", oldCanvas);
+                }
+                store.set(oldClaim.id, oldClaim);
+                var oldText = stage.get(".complexText")[oldClaim.id];
+                console.log(oldText);
+                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
+                console.log(oldText);
+                localStorage.removeItem("grid["+i+","+j+"]");
+              }
+            }
+          }
+        }else{
+          for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
+            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
+              if(store.get("grid["+i+","+j+"]")!=null){
+                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
+                store.set ("grid["+(i+1)+","+j+"]",oldClaim.id)
+                oldClaim.x = parseInt(oldClaim.x)+1;
+                if(oldClaim.x>parseInt(store.get("canvas").maxX)){
+                  var oldCanvas = store.get("canvas");
+                  oldCanvas.maxX = parseInt(oldCanvas.maxX)+1;
+                  store.set("canvas", oldCanvas);
+                }
+                store.set(oldClaim.id, oldClaim);
+                var oldText = stage.get(".complexText")[oldClaim.id];
+                console.log(oldText);
+                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
+                console.log(oldText);
+                localStorage.removeItem("grid["+i+","+j+"]");
+              }
             }
           }
         }
+        
         canvasController.newClaim(myType, myX, myY, myParent);
       }else{
-        for(var i=store.get("canvas").maxX; i>myX;i--){
-          for(var j=myY;j>=1;j--){
-            // console.log(store.get("grid["+i+","+j+"]"));
-            var testClaim = store.get(store.get("grid["+i+","+j+"]"));
-            // console.log(testClaim);
-            if(store.get("grid["+i+","+j+"]")!==null){
-              store.set("grid["+(i+1)+","+j+"]",store.get("grid["+i+","+j+"]"));
-              localStorage.removeItem("grid["+i+","+j+"]");
-              var newCanvas = store.get("canvas");
-              newCanvas.maxX=parseInt(newCanvas.maxX)+1;
-              store.set("canvas",newCanvas);
+        myX-=1;
+        if(myX>0){
+          for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
+            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
+              if(store.get("grid["+i+","+j+"]")!=null){
+                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
+                store.set ("grid["+(i+1)+","+j+"]",oldClaim.id)
+                oldClaim.x = parseInt(oldClaim.x)+1;
+                if(oldClaim.x>parseInt(store.get("canvas").maxX)){
+                  var oldCanvas = store.get("canvas");
+                  oldCanvas.maxX = parseInt(oldCanvas.maxX)+1;
+                  store.set("canvas", oldCanvas);
+                }
+                store.set(oldClaim.id, oldClaim);
+                var oldText = stage.get(".complexText")[oldClaim.id];
+                console.log(oldText);
+                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
+                console.log(oldText);
+                localStorage.removeItem("grid["+i+","+j+"]");
+              }              
+            }
+          }
+        }else{
+          for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
+            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
+              if(store.get("grid["+i+","+j+"]")!=null){
+                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
+                store.set ("grid["+(i-1)+","+j+"]",oldClaim.id)
+                oldClaim.x = parseInt(oldClaim.x)-1;
+                if(oldClaim.x>parseInt(store.get("canvas").minX)){
+                  var oldCanvas = store.get("canvas");
+                  oldCanvas.minX = parseInt(oldCanvas.minX)-1;
+                  store.set("canvas", oldCanvas);
+                }
+                store.set(oldClaim.id, oldClaim);
+                var oldText = stage.get(".complexText")[oldClaim.id];
+                console.log(oldText);
+                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
+                console.log(oldText);
+                localStorage.removeItem("grid["+i+","+j+"]");
+              }              
             }
           }
         }
@@ -96,7 +152,7 @@ var canvasController = {
     store.set(myCanvas.claimCount, {
       id : myId,
       type : myType,
-      text : "",
+      text : myId,
       x : myX,
       y : myY,
       parent : myParent
@@ -119,7 +175,7 @@ var canvasController = {
       canvas.maxY=myY;
       store.set("canvas",canvas);
     }
-    document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId,myX,myY);
+    document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId);
     document.getElementById('working').focus();
   },
   drawClaim : function(myId){
