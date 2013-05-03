@@ -26,12 +26,10 @@ layer.on('click', function(event) {
       var myType = store.get(myId).type;
       var myX = store.get(myId).x;
       var myY = store.get(myId).y;
-      console.log("layer: " + event.targetNode.getAbsoluteTransform().getTranslation().x + ", " + event.targetNode.getAbsoluteTransform().getTranslation().y);
-      //console.log(event.targetNode.getAbsoluteTransform().getTranslation());
       if(myName==="complexText"||myName==="claimTextArea"){
         var div = document.getElementById('myTextArea');
         div.innerHTML = canvasController.makeTextArea(myId);
-        document.getElementById('working').focus();
+        document.getElementsByName('working')[0].focus();
       }else if(myName==="supportButton"){
         canvasController.addClaim("support", myX, parseInt(myY)+1, myId);
       }else if(myName==="refuteButton"){
@@ -43,7 +41,32 @@ layer.on('click', function(event) {
       }else if(myName==="deleteButton"){
         
       }
-      // console.log(localStorage);
+      var claim = stage.get(".claim")[stage.get(".claim").length-1];
+      var support = stage.get(".supportButton")[stage.get(".supportButton").length-1];
+      var refute = stage.get(".refuteButton")[stage.get(".refuteButton").length-1];
+      var deleteButton = stage.get(".deleteButton")[stage.get(".deleteButton").length-1];
+      var connector = stage.get(".connector")[stage.get(".connector").length-1];
+      claim.transitionTo({
+          opacity: 1,
+          duration: .25
+      });
+      support.transitionTo({
+        opacity: 1,
+        duration: .25
+      });
+      refute.transitionTo({
+        opacity: 1,
+        duration: .25
+      });
+      deleteButton.transitionTo({
+        opacity: 1,
+        duration: .25
+      });
+      connector.transitionTo({
+        opacity: 1,
+        duration: .25
+      });
+    
     });
 
 window.onload = function()
@@ -71,17 +94,22 @@ function zoom(event)
     var scalar=layer.getScale().x+zoomAmount;
     if(scalar<0) scalar=.1;
     layer.setScale(scalar);
-    if(document.getElementById("working")!==null){
-      var workingArea = document.getElementById("working");
+    if(document.getElementsByName("working")[0]){
+      var workingArea = document.getElementsByName("working")[0];
       var textArea = document.getElementById("myTextArea");
       var canvas = store.get("canvas");
-      textArea.style.top = parseInt(textArea.style.top)/oldScalar+"px";
-      textArea.style.left = parseInt(textArea.style.left)/oldScalar+"px";     
-      textArea.style.top = parseInt(textArea.style.top)*scalar+"px";
-      textArea.style.left = parseInt(textArea.style.left)*scalar+"px";
-      workingArea.style.width=(parseInt(canvas.gridX)*scalar*.73)+"px";
-      workingArea.style.height=(parseInt(canvas.gridY)*scalar*.6)+"px";
+      var claim = store.get(document.getElementsByName("working")[0].id);
+      var gridX=parseInt(canvas.gridX);
+      var gridY=parseInt(canvas.gridY);
+      var scale=layer.getScale().x;
+      var center=parseInt(canvas.center);
+      var realX=Math.round((parseInt(claim.x)*parseInt(canvas.gridX)*1.5+center+37)*scale)+stage.getAbsoluteTransform().getTranslation().x;
+      var realY=Math.round((parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale)+stage.getAbsoluteTransform().getTranslation().y;
+      textArea.style.left = realX + "px";
+      textArea.style.top =  realY + "px";
+      workingArea.style.fontSize = (16*scale)+"px"
+      workingArea.style.width=(parseInt(canvas.gridX)-78)*scalar+"px";
+      workingArea.style.height=(parseInt(store.get("canvas").gridY)*scale*.6)+"px";
     }
-    //layer.setOffset(parseFloat(store.get(canvas).offset),parseFloat(store.get(canvas).offset));   //figure out how to manipulate the offset correctly!!!
     layer.draw();
 }

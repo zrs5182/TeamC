@@ -12,7 +12,6 @@ var canvasController = {
       claimCount : 0
     });
     canvasController.newClaim("contention", 0, 0, null);
-    //stage.draw();
   },
   makeTextArea : function(myId) {
     var claim = store.get(myId);
@@ -21,15 +20,15 @@ var canvasController = {
     var gridY=parseInt(canvas.gridY);
     var scale=layer.getScale().x;
     var center=parseInt(canvas.center);
-    var realX=(parseInt(claim.x)*parseInt(canvas.gridX)*1.5+center+37)*scale+stage.getAbsoluteTransform().getTranslation().x;
-    var realY=(parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale+stage.getAbsoluteTransform().getTranslation().y;
+    var realX=Math.round((parseInt(claim.x)*parseInt(canvas.gridX)*1.5+center+37)*scale)+stage.getAbsoluteTransform().getTranslation().x;
+    var realY=Math.round((parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale)+stage.getAbsoluteTransform().getTranslation().y;
     document.getElementById('myTextArea').style.left = realX + "px";
     document.getElementById('myTextArea').style.top =  realY + "px";
     document.getElementById('myTextArea').style.zIndex = 2;
-    return "<textarea style='width: "+(store.get("canvas").gridX*scale*.73)+"px; height: "+(store.get("canvas").gridY*scale*.6)+"px;' id='working' onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
+    return "<textarea style='font-size: "+(16*scale)+"px; width: "+((parseInt(store.get("canvas").gridX)-78)*scale)+"px; height: "+(store.get("canvas").gridY*scale*.6)+"px;' name='working' id="+claim.id+" onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
   },
   extractText : function() {
-    return document.getElementById('working').value;
+    return document.getElementsByName('working')[0].value;
   },
   removeTextArea : function(myId) {
     claimController.setClaimText(myId, canvasController.extractText());
@@ -41,7 +40,6 @@ var canvasController = {
   addClaim : function(myType, myX, myY, myParent){
     if(!store.get("grid["+myX+","+myY+"]")){  //empty slot: insert claim
       canvasController.newClaim(myType,myX,myY, myParent);
-      console.log(store.get("canvas").minX);
     }else if(store.get(store.get("grid["+myX+","+myY+"]")).parent===myParent){  //full slot,same parent: move left/right(support/refute) and try again
       if(myType==="support"){
         canvasController.addClaim(myType,myX-1,myY,myParent);
@@ -50,7 +48,6 @@ var canvasController = {
       }
     }else{  //full slot, different parents: shift everything above and outside outwards, then insert
       if(myType==="support"){
-        myX+=1;
         if(myX<=0){
           for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
             for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
@@ -65,14 +62,13 @@ var canvasController = {
                 }
                 store.set(oldClaim.id, oldClaim);
                 var oldText = stage.get(".complexText")[oldClaim.id];
-                console.log(oldText);
                 oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                console.log(oldText);
                 localStorage.removeItem("grid["+i+","+j+"]");
               }
             }
           }
         }else{
+          myX+=1;
           for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
             for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
               if(store.get("grid["+i+","+j+"]")!=null){
@@ -86,9 +82,7 @@ var canvasController = {
                 }
                 store.set(oldClaim.id, oldClaim);
                 var oldText = stage.get(".complexText")[oldClaim.id];
-                console.log(oldText);
                 oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                console.log(oldText);
                 localStorage.removeItem("grid["+i+","+j+"]");
               }
             }
@@ -97,7 +91,6 @@ var canvasController = {
         
         canvasController.newClaim(myType, myX, myY, myParent);
       }else{
-        myX-=1;
         if(myX>0){
           for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
             for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
@@ -112,14 +105,13 @@ var canvasController = {
                 }
                 store.set(oldClaim.id, oldClaim);
                 var oldText = stage.get(".complexText")[oldClaim.id];
-                console.log(oldText);
                 oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                console.log(oldText);
                 localStorage.removeItem("grid["+i+","+j+"]");
               }              
             }
           }
         }else{
+          myX-=1;
           for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
             for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
               if(store.get("grid["+i+","+j+"]")!=null){
@@ -133,9 +125,7 @@ var canvasController = {
                 }
                 store.set(oldClaim.id, oldClaim);
                 var oldText = stage.get(".complexText")[oldClaim.id];
-                console.log(oldText);
                 oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                console.log(oldText);
                 localStorage.removeItem("grid["+i+","+j+"]");
               }              
             }
@@ -174,14 +164,14 @@ var canvasController = {
       var canvas = store.get("canvas");
       canvas.maxY=myY;
       store.set("canvas",canvas);
-    }
+    }    
     document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId);
-    document.getElementById('working').focus();
+    document.getElementsByName('working')[0].focus();
   },
   drawClaim : function(myId){
     var claim = new Kinetic.Shape({
       id: myId,
-      name: store.get(myId).type,
+      name: "claim",
       drawFunc: function(canvas) {
         var myCanvas = store.get("canvas");
         var context = canvas.getContext();
@@ -193,13 +183,6 @@ var canvasController = {
         var o=30;
         context.beginPath();
           context.moveTo(x+r,y);
-          // this.setStroke('null');
-          // if(store.get(myId).type!=="contention"){
-           //  context.lineTo(x+(w/2)-(2*o),y);
-           //  this.setStroke('null');
-           //  context.lineTo(x+(w/2)-(2*o),y);
-          //  this.setStroke('null');
-          // }
           context.arcTo(x+w,y,x+w,y+r,r);
           context.arcTo(x+w,y+h,x+w-r,y+h,r);
           context.arcTo(x,y+h,x,y+h-r,r);
@@ -214,12 +197,15 @@ var canvasController = {
         }else{
           this.setFill('blue');
         }
-
         canvas.fillStroke(this);
       },
       stroke: 'black',
-      strokeWidth: 2
+      strokeWidth: 2,
+      opacity: 0
     });
+    if(localStorage.length==2){
+      claim.setOpacity(1);
+    }
     var claimTextArea = new Kinetic.Shape({
       id: parseInt(store.get(myId).id),
       drawFunc: function(canvas) {
@@ -301,8 +287,12 @@ var canvasController = {
         context.arcTo(x,y+h,x,y+h-o-r,r);
         context.closePath();
         canvas.fillStroke(this);
-      }
+      },
+      opacity: 0
     });
+    if(localStorage.length==2){
+      supportButton.setOpacity(1);
+    }
     var refuteButton = new Kinetic.Shape({
       id: parseInt(store.get(myId).id),
       drawFunc: function(canvas) {
@@ -342,8 +332,12 @@ var canvasController = {
         context.arcTo(x+w,y+h,x+w,y+h-o-r,r);
         context.closePath();
         canvas.fillStroke(this);
-      }
+      },
+      opacity: 0
     });
+    if(localStorage.length==2){
+      refuteButton.setOpacity(1);
+    }
     var deleteButton = new Kinetic.Shape({
       id: parseInt(store.get(myId).id),
       drawFunc: function(canvas) {
@@ -379,8 +373,12 @@ var canvasController = {
         context.arcTo(x+w,y,x+w-o-r,y,r);
         context.closePath();
         canvas.fillStroke(this);
-      }
+      },
+      opacity: 0
     });
+    if(localStorage.length==2){
+      deleteButton.setOpacity(1);
+    }
     var complexText = new Kinetic.Text({
       id: myId,
       name: "complexText",
@@ -466,7 +464,8 @@ var canvasController = {
           canvas.fillStroke(this);
         }
       },
-      name: 'connector'
+      name: 'connector',
+      opacity: 0
     });
 
     layer.add(claim);
