@@ -17,9 +17,20 @@ var claimController = {
   getClaimText : function(id) {
     return store.get(id).text;
   },
-  setClaimText : function(myId, newText) {
+    setClaimText : function(myId, newText) {
     var claim = store.get(myId);
     claim.text = newText;
     store.set(myId, claim);
-  }
+  },
+  removeClaim : function (myId){
+		//	console.log(store.get(myId));
+		 // var x = store.get(myId).x;
+		 // var y = store.get(myId).y;
+		 // localStorage.removeItem("grid["+x+","+y+"]"); 
+      	 localStorage.removeItem(myId);
+      	
+      	//localStorage.setItem(myId);
+      	// console.log("Local Storage After Delete:");
+      	//console.log(localStorage);
+   },
 };
