@@ -41,8 +41,11 @@
     <div class=overlay id="container" ></div>
     <div id="myTextArea"></div>
     <div id="menuArea">
-      <!-- <img src="hamburgerSmall.png"> -->
+      <a id="downloader" download="test.am"><img src="hamburgerSmall.png"></a>
     </div>
     <script src="../controllers/default.js"></script>
+    <script>
+    	document.getElementById("downloader").href = "data:application/notepad.exe;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
+    </script>
   </body>
 </html>
