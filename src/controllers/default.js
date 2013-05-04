@@ -41,7 +41,7 @@ layer.on('click', function(event) {
         }
       }else if(myName==="deleteButton"){
       	//console.log(myId);
-      	claimController.removeClaim(myId);
+      	//claimController.removeClaim(myId);
       	      		
       }
       var claim = stage.get(".claim")[stage.get(".claim").length-1];

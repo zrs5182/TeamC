@@ -38,100 +38,71 @@ var canvasController = {
     thisText.setText(store.get(myId).text);
   },
   addClaim : function(myType, myX, myY, myParent){
-    if(!store.get("grid["+myX+","+myY+"]")){  //empty slot: insert claim
-      canvasController.newClaim(myType,myX,myY, myParent);
-    }else if(store.get(store.get("grid["+myX+","+myY+"]")).parent===myParent){  //full slot,same parent: move left/right(support/refute) and try again
-      if(myType==="support"){
-        canvasController.addClaim(myType,myX-1,myY,myParent);
+    console.log(localStorage);
+    var parent = store.get(myParent);
+    if(myType=="support"){
+      var target = parseInt(parent.minX)-1;
+      console.log("placing at grid["+target+","+myY+"]");
+      if(!store.get("grid["+target+","+myY+"]")){
+        if(!store.get("grid["+target+","+(myY+1)+"]")){
+          console.log("nothing below target location");
+          canvasController.newClaim(myType,target,myY,myParent);
+          parent.minX=target;
+          store.set(myParent, parent);
+        }else{
+          parent.minX -=1;
+          store.set(parent.id, parent);
+          canvasController.addClaim(myType, myX, myY, myParent);
+        }
       }else{
-        canvasController.addClaim(myType,myX+1,myY,myParent);
-      }
-    }else{  //full slot, different parents: shift everything above and outside outwards, then insert
-      if(myType==="support"){
+        var canvas = store.get("canvas");
         if(myX<=0){
-          for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
-            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
-              if(store.get("grid["+i+","+j+"]")!=null){
+          for(var i = canvas.minX; i<parent.minX;i++){
+            for(var j = myY; j>0; j--){
+              console.log("checking grid["+i+","+j+"]");
+              if(store.get("grid["+i+","+j+"]")&&store.get("grid["+i+","+j+"]")!="blank"){
+                console.log("moving "+store.get("grid["+i+","+j+"]")+" from grid["+i+","+j+"] to grid["+(i-1)+","+j+"]");
                 var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
-                store.set ("grid["+(i-1)+","+j+"]",oldClaim.id)
-                oldClaim.x = parseInt(oldClaim.x)-1;
-                if(oldClaim.x<parseInt(store.get("canvas").minX)){
-                  var oldCanvas = store.get("canvas");
-                  oldCanvas.minX = parseInt(oldCanvas.minX)-1;
+                oldClaim.x = i-1;
+                oldClaim.minX-=1;
+                oldClaim.maxX-=1;
+                store.set(oldClaim.id, oldClaim);
+                store.set("grid["+(i-1)+","+j+"]", oldClaim.id)
+                localStorage.removeItem("grid["+i+","+j+"]");
+                var oldParent = store.get(oldClaim.parent);
+                if(oldClaim.x<oldParent.minX){
+                  console.log("adjusting "+oldParent.id+" minX");
+                  oldParent.minX-=1;
+                  store.set(oldParent.id, oldParent);
+                }
+                var oldCanvas = store.get("canvas");
+                if(oldClaim.x<oldCanvas.minX){
+                  console.log("adjusting canvas minX");
+                  oldCanvas.minX-=1;
                   store.set("canvas", oldCanvas);
                 }
-                store.set(oldClaim.id, oldClaim);
                 var oldText = stage.get(".complexText")[oldClaim.id];
                 oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                localStorage.removeItem("grid["+i+","+j+"]");
+                console.log("moving blank from grid["+i+","+(j+1)+"] to grid["+(i-1)+","+(j+1)+"]");
+                store.set("grid["+(i-1)+","+(j+1)+"]", "blank");
+                localStorage.removeItem("grid["+i+","+(j+1)+"]");
               }
             }
           }
         }else{
-          myX+=1;
-          for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
-            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
-              if(store.get("grid["+i+","+j+"]")!=null){
-                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
-                store.set ("grid["+(i+1)+","+j+"]",oldClaim.id)
-                oldClaim.x = parseInt(oldClaim.x)+1;
-                if(oldClaim.x>parseInt(store.get("canvas").maxX)){
-                  var oldCanvas = store.get("canvas");
-                  oldCanvas.maxX = parseInt(oldCanvas.maxX)+1;
-                  store.set("canvas", oldCanvas);
-                }
-                store.set(oldClaim.id, oldClaim);
-                var oldText = stage.get(".complexText")[oldClaim.id];
-                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                localStorage.removeItem("grid["+i+","+j+"]");
-              }
-            }
-          }
+          
         }
-        
-        canvasController.newClaim(myType, myX, myY, myParent);
+        canvasController.newClaim(myType,target,myY,myParent);
+      }
+      
+    }else{
+      var target = parseInt(parent.maxX)+1;
+      if(store.get("grid["+target+","+myY+"]")==null){
+        canvasController.newClaim(myType,target,myY,myParent);
+        parent.maxX=target;
+        store.set(myParent, parent);
       }else{
-        if(myX>0){
-          for(var i=parseInt(store.get("canvas").maxX); i>=myX;i--){
-            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
-              if(store.get("grid["+i+","+j+"]")!=null){
-                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
-                store.set ("grid["+(i+1)+","+j+"]",oldClaim.id)
-                oldClaim.x = parseInt(oldClaim.x)+1;
-                if(oldClaim.x>parseInt(store.get("canvas").maxX)){
-                  var oldCanvas = store.get("canvas");
-                  oldCanvas.maxX = parseInt(oldCanvas.maxX)+1;
-                  store.set("canvas", oldCanvas);
-                }
-                store.set(oldClaim.id, oldClaim);
-                var oldText = stage.get(".complexText")[oldClaim.id];
-                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                localStorage.removeItem("grid["+i+","+j+"]");
-              }              
-            }
-          }
-        }else{
-          myX-=1;
-          for(var i=parseInt(store.get("canvas").minX); i<=myX;i++){
-            for(var j=parseInt(store.get("canvas").maxY);j>0;j--){
-              if(store.get("grid["+i+","+j+"]")!=null){
-                var oldClaim = store.get(store.get("grid["+i+","+j+"]"));
-                store.set ("grid["+(i-1)+","+j+"]",oldClaim.id)
-                oldClaim.x = parseInt(oldClaim.x)-1;
-                if(oldClaim.x>parseInt(store.get("canvas").minX)){
-                  var oldCanvas = store.get("canvas");
-                  oldCanvas.minX = parseInt(oldCanvas.minX)-1;
-                  store.set("canvas", oldCanvas);
-                }
-                store.set(oldClaim.id, oldClaim);
-                var oldText = stage.get(".complexText")[oldClaim.id];
-                oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(oldClaim.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                localStorage.removeItem("grid["+i+","+j+"]");
-              }              
-            }
-          }
-        }
-        canvasController.newClaim(myType, myX, myY, myParent);
+        
       }
     }
     layer.draw();
@@ -145,26 +116,28 @@ var canvasController = {
       text : myId,
       x : myX,
       y : myY,
-      parent : myParent
+      parent : myParent,
+      minX : myX, 
+      maxX : myX
     });
     myCanvas.claimCount++;
-    store.set("canvas",myCanvas);
     canvasController.drawClaim(myId);
     store.set("grid["+myX+","+myY+"]", myId);
-    if(myX<store.get("canvas").minX){
-      var canvas = store.get("canvas");
-      canvas.minX=myX;
-      store.set("canvas",canvas);
-    }else if(myX>store.get("canvas").maxX){
-      var canvas = store.get("canvas");
-      canvas.maxX=myX;
-      store.set("canvas",canvas);     
+    store.set("grid["+myX+","+(myY+1)+"]", "blank");
+    if(myX<myCanvas.minX){
+      myCanvas.minX=myX;
+    }else if(myX>myCanvas.maxX){
+      myCanvas.maxX=myX;   
     }
-    if(myY>store.get("canvas").maxY){
-      var canvas = store.get("canvas");
-      canvas.maxY=myY;
-      store.set("canvas",canvas);
-    }    
+    if(myY>myCanvas.maxY){
+      myCanvas.maxY=myY;
+    }
+    if(myType!=="contention"&&myX<store.get(myParent).minX){
+      var parent = store.get(myParent);
+      parent.minX=myX;
+      store.set(parent.id, parent);
+    }
+    store.set("canvas",myCanvas);
     document.getElementById("myTextArea").innerHTML=canvasController.makeTextArea(myId);
     document.getElementsByName('working')[0].focus();
   },
@@ -392,88 +365,91 @@ var canvasController = {
       padding: 20,
       align: 'left'
     });
-    var connector = new Kinetic.Shape({
-      id: myId,
-      drawFunc: function(canvas) {
-        var myCanvas = store.get("canvas");
-        var context = canvas.getContext();
-        var x = parseInt(myCanvas.center)+parseInt(store.get(myId).x)*parseInt(myCanvas.gridX)/2*3;
-        var y = parseInt(store.get(myId).y)*parseInt(myCanvas.gridY)/2*3;
-        var w = parseInt(myCanvas.gridX);
-        var h = parseInt(myCanvas.gridY);
-        var r = 12;
-        var o = 30;
-        var type = store.get(myId).type;
-        if(type!=="contention"){
-          var parentX=parseInt(myCanvas.center)+parseInt(store.get(store.get(myId).parent).x)*parseInt(myCanvas.gridX)/2*3;
-          var parentY=parseInt(store.get(store.get(myId).parent).y)*parseInt(myCanvas.gridY)/2*3;
-          var parentW=parseInt(myCanvas.gridX);
-          var parentH=parseInt(myCanvas.gridY);
-          context.beginPath();
+    if(myId!==0){
+      var connector = new Kinetic.Shape({
+        id: myId,
+        drawFunc: function(canvas) {
+          var myCanvas = store.get("canvas");
+          var context = canvas.getContext();
+          var x = parseInt(myCanvas.center)+parseInt(store.get(myId).x)*parseInt(myCanvas.gridX)/2*3;
+          var y = parseInt(store.get(myId).y)*parseInt(myCanvas.gridY)/2*3;
+          var w = parseInt(myCanvas.gridX);
+          var h = parseInt(myCanvas.gridY);
+          var r = 12;
+          var o = 30;
+          var type = store.get(myId).type;
+          if(type!=="contention"){
+            var parentX=parseInt(myCanvas.center)+parseInt(store.get(store.get(myId).parent).x)*parseInt(myCanvas.gridX)/2*3;
+            var parentY=parseInt(store.get(store.get(myId).parent).y)*parseInt(myCanvas.gridY)/2*3;
+            var parentW=parseInt(myCanvas.gridX);
+            var parentH=parseInt(myCanvas.gridY);
+            context.beginPath();
+              if(store.get(myId).type==="support"){
+                var firstX = x+(w/2)+(2*o);
+                var firstY = y+1;
+                var secondX = parentX+(parentW/2);
+                var secondY = parentY+parentH;
+                var thirdX = parentX-2;
+                var thirdY = parentY+parentH-r-o-5;
+                var fourthX = x+(w/2)-(2*o);
+                var fourthY = y+1;
+                var changeX12 = secondX-firstX;
+                var changeX34 = thirdX-fourthX;
+                var changeY12 = firstY-secondY;
+                var changeY34 = fourthY-thirdY;
+                var bufferLeft = -20;
+                var bufferRight = +20;
+                context.moveTo(firstX,firstY);
+                context.bezierCurveTo(firstX+((secondX-firstX)/2)/changeX12,secondY+((firstY-secondY)/2)/changeY12+bufferRight,secondX-((secondX-firstX)/2)/changeX12,firstY-((firstY-secondY)/2)/changeY12+bufferLeft,secondX,secondY);
+                context.arcTo(parentX,parentY+parentH,thirdX,thirdY,r);
+                context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
+                context.lineTo(firstX,firstY);
+              }else{
+                var firstX = x+(w/2)-(2*o);
+                var firstY = y+1;
+                var secondX = parentX+(parentW/2);
+                var secondY = parentY+parentH;
+                var thirdX = parentX+parentW+2;
+                var thirdY = parentY+parentH-r-o-5;
+                var fourthX = x+(w/2)+(2*o);
+                var fourthY = y+1;
+                var changeX12 = secondX-firstX;
+                var changeX34 = thirdX-fourthX;
+                var changeY12 = firstY-secondY;
+                var changeY34 = fourthY-thirdY;
+                var bufferLeft = -20;
+                var bufferRight = +20;
+                context.moveTo(firstX,firstY);
+                context.bezierCurveTo(firstX+((secondX-firstX)/2)/changeX12,secondY+((firstY-secondY)/2)/changeY12+bufferRight,secondX-((secondX-firstX)/2)/changeX12,firstY-((firstY-secondY)/2)/changeY12+bufferLeft,secondX,secondY);
+                context.arcTo(parentX+parentW,parentY+parentH,thirdX,thirdY,r);
+                context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
+                context.lineTo(firstX,firstY);
+              }
+            context.closePath();
+            this.setFillLinearGradientStartPoint([parentX,parentY+parentH]);
+            this.setFillLinearGradientEndPoint([parentX,y]);
             if(store.get(myId).type==="support"){
-              var firstX = x+(w/2)+(2*o);
-              var firstY = y+1;
-              var secondX = parentX+(parentW/2);
-              var secondY = parentY+parentH;
-              var thirdX = parentX-2;
-              var thirdY = parentY+parentH-r-o-5;
-              var fourthX = x+(w/2)-(2*o);
-              var fourthY = y+1;
-              var changeX12 = secondX-firstX;
-              var changeX34 = thirdX-fourthX;
-              var changeY12 = firstY-secondY;
-              var changeY34 = fourthY-thirdY;
-              var bufferLeft = -20;
-              var bufferRight = +20;
-              context.moveTo(firstX,firstY);
-              context.bezierCurveTo(firstX+((secondX-firstX)/2)/changeX12,secondY+((firstY-secondY)/2)/changeY12+bufferRight,secondX-((secondX-firstX)/2)/changeX12,firstY-((firstY-secondY)/2)/changeY12+bufferLeft,secondX,secondY);
-              context.arcTo(parentX,parentY+parentH,thirdX,thirdY,r);
-              context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
-              context.lineTo(firstX,firstY);
+              this.setFillLinearGradientColorStops([1/5, 'green', 4/5, '#6CC54F']);
+            }else if(store.get(myId).type==="refute"){
+              this.setFillLinearGradientColorStops([1/5, 'red', 4/5, '#E60000']);
             }else{
-              var firstX = x+(w/2)-(2*o);
-              var firstY = y+1;
-              var secondX = parentX+(parentW/2);
-              var secondY = parentY+parentH;
-              var thirdX = parentX+parentW+2;
-              var thirdY = parentY+parentH-r-o-5;
-              var fourthX = x+(w/2)+(2*o);
-              var fourthY = y+1;
-              var changeX12 = secondX-firstX;
-              var changeX34 = thirdX-fourthX;
-              var changeY12 = firstY-secondY;
-              var changeY34 = fourthY-thirdY;
-              var bufferLeft = -20;
-              var bufferRight = +20;
-              context.moveTo(firstX,firstY);
-              context.bezierCurveTo(firstX+((secondX-firstX)/2)/changeX12,secondY+((firstY-secondY)/2)/changeY12+bufferRight,secondX-((secondX-firstX)/2)/changeX12,firstY-((firstY-secondY)/2)/changeY12+bufferLeft,secondX,secondY);
-              context.arcTo(parentX+parentW,parentY+parentH,thirdX,thirdY,r);
-              context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
-              context.lineTo(firstX,firstY);
+              this.setFill('orange');
             }
-          context.closePath();
-          this.setFillLinearGradientStartPoint([parentX,parentY+parentH]);
-          this.setFillLinearGradientEndPoint([parentX,y]);
-          if(store.get(myId).type==="support"){
-            this.setFillLinearGradientColorStops([1/5, 'green', 4/5, '#6CC54F']);
-          }else if(store.get(myId).type==="refute"){
-            this.setFillLinearGradientColorStops([1/5, 'red', 4/5, '#E60000']);
-          }else{
-            this.setFill('orange');
+            canvas.fillStroke(this);
           }
-          canvas.fillStroke(this);
-        }
-      },
-      name: 'connector',
-      opacity: 0
-    });
-
+        },
+        name: 'connector',
+        opacity: 0
+      });
+    }
     layer.add(claim);
     layer.add(claimTextArea);
     layer.add(supportButton);
     layer.add(refuteButton);
     layer.add(deleteButton);
     layer.add(complexText);
-    layer.add(connector);
+    if(myId!==0){
+      layer.add(connector);
+    }
   }
 };
