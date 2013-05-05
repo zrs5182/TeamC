@@ -29,23 +29,55 @@
         height: 50px;
         z-index: 2;
       }
+    
+    /*Hamburger Toppings Here*/ 
+      
+   	/*a,img,ol,ul,li{border:0;outline:0;font-size:100%;margin:0;padding:0}*/	ol,ul{list-style:none}
+	
+#nav {
+	z-index: 10;
+    display: none;
+    
+}
+	
     </style>
+    
     <script src="../controllers/kineticJS.js"></script>
     <script src="../controllers/store.js"></script>
     <script src="../models/claim.js"></script>
     <script src="../models/canvas.js"></script>
     <script src="../controllers/claimController.js"></script>
     <script src="../controllers/canvasController.js"></script>
+   	<script defer src="../controllers/default.js"></script>
+	
   </head>
   <body>
     <div class=overlay id="container" ></div>
     <div id="myTextArea"></div>
+    
     <div id="menuArea">
-      <a id="downloader" download="test.am"><img src="hamburgerSmall.png"></a>
+      <img src="hamburger.png" onClick="displayMenu()">
+      <div id="nav">
+	   	<a id="downloader" download="test.am"><img src="save.png" alt="save"></a>
+		<a href="#"><img src="folder.png" alt="load"></a>
+      	<a href="#"><img src="undo.png" alt="revert"></a>
+      	<a href="#"><img src="compass.png" alt="center map"></a>
+      </div>      
     </div>
-    <script src="../controllers/default.js"></script>
-    <script>
-    	document.getElementById("downloader").href = "data:application/notepad.exe;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
-    </script>
+
+    <script type="text/javascript">
+    	document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
+			var isHidden = true;
+	function displayMenu(){
+		if(isHidden){
+			document.getElementById("nav").style.display="block";
+			isHidden=false;
+		}else{
+			document.getElementById("nav").style.display="none";
+			isHidden=true;
+		}
+	}
+	</script>
+  
   </body>
 </html>
