@@ -58,7 +58,7 @@
     <div id="menuArea">
       <img src="hamburger.png" onClick="displayMenu()">
       <div id="nav">
-	   	<a id="downloader" download="test.am"><img src="save.png" alt="save"></a>
+	   	<a id="downloader"><img src="save.png" alt="save" onClick="save()"></a>
 		<a href="#"><img src="folder.png" alt="load"></a>
       	<a href="#"><img src="undo.png" alt="revert"></a>
       	<a href="#"><img src="compass.png" alt="center map"></a>
@@ -66,8 +66,16 @@
     </div>
 
     <script type="text/javascript">
+    function save(){
+    	var save_pattern=/\S/i
+    	var filename=prompt("Save As...","argument_map")+".am";
+    	if(save_pattern.test(filename)){
+    		filename="argument_map.am";
+    	}
+    	document.getElementById("downloader").download=filename;
     	document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
-			var isHidden = true;
+	}
+	var isHidden = true;
 	function displayMenu(){
 		if(isHidden){
 			document.getElementById("nav").style.display="block";
