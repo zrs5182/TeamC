@@ -1,6 +1,7 @@
 var container=document.getElementById("container");
 document.getElementById("menuArea").left=window.innerWidth-50;
 var myText = 'foo';
+
 var stage = new Kinetic.Stage({
   container: 'container',
   width: window.innerWidth,
@@ -115,4 +116,27 @@ function zoom(event)
       workingArea.style.height=(parseInt(store.get("canvas").gridY)*scale*.6)+"px";
     }
     layer.draw();
+    // window.onresize = function(){
+        // alert("Resized");
+        // console.log("Resizing");
+        // console.log("Window: "+window.innerWidth+", "+window.innerHeight);
+        // console.log("Layer: "+layer.getWidth()+", "+layer.getHeight());
+        // layer.setSize(window.innerWidth, window.innerHeight);
+        // console.log("Resized");
+        // console.log("Window: "+window.innerWidth+", "+window.innerHeight);
+        // console.log("Layer: "+layer.getWidth()+", "+layer.getHeight());
+        // layer.draw();
+    // }
+    function canvasResize(){
+    var container = document.getElementById('container');
+    var newWidth = window.innerWidth;
+    var newHeight = window.innerHeight;
+    container.style.width = newWidth + 'px';
+    container.style.height = newHeight + 'px';
+       // alert("Resized");
+       //layer.draw()
+}
+
+window.addEventListener('resize', canvasResize(), false);
+
 }

@@ -67,9 +67,9 @@
 
     <script type="text/javascript">
     function save(){
-    	var save_pattern=/\S/i
+    	var save_pattern=/(\S)\.am/i
     	var filename=prompt("Save As...","argument_map")+".am";
-    	if(save_pattern.test(filename)){
+    	if(!save_pattern.test(filename)){
     		filename="argument_map.am";
     	}
     	document.getElementById("downloader").download=filename;
@@ -86,6 +86,5 @@
 		}
 	}
 	</script>
-  
   </body>
 </html>
