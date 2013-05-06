@@ -1,6 +1,6 @@
 var container=document.getElementById("container");
 document.getElementById("menuArea").left=window.innerWidth-50;
-var myText = 'foo';
+//var myText = 'foo';
 
 var stage = new Kinetic.Stage({
   container: 'container',
@@ -15,10 +15,10 @@ var stage = new Kinetic.Stage({
   draggable: true
 });
 var layer = new Kinetic.Layer();
-
+var nextClaimNumber = 0;
 
 canvasController.newCanvas();
-
+//console.log(localStorage);
 stage.add(layer);
 
 layer.on('click', function(event) {
@@ -26,51 +26,30 @@ layer.on('click', function(event) {
       var myName = node.attrs.name;
       var myId = node.attrs.id;
       var myType = store.get(myId).type;
-      var myX = store.get(myId).x;
-      var myY = store.get(myId).y;
+      
+      //console.log(stage.get("#group"+myId));
+      //console.log(stage.get(".claim")[myId]);
+      //console.log(localStorage);
+      
       if(myName==="complexText"||myName==="claimTextArea"){
         var div = document.getElementById('myTextArea');
         div.innerHTML = canvasController.makeTextArea(myId);
         document.getElementsByName('working')[0].focus();
       }else if(myName==="supportButton"){
-        canvasController.addClaim("support", myX, parseInt(myY)+1, myId);
+        canvasController.addClaim("support", myId);
       }else if(myName==="refuteButton"){
         if(myType==="refute"){
-          canvasController.addClaim("rebut", myX, parseInt(myY)+1, myId);
+          canvasController.addClaim("rebut", myId);
         }else{
-          canvasController.addClaim("refute", myX, parseInt(myY)+1, myId);
+          canvasController.addClaim("refute", myId);
         }
       }else if(myName==="deleteButton"){
+        //canvasController.removeClaim(myId);
+        //setTimeout(function(){buckheim(0);},1);
+        //buckheim(0);
       	//console.log(myId);
-      	//claimController.removeClaim(myId);
-      	      		
+      	//claimController.removeClaim(myId);     		
       }
-      var claim = stage.get(".claim")[stage.get(".claim").length-1];
-      var support = stage.get(".supportButton")[stage.get(".supportButton").length-1];
-      var refute = stage.get(".refuteButton")[stage.get(".refuteButton").length-1];
-      var deleteButton = stage.get(".deleteButton")[stage.get(".deleteButton").length-1];
-      var connector = stage.get(".connector")[stage.get(".connector").length-1];
-      claim.transitionTo({
-          opacity: 1,
-          duration: .25
-      });
-      support.transitionTo({
-        opacity: 1,
-        duration: .25
-      });
-      refute.transitionTo({
-        opacity: 1,
-        duration: .25
-      });
-      deleteButton.transitionTo({
-        opacity: 1,
-        duration: .25
-      });
-      connector.transitionTo({
-        opacity: 1,
-        duration: .25
-      });
-    
     });
 
 window.onload = function()
@@ -99,21 +78,22 @@ function zoom(event)
     if(scalar<0) scalar=.1;
     layer.setScale(scalar);
     if(document.getElementsByName("working")[0]){
-      var workingArea = document.getElementsByName("working")[0];
-      var textArea = document.getElementById("myTextArea");
-      var canvas = store.get("canvas");
-      var claim = store.get(document.getElementsByName("working")[0].id);
-      var gridX=parseInt(canvas.gridX);
-      var gridY=parseInt(canvas.gridY);
-      var scale=layer.getScale().x;
-      var center=parseInt(canvas.center);
-      var realX=Math.round((parseInt(claim.x)*parseInt(canvas.gridX)*1.5+center+37)*scale)+stage.getAbsoluteTransform().getTranslation().x;
-      var realY=Math.round((parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale)+stage.getAbsoluteTransform().getTranslation().y;
-      textArea.style.left = realX + "px";
-      textArea.style.top =  realY + "px";
-      workingArea.style.fontSize = (16*scale)+"px"
-      workingArea.style.width=(parseInt(canvas.gridX)-78)*scalar+"px";
-      workingArea.style.height=(parseInt(store.get("canvas").gridY)*scale*.6)+"px";
+      document.getElementsByName("working")[0].blur();
+      // var workingArea = document.getElementsByName("working")[0];
+      // var textArea = document.getElementById("myTextArea");
+      // var canvas = store.get("canvas");
+      // var claim = store.get(document.getElementsByName("working")[0].id);
+      // var gridX=parseInt(canvas.gridX);
+      // var gridY=parseInt(canvas.gridY);
+      // var scale=layer.getScale().x;
+      // var center=parseInt(canvas.center);
+      // var realX=Math.round(((parseInt(claim.x))*parseInt(canvas.gridX)*1.5+center+37)*scale)+stage.getAbsoluteTransform().getTranslation().x;
+      // var realY=Math.round((parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale)+stage.getAbsoluteTransform().getTranslation().y;
+      // textArea.style.left = realX + "px";
+      // textArea.style.top =  realY + "px";
+      // workingArea.style.fontSize = (16*scale)+"px"
+      // workingArea.style.width=(parseInt(canvas.gridX)-78)*scalar+"px";
+      // workingArea.style.height=(parseInt(store.get("canvas").gridY)*scale*.6)+"px";
     }
     layer.draw();
     // window.onresize = function(){
