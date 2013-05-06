@@ -17,5 +17,20 @@ var fileController = {
 			
 		}
 		return true;
-	}
+	},
+	save: function(){
+        var save_pattern=/(\S)\.am/i
+        var filename=prompt("Save As...","argument_map");
+ 
+        if(filename===null){
+
+        }else{
+        if(!save_pattern.test(filename)){
+            filename="argument_map";
+        }
+        filename=filename+".am";
+        document.getElementById("downloader").download=filename;
+        document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
+        }
+    }
 };
