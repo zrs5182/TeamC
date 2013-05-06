@@ -30,6 +30,7 @@ var canvasController = {
             menu.style.display="block";
         }else{
             menu.style.display="none";
+            document.getElementById("loadArea").style.display="none";
         }
     },
   makeTextArea : function(myId) {
