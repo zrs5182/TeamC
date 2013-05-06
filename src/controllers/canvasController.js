@@ -13,6 +13,25 @@ var canvasController = {
     });
     canvasController.newClaim("contention", 0, 0, null);
   },
+    displayLoad: function(){
+        var loadArea = document.getElementById("loadArea");
+        var currentLoadDisplay=loadArea.style.display;
+        if(currentLoadDisplay=="none"){
+            loadArea.style.paddingRight="100px";
+            loadArea.style.display="inline";
+        }else{
+            loadArea.style.display="none";
+        }
+    },
+    displayMenu: function(){
+        var menu=document.getElementById("nav");
+        var currentMenuDisplay=menu.style.display;
+        if(currentMenuDisplay=="none"){
+            menu.style.display="block";
+        }else{
+            menu.style.display="none";
+        }
+    },
   makeTextArea : function(myId) {
     var claim = store.get(myId);
     var canvas = store.get("canvas");
