@@ -2,7 +2,7 @@ addNode = function(newId, newType, newParent=null){
   var newNode = {
     id: newId,
     type: newType,
-    text: newId,
+    text: "",
     x: 0,
     y: 0,
     tree: 0,

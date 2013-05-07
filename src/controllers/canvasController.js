@@ -335,7 +335,7 @@ var canvasController = {
             var parentW=(myCanvas.gridX);
             var parentH=(myCanvas.gridY);
             context.beginPath();
-              if(store.get(myId).type==="support"){
+              if(store.get(myId).type==="support"&&store.get(myId).x<=store.get(store.get(myId).parent).x){
                 var firstX = x+(w/2)+(2*o);
                 var firstY = y+1;
                 var secondX = parentX+(parentW/2);
@@ -355,8 +355,23 @@ var canvasController = {
                 context.arcTo(parentX,parentY+parentH,thirdX,thirdY,r);
                 context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
                 context.lineTo(firstX,firstY);
-                
-              }else{
+              }else if(store.get(myId).type==="support"){
+                var firstX = x+(w/2)-(2*o);
+                var firstY = y+1;
+                var secondX = parentX+r;
+                var secondY = parentY+parentH;
+                var thirdX = parentX+(parentW/2);
+                var thirdY = parentY+parentH;
+                var fourthX = x+(w/2)+(2*o);
+                var fourthY = y+1;
+                var bufferLeft = 20;
+                var bufferRight = -20;
+                context.moveTo(firstX,firstY);
+                context.bezierCurveTo(firstX+bufferRight,secondY+bufferLeft,secondX+bufferRight,firstY+bufferLeft,secondX,secondY);
+                context.lineTo(thirdX,thirdY);
+                context.bezierCurveTo(thirdX+2*bufferLeft,fourthY+bufferRight,fourthX+bufferLeft,thirdY+bufferRight,fourthX,fourthY);
+                context.lineTo(firstX,firstY);
+              }else if((store.get(myId).type==="refute"||store.get(myId).type==="rebut")&&store.get(myId).x>=store.get(store.get(myId).parent).x){
                 var firstX = x+(w/2)-(2*o);
                 var firstY = y+1;
                 var secondX = parentX+(parentW/2);
@@ -375,6 +390,22 @@ var canvasController = {
                 context.bezierCurveTo(firstX+((secondX-firstX)/2)/changeX12,secondY+((firstY-secondY)/2)/changeY12+bufferRight,secondX-((secondX-firstX)/2)/changeX12,firstY-((firstY-secondY)/2)/changeY12+bufferLeft,secondX,secondY);
                 context.arcTo(parentX+parentW,parentY+parentH,thirdX,thirdY,r);
                 context.bezierCurveTo(thirdX-((thirdX-fourthX)/2)/changeX34,fourthY-((fourthY-thirdY)/2)/changeY34+bufferLeft,fourthX+((thirdX-fourthX)/2)/changeX34,thirdY+((fourthY-thirdY)/2)/changeY34+bufferRight,fourthX,fourthY);
+                context.lineTo(firstX,firstY);
+              }else{
+                var firstX = x+(w/2)+(2*o);
+                var firstY = y+1;
+                var secondX = parentX+parentW-r;
+                var secondY = parentY+parentH;
+                var thirdX = parentX+(parentW/2);
+                var thirdY = parentY+parentH;
+                var fourthX = x+(w/2)-(2*o);
+                var fourthY = y+1;
+                var bufferLeft = -20;
+                var bufferRight = 20;
+                context.moveTo(firstX,firstY);
+                context.bezierCurveTo(firstX+bufferRight,secondY+bufferRight,secondX+bufferRight,firstY+bufferRight,secondX,secondY);
+                context.lineTo(thirdX,thirdY);
+                context.bezierCurveTo(thirdX+2*bufferLeft,fourthY+bufferLeft,fourthX+bufferLeft,thirdY+bufferLeft,fourthX,fourthY);
                 context.lineTo(firstX,firstY);
               }
             context.closePath();
