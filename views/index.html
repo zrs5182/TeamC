@@ -1,0 +1,141 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8"/>
+<!-- 
+ Project Map
+ Copyright 2013, Kyle Penniston and Zach Schwartz
+ Licensed under the MIT or GPL Version 2 licenses.
+ Date: May 11 2013
+
+ Copyright (C) 2013 by Kyle Penniston and Zach Schwartz
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+-->
+    <style>
+	body {
+		margin: 0px;
+		padding: 0px;
+	}
+	.overlay {
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		left: 0;
+		top: 0;
+		z-index: 1;
+	}
+	#myTextArea {
+		position: fixed;
+		width: 0px;
+		height: 0px;
+		z-index: 0;
+	}
+	#menuArea {
+		position: fixed;
+		top: 0px;
+		right: 0px;
+		width: 50px;
+		height: 50px;
+		z-index: 2;
+	}
+	#loadArea {
+		z-index:3;
+		position: relative;
+		right:230px;		bottom: 250px;
+		display: none;
+	}
+/*Hamburger Toppings Here*/ 
+	ul {
+		list-style-type: none;
+	}
+	.spaced{
+		padding-top: 10px;
+	}	
+	#menuArea{
+			padding-right: 50px;
+	}
+	#nav {
+		z-index: 10;
+	    display: none;
+	    position: relative;
+		right:36px;
+	}
+    </style>
+    
+    <script src="../assets/kineticJS.js"></script>
+    <script src="../assets/store.js"></script>
+    <script src="../controllers/layoutController.js"></script>
+    <script src="../controllers/canvasController.js"></script>
+    <script src="../controllers/fileController.js"></script>
+   	<script defer src="../controllers/events.js"></script>
+   	<script defer src="../layoutTest.js"></script>
+	
+  </head>
+  <body>
+  	<script>
+  		localStorage.clear();
+  	</script>
+    <div class=overlay id="container" ></div>
+    <div id="myTextArea"></div>
+    <div id="menuArea">
+    	<ul>
+    		<li>
+      <img src="hamburger.png" onClick="canvasController.displayMenu()">
+      		</li>
+      		<div id="nav">
+      			
+      		<li class="spaced">
+      			<ul>
+      			<a id="downloader">
+      				<img src="save.png" alt="save" onClick="fileController.save()">
+      			</a>
+      		</li>
+      		<li class="spaced">
+				<a href="#"><img src="folder.png" alt="load" onclick="canvasController.displayLoad()"></a>
+			</li>
+			
+			<li>
+		      	<a href="#"><img src="undo.png" alt="revert"></a>
+		  	</li>
+		  	<li>
+		      	<a href="#"><img src="compass.png" alt="center map" onclick="locate()"></a>
+			</li>
+			<li>		      	
+		      	<a href="#"><img src="paper_airplane.png" alt="email project file"></a>
+		   	</li>
+		   	<li>
+		      	<a href="#"><img src="picture.png"></a>
+		      				</ul>
+			</li>
+			<li>
+				<ul>
+					<li>
+				    <div style="display:none;" id="loadArea">
+					    <input type="file"  id="files" name="files[]"  />
+					</div>
+			</li>
+				</ul>
+			</li>
+		</ul>
+		      </div>    
+
+    </div>
+  </body>
+</html>
