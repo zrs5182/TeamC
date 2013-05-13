@@ -3,13 +3,9 @@ var canvasController = {
     localStorage.clear();
     stage.clear();
     store.set("canvas", {
-      // minX : 0,
-      // maxX : 0,
-      // maxY : 1,
       gridX : 300,
       gridY : 200,
       center : container.clientWidth/2 - 150, //half of gridX
-      // claimCount : 0
     });
     canvasController.addClaim("contention");
   },
@@ -59,7 +55,8 @@ var canvasController = {
     var thisText = stage.get('.complexText')[myId];
     thisText.setText(store.get(myId).text);
   },
-  addClaim : function(type, parent=null){
+  addClaim : function(type, parent){
+  	parent = ( typeof parent == 'undefined') ? null : parent;
     var myId = nextClaimNumber;
     nextClaimNumber = myId+1;
     addNode(myId, type, parent);
@@ -113,9 +110,6 @@ var canvasController = {
         var h=(myCanvas.gridY);
         var r=12;
         var o=30;
-        // console.log("drawing claim "+myId+", x value "+x+", should be ");
-        // console.log((myCanvas.center)+"+"+((store.get(myId).x)-(store.get(0).x))+"*"+(myCanvas.gridX)/2*3);
-        // console.log((myCanvas.center)+((store.get(myId).x)-(store.get(0).x))*(myCanvas.gridX)/2*3)
         context.beginPath();
           context.moveTo(x+r,y);
           context.arcTo(x+w,y,x+w,y+r,r);
@@ -437,7 +431,5 @@ var canvasController = {
       layer.add(connector);
     }
     layer.draw();
-    //console.log(group);
-    //console.log(stage.get("#group"+0));
   }
 };

@@ -1,4 +1,5 @@
-addNode = function(newId, newType, newParent=null){
+addNode = function(newId, newType, newParent){
+	newParent = ( typeof newParent == 'undefined') ? null : newParent;
   var newNode = {
     id: newId,
     type: newType,
@@ -9,7 +10,6 @@ addNode = function(newId, newType, newParent=null){
     children: [],
     parent: newParent,
     thread: null,
-    //offset: 0,
     ancestor: newId,
     change: 0,
     shift: 0,
@@ -60,8 +60,6 @@ function readyTree(node){
       item.shift = 0;
       item.change = 0;
       item.thread = null;
-      //item.leftBrother = null;
-      //item.leftMostSibling = null;
       store.set(item.id, item);
     }
   }
@@ -111,12 +109,9 @@ function firstWalk(node){
   store.set(v.id, v);
 }
 function secondWalk(node, m=0, depth=0){
+	m = ( typeof m == 'undefined') ? null : m;
+	depth = ( typeof depth == 'undefined') ? null : depth;
   var v = store.get(node);
-  // if(v.x+m<store.get(0).x){
-  //  v.x = Math.ceil(v.x + m);
-  // }else{
-  //  v.x = Math.floor(v.x + m);
-  // }
   v.x = v.x + m;
   v.y = depth;
   store.set(v.id, v);
@@ -124,8 +119,6 @@ function secondWalk(node, m=0, depth=0){
     secondWalk(v.children[w], m+v.mod, depth+1);
   }
   var oldText = stage.get(".complexText")[node.id];
-  //oldText.setAttr("x", parseInt(store.get("canvas").center)+parseInt(node.x)*parseInt(store.get("canvas").gridX)/2*3+30);
-                
 }
 function apportion(node, defaultAncestor){
   var v = store.get(node);
@@ -204,8 +197,7 @@ function ancestor(vil, v, defaultAncestor){
 function executeShifts(v){
   var shift = 0;
   var change = 0;
-  //v.children.reverse();
-  for(var w in v.children){
+  for(var w = v.children.length-1;w>0;w--){
     var child = store.get(v.children[w]);
     child.x = child.x + shift;
     child.mod = child.mod + shift;
@@ -213,27 +205,4 @@ function executeShifts(v){
     shift = shift + child.shift + change;
     store.set(child.id, child);
   }
-  //v.children.reverse();
 }
-// 
-// addNode(0,"contention");
-// //buckheim(0);
-// addNode(1,"refute",0);
-// //buckheim(0);
-// addNode(2,"refute", 0);
-// //buckheim(0);
-// addNode(3,"support",0);
-// //buckheim(0);
-// addNode(4,"support",0);
-// //buckheim(0);
-// addNode(5,"support",0);
-// //buckheim(0);
-// addNode(6,"support",1);
-// //buckheim(0);
-// addNode(7,"support",1);
-// buckheim(0);
-// console.log(localStorage);
-// for(var key = 0; key<localStorage.length; key++){
-  // var node = store.get(key);
-  // console.log(node.id+": "+node.x+","+node.y+" -parent: "+node.parent);
-// }
