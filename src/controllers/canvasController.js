@@ -45,13 +45,15 @@ var canvasController = {
     document.getElementById('myTextArea').style.left = realX + "px";
     document.getElementById('myTextArea').style.top =  realY + "px";
     document.getElementById('myTextArea').style.zIndex = 2;
-    return "<textarea style='font-size: "+(16*scale)+"px; width: "+(((store.get("canvas").gridX)-78)*scale)+"px; height: "+(store.get("canvas").gridY*scale*.6)+"px;' name='working' id="+claim.id+" onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claimController.getClaimText(myId) + "</textarea>"
+    return "<textarea style='font-size: "+(16*scale)+"px; width: "+(((store.get("canvas").gridX)-78)*scale)+"px; height: "+(store.get("canvas").gridY*scale*.6)+"px;' name='working' id="+claim.id+" onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + store.get(myId).text + "</textarea>"
   },
   extractText : function() {
     return document.getElementsByName('working')[0].value;
   },
   removeTextArea : function(myId) {
-    claimController.setClaimText(myId, canvasController.extractText());
+  	var claim = store.get(myId);
+  	claim.text = canvasController.extractText();
+  	store.set(myId, claim);
     document.getElementById('myTextArea').innerHTML = '';
     document.getElementById('myTextArea').style.zIndex = 0;
     var thisText = stage.get('.complexText')[myId];
