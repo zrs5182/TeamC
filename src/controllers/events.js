@@ -55,6 +55,7 @@ layer.on('click', function(event) {
 			moving=1;
 			selected = myId;
 			console.log(selected+" selected");
+			document.getElementById("container").style.backgroundColor='lightgray';
 			layer.draw();
 		}
 	}else{
@@ -74,6 +75,7 @@ layer.on('click', function(event) {
 			}
 			moving=0;
 			selected=null;
+			document.getElementById("container").style.backgroundColor='white';
 			layer.draw();
 		}else if (myName === "claimAddLeft"){
 			var oldParent = store.get(store.get(selected).parent);
@@ -99,6 +101,7 @@ layer.on('click', function(event) {
 			}
 			moving=0;
 			selected=null;
+			document.getElementById("container").style.backgroundColor='white';
 			buchheim(0);
 		}else if(myName === "claimAddRight"){
 			var oldParent = store.get(store.get(selected).parent);
@@ -124,6 +127,7 @@ layer.on('click', function(event) {
 			}
 			moving=0;
 			selected=null;
+			document.getElementById("container").style.backgroundColor='white';
 			buchheim(0);
 		}
 	}
