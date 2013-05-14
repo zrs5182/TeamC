@@ -30,7 +30,7 @@ addNode = function(newId, newType, newParent){
   }
 }
 /////////////////////////////////
-function buckheim(root){
+function buchheim(root){
   readyTree(root);
   firstWalk(root);
   secondWalk(root);
@@ -47,23 +47,22 @@ function fixText(node){
         }
       }
       layer.draw();
-      console.log(localStorage);
     }
   },.01);
 }
 function readyTree(node){
-  for(key in localStorage){
-    if(key!="canvas"){
-      var item = store.get(key);
-      item.x = 0;
-      item.mod = 0;
-      item.shift = 0;
-      item.change = 0;
-      item.thread = null;
-      store.set(item.id, item);
-    }
-  }
   var v = store.get(node);
+  v.x = 0;
+  v.y = 0;
+  v.mod = 0;
+  v.shift = 0;
+  v.change = 0;
+  v.thread = null;
+  v.tree = null;
+  v.number = null;
+  v.ancestor = v.id;
+  v.leftMostSibling = null;
+  v.leftBrother = null;
   if(v.parent!=null && v.id!=store.get(v.parent).children[0]){
     v.leftMostSibling = store.get(v.parent).children[0];
   }
