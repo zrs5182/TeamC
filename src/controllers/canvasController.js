@@ -1,12 +1,19 @@
+var amCanvas = {
+	gridX: 300,
+	gridY: 200,
+	center: (window.innerWidth / 2) - 150 // half of gridX
+}
+
 var canvasController = {
 	newCanvas : function() {
 		localStorage.clear();
 		stage.clear();
-		store.set("canvas", {
+		stage.add(layer);
+		/*store.set("canvas", {
 			gridX : 300,
 			gridY : 200,
 			center : container.clientWidth / 2 - 150, //half of gridX
-		});
+		});*/
 		canvasController.addClaim("contention");
 	},
 	displayLoad : function() {
@@ -30,49 +37,47 @@ var canvasController = {
 		}
 	},
 	makeTextArea : function(myId) {
-		var claim = store.get(myId);
-		var canvas = store.get("canvas");
-		var gridX = (canvas.gridX);
-		var gridY = (canvas.gridY);
+		var claim = nodeList.nodes[myId];
+		var gridX = amCanvas.gridX;
+		var gridY = amCanvas.gridY;
 		var scale = layer.getScale().x;
-		var center = (canvas.center);
-		var realX = Math.round((((claim.x) - (store.get(0).x)) * (canvas.gridX) * 1.5 + center + 37) * scale) + stage.getAbsoluteTransform().getTranslation().x;
-		var realY = Math.round(((claim.y) * (canvas.gridY) * 1.5 + 37) * scale) + stage.getAbsoluteTransform().getTranslation().y;
+		var center = amCanvas.center;
+		var realX = Math.round(((claim.x - nodeList.nodes[0].x) * (amCanvas.gridX * 1.5) + center + 37) * scale) + stage.getAbsoluteTransform().getTranslation().x;
+		var realY = Math.round(((claim.y * amCanvas.gridY * 1.5) + 37) * scale) + stage.getAbsoluteTransform().getTranslation().y;
 		document.getElementById('myTextArea').style.left = realX + "px";
 		document.getElementById('myTextArea').style.top = realY + "px";
 		document.getElementById('myTextArea').style.zIndex = 2;
-		return "<textarea style='font-size: " + (16 * scale) + "px; width: " + (((store.get("canvas").gridX) - 78) * scale) + "px; height: " + (store.get("canvas").gridY * scale * .6) + "px;' name='working' id=" + claim.id + " onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + store.get(myId).text + "</textarea>"
+		return "<textarea style='font-size: " + (16 * scale) + "px; width: " + (((amCanvas.gridX) - 78) * scale) + "px; height: " + (amCanvas.gridY * scale * .6) + "px;' name='working' id=" + claim.id + " onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + nodeList.nodes[myId].text + "</textarea>"
 	},
 	extractText : function() {
 		return document.getElementsByName('working')[0].value;
 	},
 	removeTextArea : function(myId) {
-		var claim = store.get(myId);
+		var claim = nodeList.nodes[myId];
 		claim.text = canvasController.extractText();
-		store.set(myId, claim);
 		document.getElementById('myTextArea').innerHTML = '';
 		document.getElementById('myTextArea').style.zIndex = 0;
 		var thisText = stage.get('.complexText')[myId];
-		thisText.setText(store.get(myId).text);
+		thisText.setText(nodeList.nodes[myId].text);
 	},
 	addClaim : function(type, parent) {
 		parent = ( typeof parent == 'undefined') ? null : parent;
 		var myId = nextClaimNumber;
 		nextClaimNumber = myId + 1;
-		addNode(myId, type, parent);
-		buchheim(0);
+		nodeList.newNode(myId, type, parent);
+		amTree.buchheim(0);
 		canvasController.drawClaim(myId);
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
 		document.getElementsByName('working')[0].focus();
 	},
-	removeClaim : function(id) {
+	/*removeClaim : function(id) {
 		layer.destroy();
 		layer = new Kinetic.Layer();
 		stage.add(layer);
-		var node = store.get(id);
+		var node = nodeList.nodes[id];
 
 		if (node != 0) {
-			var parent = store.get(node.parent);
+			var parent = nodeList.nodes[node.parent];
 			console.log(parent.children.splice(node.number - 1, 1) + " removed");
 			store.set(parent.id, parent);
 		}
@@ -80,7 +85,7 @@ var canvasController = {
 		console.log(parent.children);
 		for (var key in localStorage) {
 			if (key != "canvas") {
-				canvasController.drawClaim(store.get(key).id);
+				canvasController.drawClaim(nodeList.nodes[key].id);
 				console.log(layer.children);
 				for (var shape in layer.children) {
 					console.log(shape.name);
@@ -98,18 +103,17 @@ var canvasController = {
 			secondWalk(0);
 			fixText(0);
 		}, 500);
-	},
+	},*/
 	drawClaim : function(myId) {
 		var claim = new Kinetic.Shape({
 			id : myId,
 			name : "claim",
 			drawFunc : function(canvas) {
-				var myCanvas = store.get("canvas");
 				var context = canvas.getContext();
-				var x = (myCanvas.center) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3;
-				var w = (myCanvas.gridX);
-				var h = (myCanvas.gridY);
+				var x = amCanvas.center + ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -119,11 +123,11 @@ var canvasController = {
 				context.arcTo(x, y + h, x, y + h - r, r);
 				context.arcTo(x, y, x + r, y, r);
 				context.closePath();
-				if (store.get(myId).type === "support") {
+				if (nodeList.nodes[myId].type === "support") {
 					this.setFill('#6CC54F');
-				} else if (store.get(myId).type === "refute") {
+				} else if (nodeList.nodes[myId].type === "refute") {
 					this.setFill('#E60000');
-				} else if (store.get(myId).type === "rebut") {
+				} else if (nodeList.nodes[myId].type === "rebut") {
 					this.setFill('orange');
 				} else {
 					this.setFill('blue');
@@ -134,9 +138,9 @@ var canvasController = {
 			strokeWidth : 2,
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
+				var x = amCanvas.center + ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -154,12 +158,11 @@ var canvasController = {
 			id : myId,
 			name : "claimAddLeft",
 			drawFunc : function(canvas) {
-				var myCanvas = store.get("canvas");
 				var context = canvas.getContext();
-				var x = (myCanvas.center) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3 + (myCanvas.gridY / 8);
-				var w = (myCanvas.gridX / 4);
-				var h = (myCanvas.gridY / 4 * 3);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var w = amCanvas.gridX / 4;
+				var h = amCanvas.gridY / 4 * 3;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -179,12 +182,11 @@ var canvasController = {
 			stroke : 'black',
 			strokeWidth : 5,
 			drawHitFunc : function(canvas) {
-				var myCanvas = store.get("canvas");
 				var context = canvas.getContext();
-				var x = (myCanvas.center) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3;
-				var w = (myCanvas.gridX / 3);
-				var h = (myCanvas.gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var w = amCanvas.gridX / 4;
+				var h = amCanvas.gridY / 4 * 3;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -202,12 +204,11 @@ var canvasController = {
 			id : myId,
 			name : "claimAddRight",
 			drawFunc : function(canvas) {
-				var myCanvas = store.get("canvas");
 				var context = canvas.getContext();
-				var x = (myCanvas.center) + (myCanvas.gridX) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3 + (myCanvas.gridY / 8);
-				var w = (myCanvas.gridX / 4);
-				var h = (myCanvas.gridY / 4 * 3);
+				var x = amCanvas.center + amCanvas.gridX + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var w = amCanvas.gridX / 4;
+				var h = (amCanvas.gridY / 4) * 3;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -227,12 +228,11 @@ var canvasController = {
 			stroke : 'black',
 			strokeWidth : 5,
 			drawHitFunc : function(canvas) {
-				var myCanvas = store.get("canvas");
 				var context = canvas.getContext();
-				var x = (myCanvas.center) + (myCanvas.gridX) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3 + (myCanvas.gridY / 8);
-				var w = (myCanvas.gridX / 4);
-				var h = (myCanvas.gridY / 4 * 3);
+				var x = amCanvas.center + amCanvas.gridX + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var w = amCanvas.gridX / 4;
+				var h = (amCanvas.gridY / 4) * 3;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -248,13 +248,13 @@ var canvasController = {
 		});
 
 		var claimTextArea = new Kinetic.Shape({
-			id : (store.get(myId).id),
+			id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -265,7 +265,7 @@ var canvasController = {
 				context.arcTo(x + o, y + o, x + r / 2 + o, y + o, r / 2);
 				context.closePath();
 				this.setFill('white');
-				if (store.get(myId).type === "contention") {
+				if (nodeList.nodes[myId].type === "contention") {
 					this.setFill('white');
 					this.setStroke('black');
 					this.setStrokeWidth(2);
@@ -277,10 +277,10 @@ var canvasController = {
 			name : 'claimTextArea',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -295,13 +295,13 @@ var canvasController = {
 			opacity : 1
 		});
 		var supportButton = new Kinetic.Shape({
-			id : (store.get(myId).id),
+			id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -317,10 +317,10 @@ var canvasController = {
 			name : 'supportButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -335,13 +335,13 @@ var canvasController = {
 		});
 
 		var refuteButton = new Kinetic.Shape({
-			id : (store.get(myId).id),
+			id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -349,7 +349,7 @@ var canvasController = {
 				context.bezierCurveTo(x + w, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
 				context.arcTo(x + w, y + h, x + w, y + h - o - r, r);
 				context.closePath();
-				if (store.get(myId).type !== "refute") {
+				if (nodeList.nodes[myId].type !== "refute") {
 					this.setFill('red');
 				} else {
 					this.setFill('orange');
@@ -361,10 +361,10 @@ var canvasController = {
 			name : 'refuteButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -379,13 +379,13 @@ var canvasController = {
 		});
 
 		var deleteButton = new Kinetic.Shape({
-			id : (store.get(myId).id),
+			id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -401,10 +401,10 @@ var canvasController = {
 			name : 'deleteButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-				var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-				var w = (store.get("canvas").gridX);
-				var h = (store.get("canvas").gridY);
+				var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var w = amCanvas.gridX;
+				var h = amCanvas.gridY;
 				var r = 12;
 				var o = 30;
 				context.beginPath();
@@ -421,13 +421,13 @@ var canvasController = {
 		var complexText = new Kinetic.Text({
 			id : myId,
 			name : "complexText",
-			x : parseInt(store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3 + 30,
-			y : (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3 + 30,
-			text : store.get(myId).text,
+			x : amCanvas.center + ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3)) + 30,
+			y : (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + 30,
+			text : nodeList.nodes[myId].text,
 			fontSize : 18,
 			fontFamily : 'Calibri',
 			fill : '#555',
-			width : store.get("canvas").gridX - 60,
+			width : amCanvas.gridX - 60,
 			padding : 20,
 			align : 'left',
 			opacity : 1
@@ -436,22 +436,21 @@ var canvasController = {
 			var connector = new Kinetic.Shape({
 				id : myId,
 				drawFunc : function(canvas) {
-					var myCanvas = store.get("canvas");
 					var context = canvas.getContext();
-					var x = (myCanvas.center) + ((store.get(myId).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-					var y = (store.get(myId).y) * (myCanvas.gridY) / 2 * 3;
-					var w = (myCanvas.gridX);
-					var h = (myCanvas.gridY);
+					var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+					var w = amCanvas.gridX;
+					var h = amCanvas.gridY;
 					var r = 12;
 					var o = 30;
-					var type = store.get(myId).type;
+					var type = nodeList.nodes[myId].type;
 					if (type !== "contention") {
-						var parentX = (myCanvas.center) + ((store.get(store.get(myId).parent).x) - (store.get(0).x)) * (myCanvas.gridX) / 2 * 3;
-						var parentY = (store.get(store.get(myId).parent).y) * (myCanvas.gridY) / 2 * 3;
-						var parentW = (myCanvas.gridX);
-						var parentH = (myCanvas.gridY);
+						var parentX = amCanvas.center + ((nodeList.nodes[nodeList.nodes[myId].parent].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
+						var parentY = nodeList.nodes[nodeList.nodes[myId].parent].y * ((amCanvas.gridY / 2) * 3);
+						var parentW = amCanvas.gridX;
+						var parentH = amCanvas.gridY;
 						context.beginPath();
-						if (store.get(myId).type === "support" && store.get(myId).x <= store.get(store.get(myId).parent).x) {
+						if (nodeList.nodes[myId].type === "support" && nodeList.nodes[myId].x <= nodeList.nodes[nodeList.nodes[myId].parent].x) {
 							var firstX = x + (w / 2) + (2 * o);
 							var firstY = y + 1;
 							var secondX = parentX + (parentW / 2);
@@ -471,7 +470,7 @@ var canvasController = {
 							context.arcTo(parentX, parentY + parentH, thirdX, thirdY, r);
 							context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
 							context.lineTo(firstX, firstY);
-						} else if (store.get(myId).type === "support") {
+						} else if (nodeList.nodes[myId].type === "support") {
 							var firstX = x + (w / 2) - (2 * o);
 							var firstY = y + 1;
 							var secondX = parentX + r;
@@ -487,7 +486,7 @@ var canvasController = {
 							context.lineTo(thirdX, thirdY);
 							context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferRight, fourthX + bufferLeft, thirdY + bufferRight, fourthX, fourthY);
 							context.lineTo(firstX, firstY);
-						} else if ((store.get(myId).type === "refute" || store.get(myId).type === "rebut") && store.get(myId).x >= store.get(store.get(myId).parent).x) {
+						} else if ((nodeList.nodes[myId].type === "refute" || nodeList.nodes[myId].type === "rebut") && nodeList.nodes[myId].x >= nodeList.nodes[nodeList.nodes[myId].parent].x) {
 							var firstX = x + (w / 2) - (2 * o);
 							var firstY = y + 1;
 							var secondX = parentX + (parentW / 2);
@@ -527,9 +526,9 @@ var canvasController = {
 						context.closePath();
 						this.setFillLinearGradientStartPoint([parentX, parentY + parentH]);
 						this.setFillLinearGradientEndPoint([parentX, y]);
-						if (store.get(myId).type === "support") {
+						if (nodeList.nodes[myId].type === "support") {
 							this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
-						} else if (store.get(myId).type === "refute") {
+						} else if (nodeList.nodes[myId].type === "refute") {
 							this.setFillLinearGradientColorStops([1 / 5, 'red', 4 / 5, '#E60000']);
 						} else {
 							this.setFill('orange');
@@ -540,9 +539,9 @@ var canvasController = {
 				name : 'connector',
 				drawHitFunc : function(canvas) {
 					var context = canvas.getContext();
-					var x = (store.get("canvas").center) + ((store.get(myId).x) - (store.get(0).x)) * (store.get("canvas").gridX) / 2 * 3;
-					var y = (store.get(myId).y) * (store.get("canvas").gridY) / 2 * 3;
-					var w = (store.get("canvas").gridX);
+					var x = amCanvas.center + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
+					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+					var w = amCanvas.gridX;
 					var r = 12;
 					var o = 30;
 					context.beginPath();

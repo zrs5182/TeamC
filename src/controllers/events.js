@@ -1,6 +1,5 @@
 var container = document.getElementById("container");
-document.getElementById("menuArea").left = window.innerWidth - 50;
-//var myText = 'foo';
+//document.getElementById("menuArea").left = window.innerWidth - 50;
 
 var stage = new Kinetic.Stage({
 	container : 'container',
@@ -18,7 +17,6 @@ var layer = new Kinetic.Layer();
 var nextClaimNumber = 0;
 
 canvasController.newCanvas();
-stage.add(layer);
 
 var moving = 0;
 var selected = null;
@@ -27,7 +25,7 @@ layer.on('click', function(event) {
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 		var myId = node.attrs.id;
-		var myType = store.get(myId).type;
+		var myType = nodeList.nodes[myId].type;
 		console.log(myName+" clicked");
 		if (myName === "complexText" || myName === "claimTextArea") {
 			var div = document.getElementById('myTextArea');
@@ -62,7 +60,7 @@ layer.on('click', function(event) {
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 		var myId = node.attrs.id;
-		var myType = store.get(myId).type;
+		var myType = nodeList.nodes[myId].type;
 		console.log(myName+","+myId);
 		if ((myName === "claim" || myName === "connector")&& myId===selected) {
 			for (element in layer.children) {
@@ -78,19 +76,15 @@ layer.on('click', function(event) {
 			document.getElementById("container").style.backgroundColor='white';
 			layer.draw();
 		}else if (myName === "claimAddLeft"){
-			var oldParent = store.get(store.get(selected).parent);
+			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
 			var children = oldParent.children;
 			children.splice(children.indexOf(selected),1);
-			store.set(oldParent.id,oldParent);
-			var newParent = store.get(store.get(myId).parent);
+			var newParent = nodeList.nodes[nodeList.nodes[myId].parent];
 			children = newParent.children;
 			children.splice(children.indexOf(myId),0,selected);
-			store.set(newParent.id, newParent)
 			newParent.children = children;
-			store.set(newParent.id, newParent);
-			var claim = store.get(selected);
+			var claim = nodeList.nodes[selected];
 			claim.parent = newParent.id;
-			store.set(claim.id,claim);
 			for (element in layer.children) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 1);
@@ -102,21 +96,17 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			buchheim(0);
+			amTree.buchheim(0);
 		}else if(myName === "claimAddRight"){
-			var oldParent = store.get(store.get(selected).parent);
+			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
 			var children = oldParent.children;
 			children.splice(children.indexOf(selected),1);
-			store.set(oldParent.id,oldParent);
-			var newParent = store.get(store.get(myId).parent);
+			var newParent = nodeList.nodes[nodeList.nodes[myId].parent];
 			children = newParent.children;
 			children.splice(children.indexOf(myId)+1,0,selected);
-			store.set(newParent.id, newParent)
 			newParent.children = children;
-			store.set(newParent.id, newParent);
-			var claim = store.get(selected);
+			var claim = nodeList.nodes[selected];
 			claim.parent = newParent.id;
-			store.set(claim.id,claim);
 			for (element in layer.children) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 1);
@@ -128,7 +118,7 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			buchheim(0);
+			amTree.buchheim(0);
 		}
 	}
 });

@@ -3,7 +3,7 @@ var fileController = {
 		var data = [];
 		for (var i = 0; i < store.get("canvas").claimCount; i++) {
 			
-			data[i] = store.get(i);
+			data[i] = nodeList.nodes[i];
 			
 		}
 		dataString = JSON.stringify(data);
