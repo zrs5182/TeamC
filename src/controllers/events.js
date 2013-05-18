@@ -44,7 +44,7 @@ layer.on('click', function(event) {
 	
 		} else if (myName === "claim" || myName === "connector") {
 			for (element in layer.children) {
-				if ((layer.children[element].attrs.id != myId && layer.children[element].attrs.name!="claimAddLeft" && layer.children[element].attrs.name!="claimAddRight")|| layer.children[element].attrs.name === "connector") {
+				if ((layer.children[element].attrs.id != myId && layer.children[element].attrs.name!="claimAddLeft" && layer.children[element].attrs.name!="claimAddRight" && layer.children[element].attrs.name!="claimAddBottom") || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 0.25);
 				}else{
 					layer.children[element].setAttr("opacity",1);
@@ -67,7 +67,7 @@ layer.on('click', function(event) {
 				if (layer.children[element].attrs.id != myId || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 1);
 				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight"){
+				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
 					layer.children[element].setAttr("opacity",0);
 				}
 			}
@@ -89,7 +89,7 @@ layer.on('click', function(event) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 1);
 				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight"){
+				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
 					layer.children[element].setAttr("opacity",0);
 				}
 			}
@@ -111,7 +111,33 @@ layer.on('click', function(event) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
 					layer.children[element].setAttr("opacity", 1);
 				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight"){
+				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
+					layer.children[element].setAttr("opacity",0);
+				}
+			}
+			moving=0;
+			selected=null;
+			document.getElementById("container").style.backgroundColor='white';
+			amTree.buchheim(0);
+		}else if(myName === "claimAddBottom"){
+			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
+			var children = oldParent.children;
+			children.splice(children.indexOf(selected),1);
+			var newParent = nodeList.nodes[myId];
+			children = newParent.children;
+			if(nodeList.nodes[selected].type==="support"){
+				children.unshift(selected);
+			}else{
+				children.push(selected);
+			}
+			newParent.children = children;
+			var claim = nodeList.nodes[selected];
+			claim.parent = myId;
+			for (element in layer.children) {
+				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
+					layer.children[element].setAttr("opacity", 1);
+				}
+				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
 					layer.children[element].setAttr("opacity",0);
 				}
 			}
@@ -130,6 +156,19 @@ window.onload = function() {
 	//for IE/OPERA etc
 	document.onmousewheel = zoom;
 }
+var mousePos = {x:626,y:205};
+window.addEventListener('mousemove', function() {
+	mousePos = stage.getMousePosition();
+    mousePos.x = mousePos.x - amCanvas.centerX - 150;
+    console.log(mousePos);
+  }, false);
+window.addEventListener('drag', function() {
+	if (document.getElementsByName("working")[0]) {
+		document.getElementsByName("working")[0].blur();
+	}
+  }, false);
+
+
 function zoom(event) {
 	var delta = 0;
 	if (!event)
@@ -147,25 +186,35 @@ function zoom(event) {
 	var scalar = layer.getScale().x + zoomAmount;
 	if (scalar < 0)
 		scalar = .1;
+	layer.setX(mousePos.x);
+	layer.setY(mousePos.y);
 	layer.setScale(scalar);
+	layer.setX(-mousePos.x);
+	layer.setY(-mousePos.y);
+	//console.log(scalar);
 	if (document.getElementsByName("working")[0]) {
 		document.getElementsByName("working")[0].blur();
-		// var workingArea = document.getElementsByName("working")[0];
-		// var textArea = document.getElementById("myTextArea");
-		// var canvas = store.get("canvas");
-		// var claim = store.get(document.getElementsByName("working")[0].id);
-		// var gridX=parseInt(canvas.gridX);
-		// var gridY=parseInt(canvas.gridY);
-		// var scale=layer.getScale().x;
-		// var center=parseInt(canvas.center);
-		// var realX=Math.round(((parseInt(claim.x))*parseInt(canvas.gridX)*1.5+center+37)*scale)+stage.getAbsoluteTransform().getTranslation().x;
-		// var realY=Math.round((parseInt(claim.y)*parseInt(canvas.gridY)*1.5+37)*scale)+stage.getAbsoluteTransform().getTranslation().y;
-		// textArea.style.left = realX + "px";
-		// textArea.style.top =  realY + "px";
-		// workingArea.style.fontSize = (16*scale)+"px"
-		// workingArea.style.width=(parseInt(canvas.gridX)-78)*scalar+"px";
-		// workingArea.style.height=(parseInt(store.get("canvas").gridY)*scale*.6)+"px";
 	}
+	
+	//94 and 75 have to do with window.innerWidth of 1252 and window.innerHeight of 594.
+	//Changed to window.innerWidth/13.33 and window.innerHeight/6.9
+	//innerHeight/6.9 is wrong for height of 594, right for 428
+	//They need to change based on window size somehow.
+	//Also need to find the right point after dragging the stage.
+	//Absolute position of mouse:
+	//	stage.getPointerPosition().x-stage.getPosition().x
+	//	stage.getPointerPosition().y-stage.getPosition().y
+	
+	// if(zoomAmount>0){
+		// layer.setX((layer.getX()-(window.innerWidth/13.33))-(mousePos.x-amCanvas.centerX-150)*(zoomAmount));
+		// layer.setY((layer.getY()-(window.innerHeight/6.9))-(mousePos.y-amCanvas.centerY-100)*(zoomAmount));
+	// }else{
+		// if(scalar-oldScalar<0){ //stop adjusting when zoom-out is maxed
+			// layer.setX((layer.getX()+(window.innerWidth/13.33))-(mousePos.x-amCanvas.centerX-150)*(zoomAmount));
+			// layer.setY((layer.getY()+(window.innerHeight/6.9))-(mousePos.y-amCanvas.centerY-100)*(zoomAmount));
+		// }
+	// }
+	
 	layer.draw();
 	// window.onresize = function(){
 	// alert("Resized");
