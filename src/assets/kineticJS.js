@@ -1,9 +1,9 @@
 /**
- * KineticJS JavaScript Framework v4.4.3
+ * KineticJS JavaScript Framework v4.5.1
  * http://www.kineticjs.com/
  * Copyright 2013, Eric Rowell
  * Licensed under the MIT or GPL Version 2 licenses.
- * Date: Apr 14 2013
+ * Date: May 12 2013
  *
  * Copyright (C) 2011 - 2013 by Eric Rowell
  *
@@ -30,14 +30,267 @@
  */
 var Kinetic = {}; 
 (function() {
-    Kinetic.version = '4.4.3';
+    Kinetic.version = '4.5.1';
     
     /** 
      * @namespace 
      */
     Kinetic.Filters = {};
-    Kinetic.DD = {};
-    
+
+    /**
+     * Node constructor. Nodes are entities that can be transformed, layered,
+     * and have bound events. The stage, layers, groups, and shapes all extend Node.
+     * @constructor
+     * @param {Object} config
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     */
+    Kinetic.Node = function(config) {
+        this._nodeInit(config);
+    };
+
+    /**
+     * Shape constructor.  Shapes are primitive objects such as rectangles,
+     *  circles, text, lines, etc.
+     * @constructor
+     * @augments Kinetic.Node
+     * @param {Object} config
+     * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
+     * @param {Image} [config.fillPatternImage] fill pattern image
+     * @param {Number} [config.fillPatternX]
+     * @param {Number} [config.fillPatternY]
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
+     * @param {Number} [config.fillPatternRotation]
+     * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
+     * @param {Array} [config.fillLinearGradientColorStops] array of color stops
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
+     * @param {Number} [config.fillRadialGradientStartRadius]
+     * @param {Number} [config.fillRadialGradientEndRadius]
+     * @param {Array} [config.fillRadialGradientColorStops] array of color stops
+     * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
+     * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
+     * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
+     * @param {Number} [config.strokeWidth] stroke width
+     * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
+     * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
+     * @param {String} [config.lineJoin] can be miter, round, or bevel.  The default
+     *  is miter
+     * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
+     *  is butt
+     * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
+     * @param {Number} [config.shadowBlur]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
+     * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
+     *  between 0 and 1
+     * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
+     * @param {Array} [config.dashArray]
+     * @param {Boolean} [config.dashArrayEnabled] flag which enables or disables the dashArray.  The default value is true
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     */
+    Kinetic.Shape = function(config) {
+        this._initShape(config);
+    }; 
+
+    /**
+     * Container constructor.&nbsp; Containers are used to contain nodes or other containers
+     * @constructor
+     * @augments Kinetic.Node
+     * @param {Object} config
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     * @param {Function} [config.clipFunc] clipping function
+
+     */
+    Kinetic.Container = function(config) {
+        this._containerInit(config);
+    };
+
+    /**
+     * Stage constructor.  A stage is used to contain multiple layers
+     * @constructor
+     * @augments Kinetic.Container
+     * @param {Object} config
+     * @param {String|DomElement} config.container Container id or DOM element
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     * @param {Function} [config.clipFunc] clipping function
+
+     */
+    Kinetic.Stage = function(config) {
+        this._initStage(config);
+    };
+
+    /**
+     * Layer constructor.  Layers are tied to their own canvas element and are used
+     * to contain groups or shapes
+     * @constructor
+     * @augments Kinetic.Container
+     * @param {Object} config
+     * @param {Boolean} [config.clearBeforeDraw] set this property to false if you don't want
+     * to clear the canvas before each layer draw.  The default value is true.
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     * @param {Function} [config.clipFunc] clipping function
+
+     */
+    Kinetic.Layer = function(config) {
+        this._initLayer(config);
+    };
+
+    /**
+     * Group constructor.  Groups are used to contain shapes or other groups.
+     * @constructor
+     * @augments Kinetic.Container
+     * @param {Object} config
+     * @param {Number} [config.x]
+     * @param {Number} [config.y]
+     * @param {Number} [config.width]
+     * @param {Number} [config.height]
+     * @param {Boolean} [config.visible]
+     * @param {Boolean} [config.listening] whether or not the node is listening for events
+     * @param {String} [config.id] unique id
+     * @param {String} [config.name] non-unique name
+     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
+     * @param {Number} [config.rotation] rotation in radians
+     * @param {Number} [config.rotationDeg] rotation in degrees
+     * @param {Object} [config.offset] offset from center point and rotation point
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
+     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
+     *  the entire stage by dragging any portion of the stage
+     * @param {Function} [config.dragBoundFunc]
+     * @param {Function} [config.clipFunc] clipping function
+
+     */
+    Kinetic.Group = function(config) {
+        this._initGroup(config);
+    }; 
+
     /** 
      * @namespace 
      */
@@ -48,6 +301,7 @@ var Kinetic = {};
         names: {},
         //shapes hash.  rgb keys and shape values
         shapes: {},
+
         /**
          * @method isDragging returns whether or not drag and drop
          *  is currently active
@@ -82,22 +336,6 @@ var Kinetic = {};
             // if DD is included with the build
             else {
                 return !!dd.node;
-            }
-        },
-        warn: function(str) {
-            /*
-             * IE9 on Windows7 64bit will throw a JS error
-             * if we don't use window.console in the conditional
-             */
-            if(window.console && console.warn) {
-                console.warn('Kinetic warning: ' + str);
-            }
-        },
-        extend: function(c1, c2) {
-            for(var key in c2.prototype) {
-                if(!( key in c1.prototype)) {
-                    c1.prototype[key] = c2.prototype[key];
-                }
             }
         },
         _addId: function(node, id) {
@@ -178,6 +416,193 @@ var Kinetic = {};
 }));
 
 (function() {
+    /**
+     * Collection constructor.  Collection extends
+     *  Array.  This class is used in conjunction with get()
+     * @constructor
+     */
+    Kinetic.Collection = function() {
+        var args = [].slice.call(arguments), length = args.length, i = 0;
+
+        this.length = length;
+        for(; i < length; i++) {
+            this[i] = args[i];
+        }
+        return this;
+    }
+    Kinetic.Collection.prototype = new Array();
+    /**
+     * iterate through node array
+     * @name each
+     * @methodOf Kinetic.Collection.prototype
+     * @param {Function} func
+     */
+    Kinetic.Collection.prototype.each = function(func) {
+        for(var n = 0; n < this.length; n++) {
+            func(this[n], n);
+        }
+    };
+
+    Kinetic.Collection.mapMethods = function(arr) {
+        var leng = arr.length,
+            n;
+            
+        for(n = 0; n < leng; n++) {
+            // induce scope
+            (function(i) {
+                var method = arr[i];
+                Kinetic.Collection.prototype[method] = function() {
+                    var len = this.length,
+                        i;
+                        
+                    args = [].slice.call(arguments);
+                    for(i = 0; i < len; i++) {
+                        this[i][method].apply(this[i], args);
+                    }        
+                };
+            })(n);
+        }
+    };
+})();
+
+
+(function() {
+    /*
+    * Last updated November 2011
+    * By Simon Sarris
+    * www.simonsarris.com
+    * sarris@acm.org
+    *
+    * Free to use and distribute at will
+    * So long as you are nice to people, etc
+    */
+
+    /*
+    * The usage of this class was inspired by some of the work done by a forked
+    * project, KineticJS-Ext by Wappworks, which is based on Simon's Transform
+    * class.
+    */
+
+    /**
+     * Transform constructor
+     * @constructor
+     */
+    Kinetic.Transform = function() {
+        this.m = [1, 0, 0, 1, 0, 0];
+    }
+
+    Kinetic.Transform.prototype = {
+        /**
+         * Apply translation
+         * @param {Number} x
+         * @param {Number} y
+         */
+        translate: function(x, y) {
+            this.m[4] += this.m[0] * x + this.m[2] * y;
+            this.m[5] += this.m[1] * x + this.m[3] * y;
+        },
+        /**
+         * Apply scale
+         * @param {Number} sx
+         * @param {Number} sy
+         */
+        scale: function(sx, sy) {
+            this.m[0] *= sx;
+            this.m[1] *= sx;
+            this.m[2] *= sy;
+            this.m[3] *= sy;
+        },
+        /**
+         * Apply rotation
+         * @param {Number} rad  Angle in radians
+         */
+        rotate: function(rad) {
+            var c = Math.cos(rad);
+            var s = Math.sin(rad);
+            var m11 = this.m[0] * c + this.m[2] * s;
+            var m12 = this.m[1] * c + this.m[3] * s;
+            var m21 = this.m[0] * -s + this.m[2] * c;
+            var m22 = this.m[1] * -s + this.m[3] * c;
+            this.m[0] = m11;
+            this.m[1] = m12;
+            this.m[2] = m21;
+            this.m[3] = m22;
+        },
+        /**
+         * Returns the translation
+         * @returns {Object} 2D point(x, y)
+         */
+        getTranslation: function() {
+            return {
+                x: this.m[4],
+                y: this.m[5]
+            };
+        },
+        /**
+         * Apply skew 
+         * @param {Number} sx
+         * @param {Number} sy
+         */
+        skew: function(sx, sy) {
+            var m11 = this.m[0] + this.m[2] * sy;
+            var m12 = this.m[1] + this.m[3] * sy;
+            var m21 = this.m[2] + this.m[0] * sx;
+            var m22 = this.m[3] + this.m[1] * sx;
+            this.m[0] = m11;
+            this.m[1] = m12;
+            this.m[2] = m21;
+            this.m[3] = m22;
+         },
+        /**
+         * Transform multiplication
+         * @param {Kinetic.Transform} matrix
+         */
+        multiply: function(matrix) {
+            var m11 = this.m[0] * matrix.m[0] + this.m[2] * matrix.m[1];
+            var m12 = this.m[1] * matrix.m[0] + this.m[3] * matrix.m[1];
+
+            var m21 = this.m[0] * matrix.m[2] + this.m[2] * matrix.m[3];
+            var m22 = this.m[1] * matrix.m[2] + this.m[3] * matrix.m[3];
+
+            var dx = this.m[0] * matrix.m[4] + this.m[2] * matrix.m[5] + this.m[4];
+            var dy = this.m[1] * matrix.m[4] + this.m[3] * matrix.m[5] + this.m[5];
+
+            this.m[0] = m11;
+            this.m[1] = m12;
+            this.m[2] = m21;
+            this.m[3] = m22;
+            this.m[4] = dx;
+            this.m[5] = dy;
+        },
+        /**
+         * Invert the matrix
+         */
+        invert: function() {
+            var d = 1 / (this.m[0] * this.m[3] - this.m[1] * this.m[2]);
+            var m0 = this.m[3] * d;
+            var m1 = -this.m[1] * d;
+            var m2 = -this.m[2] * d;
+            var m3 = this.m[0] * d;
+            var m4 = d * (this.m[2] * this.m[5] - this.m[3] * this.m[4]);
+            var m5 = d * (this.m[1] * this.m[4] - this.m[0] * this.m[5]);
+            this.m[0] = m0;
+            this.m[1] = m1;
+            this.m[2] = m2;
+            this.m[3] = m3;
+            this.m[4] = m4;
+            this.m[5] = m5;
+        },
+        /**
+         * return matrix
+         */
+        getMatrix: function() {
+            return this.m;
+        }
+    };
+})();
+
+
+(function() {
     // CONSTANTS
     var CANVAS = 'canvas',
         CONTEXT_2D = '2d',
@@ -185,12 +610,38 @@ var Kinetic = {};
         OBJECT_NUMBER = '[object Number]',
         OBJECT_STRING = '[object String]',
         PI_OVER_DEG180 = Math.PI / 180,
-        DEG180_OVER_PI = 180 / Math.PI;
-        
-    /*
-     * utilities that handle data type detection, conversion, and manipulation
+        DEG180_OVER_PI = 180 / Math.PI,
+        HASH = '#',
+        RGB_PAREN = 'rgb(',
+        COLORS = {
+            aqua: [0,255,255],
+            lime: [0,255,0],
+            silver: [192,192,192],
+            black: [0,0,0],
+            maroon: [128,0,0],
+            teal: [0,128,128],
+            blue: [0,0,255],
+            navy: [0,0,128],
+            white: [255,255,255],
+            fuchsia: [255,0,255],
+            olive:[128,128,0],
+            yellow: [255,255,0],
+            orange: [255,165,0],
+            gray: [128,128,128],
+            purple: [128,0,128],
+            green: [0,128,0],
+            red: [255,0,0],
+            pink: [255,192,203],
+            cyan: [0,255,255],
+            transparent: [255,255,255,0]
+        },
+
+        RGB_REGEX = /rgb\((\d{1,3}),(\d{1,3}),(\d{1,3})\)/;
+
+    /** 
+     * @namespace 
      */
-    Kinetic.Type = {
+    Kinetic.Util = {
         /*
          * cherry-picked utilities from underscore.js
          */
@@ -470,12 +921,45 @@ var Kinetic = {};
                 b: bigint & 255
             };
         },
-        _getRandomColorKey: function() {
+        getRandomColor: function() {
             var randColor = (Math.random() * 0xFFFFFF << 0).toString(16);
             while (randColor.length < 6) {
               randColor = '0' + randColor;
             }
             return randColor;
+        },
+        getRGB: function(color) {
+          var rgb;
+          // color string
+          if (color in COLORS) {
+            rgb = COLORS[color];
+            return {
+              r: rgb[0],
+              g: rgb[1],
+              b: rgb[2]
+            };
+          }
+          // hex
+          else if (color[0] === HASH) {
+            return this._hexToRgb(color.substring(1));
+          }
+          // rgb string
+          else if (color.substr(0, 4) === RGB_PAREN) {
+            rgb = RGB_REGEX.exec(color.replace(/ /g,'')); 
+            return {
+                r: parseInt(rgb[1]),
+                g: parseInt(rgb[2]),
+                b: parseInt(rgb[3])
+            };
+          }
+          // default
+          else {
+            return {
+                r: 0,
+                g: 0,
+                b: 0
+            };
+          }
         },
         // o1 takes precedence over o2
         _merge: function(o1, o2) {
@@ -511,7 +995,36 @@ var Kinetic = {};
         },
         _capitalize: function(str) {
             return str.charAt(0).toUpperCase() + str.slice(1);
-        }
+        },
+        warn: function(str) {
+            /*
+             * IE9 on Windows7 64bit will throw a JS error
+             * if we don't use window.console in the conditional
+             */
+            if(window.console && console.warn) {
+                console.warn('Kinetic warning: ' + str);
+            }
+        },
+        extend: function(c1, c2) {
+            for(var key in c2.prototype) {
+                if(!( key in c1.prototype)) {
+                    c1.prototype[key] = c2.prototype[key];
+                }
+            }
+        },
+        /**
+         * @method addMethods adds methods to a constructor prototype
+         * @methodOf Kinetic.Util
+         * @param {Function} constructor
+         * @param {Object} methods
+         */
+        addMethods: function(constructor, methods) {
+          var key;
+
+          for (key in methods) {
+            constructor.prototype[key] = methods[key];
+          }
+        },
     };
 })();
 
@@ -546,8 +1059,6 @@ var Kinetic = {};
                 contextType = config.contextType || '2d'; 
 
             this.pixelRatio = pixelRatio;
-            this.width = width;
-            this.height = height;
             this.element = document.createElement('canvas');
             this.element.style.padding = 0;
             this.element.style.margin = 0;
@@ -579,9 +1090,8 @@ var Kinetic = {};
          * @param {Number} width
          */
         setWidth: function(width) {
-            this.width = width;
             // take into account pixel ratio
-            this.element.width = width * this.pixelRatio;
+            this.width = this.element.width = width * this.pixelRatio;
             this.element.style.width = width + 'px';
         },
         /**
@@ -591,9 +1101,8 @@ var Kinetic = {};
          * @param {Number} height
          */
         setHeight: function(height) {
-            this.height = height;
             // take into account pixel ratio
-            this.element.height = height * this.pixelRatio;
+            this.height = this.element.height = height * this.pixelRatio;
             this.element.style.height = height + 'px';
         },
         /**
@@ -644,7 +1153,7 @@ var Kinetic = {};
         clear: function() {
             var context = this.getContext();
             var el = this.getElement();
-            context.clearRect(0, 0, el.width, el.height);
+            context.clearRect(0, 0, this.getWidth(), this.getHeight());
         },
         /**
          * to data url
@@ -664,7 +1173,7 @@ var Kinetic = {};
                     return this.element.toDataURL();
                 }
                 catch(e) {
-                    Kinetic.Global.warn('Unable to get data URL. ' + e.message)
+                    Kinetic.Util.warn('Unable to get data URL. ' + e.message)
                     return '';
                 }
             }
@@ -743,9 +1252,12 @@ var Kinetic = {};
             }
         },
         _applyAncestorTransforms: function(node) {
-            var context = this.context;
+            var context = this.context,
+                t, m;
+
             node._eachAncestorReverse(function(no) {
-                var t = no.getTransform(), m = t.getMatrix();
+                t = no.getTransform(true); 
+                m = t.getMatrix();
                 context.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
             }, true);
         },
@@ -760,7 +1272,7 @@ var Kinetic = {};
         }
     };
 
-    Kinetic.Global.extend(Kinetic.Canvas2D, Kinetic.Canvas);
+    Kinetic.Util.extend(Kinetic.Canvas2D, Kinetic.Canvas);
 
     Kinetic.SceneCanvas = function(config) {
         Kinetic.Canvas2D.call(this, config);
@@ -783,7 +1295,14 @@ var Kinetic = {};
             shape._fillFunc(context);
         },
         _fillPattern: function(shape) {
-            var context = this.context, fillPatternImage = shape.getFillPatternImage(), fillPatternX = shape.getFillPatternX(), fillPatternY = shape.getFillPatternY(), fillPatternScale = shape.getFillPatternScale(), fillPatternRotation = shape.getFillPatternRotation(), fillPatternOffset = shape.getFillPatternOffset(), fillPatternRepeat = shape.getFillPatternRepeat();
+            var context = this.context, 
+                fillPatternImage = shape.getFillPatternImage(), 
+                fillPatternX = shape.getFillPatternX(), 
+                fillPatternY = shape.getFillPatternY(), 
+                fillPatternScale = shape.getFillPatternScale(), 
+                fillPatternRotation = shape.getFillPatternRotation(), 
+                fillPatternOffset = shape.getFillPatternOffset(), 
+                fillPatternRepeat = shape.getFillPatternRepeat();
 
             if(fillPatternX || fillPatternY) {
                 context.translate(fillPatternX || 0, fillPatternY || 0);
@@ -802,17 +1321,29 @@ var Kinetic = {};
             context.fill();
         },
         _fillLinearGradient: function(shape) {
-            var context = this.context, start = shape.getFillLinearGradientStartPoint(), end = shape.getFillLinearGradientEndPoint(), colorStops = shape.getFillLinearGradientColorStops(), grd = context.createLinearGradient(start.x, start.y, end.x, end.y);
+            var context = this.context, 
+                start = shape.getFillLinearGradientStartPoint(), 
+                end = shape.getFillLinearGradientEndPoint(), 
+                colorStops = shape.getFillLinearGradientColorStops(), 
+                grd = context.createLinearGradient(start.x, start.y, end.x, end.y);
 
-            // build color stops
-            for(var n = 0; n < colorStops.length; n += 2) {
-                grd.addColorStop(colorStops[n], colorStops[n + 1]);
+            if (colorStops) {
+                // build color stops
+                for(var n = 0; n < colorStops.length; n += 2) {
+                    grd.addColorStop(colorStops[n], colorStops[n + 1]);
+                }
+                context.fillStyle = grd;
+                context.fill();  
             }
-            context.fillStyle = grd;
-            context.fill();
         },
         _fillRadialGradient: function(shape) {
-            var context = this.context, start = shape.getFillRadialGradientStartPoint(), end = shape.getFillRadialGradientEndPoint(), startRadius = shape.getFillRadialGradientStartRadius(), endRadius = shape.getFillRadialGradientEndRadius(), colorStops = shape.getFillRadialGradientColorStops(), grd = context.createRadialGradient(start.x, start.y, startRadius, end.x, end.y, endRadius);
+            var context = this.context, 
+            start = shape.getFillRadialGradientStartPoint(), 
+            end = shape.getFillRadialGradientEndPoint(), 
+            startRadius = shape.getFillRadialGradientStartRadius(), 
+            endRadius = shape.getFillRadialGradientEndRadius(), 
+            colorStops = shape.getFillRadialGradientColorStops(), 
+            grd = context.createRadialGradient(start.x, start.y, startRadius, end.x, end.y, endRadius);
 
             // build color stops
             for(var n = 0; n < colorStops.length; n += 2) {
@@ -822,7 +1353,12 @@ var Kinetic = {};
             context.fill();
         },
         _fill: function(shape, skipShadow) {
-            var context = this.context, fill = shape.getFill(), fillPatternImage = shape.getFillPatternImage(), fillLinearGradientStartPoint = shape.getFillLinearGradientStartPoint(), fillRadialGradientStartPoint = shape.getFillRadialGradientStartPoint(), fillPriority = shape.getFillPriority();
+            var context = this.context, 
+                hasColor = shape.getFill(), 
+                hasPattern = shape.getFillPatternImage(), 
+                hasLinearGradient = shape.getFillLinearGradientColorStops(), 
+                hasRadialGradient = shape.getFillRadialGradientColorStops(), 
+                fillPriority = shape.getFillPriority();
 
             context.save();
 
@@ -831,29 +1367,29 @@ var Kinetic = {};
             }
 
             // priority fills
-            if(fill && fillPriority === 'color') {
+            if(hasColor && fillPriority === 'color') {
                 this._fillColor(shape);
             }
-            else if(fillPatternImage && fillPriority === 'pattern') {
+            else if(hasPattern && fillPriority === 'pattern') {
                 this._fillPattern(shape);
             }
-            else if(fillLinearGradientStartPoint && fillPriority === 'linear-gradient') {
+            else if(hasLinearGradient && fillPriority === 'linear-gradient') {
                 this._fillLinearGradient(shape);
             }
-            else if(fillRadialGradientStartPoint && fillPriority === 'radial-gradient') {
+            else if(hasRadialGradient && fillPriority === 'radial-gradient') {
                 this._fillRadialGradient(shape);
             }
             // now just try and fill with whatever is available
-            else if(fill) {
+            else if(hasColor) {
                 this._fillColor(shape);
             }
-            else if(fillPatternImage) {
+            else if(hasPattern) {
                 this._fillPattern(shape);
             }
-            else if(fillLinearGradientStartPoint) {
+            else if(hasLinearGradient) {
                 this._fillLinearGradient(shape);
             }
-            else if(fillRadialGradientStartPoint) {
+            else if(hasRadialGradient) {
                 this._fillRadialGradient(shape);
             }
             context.restore();
@@ -863,7 +1399,11 @@ var Kinetic = {};
             }
         },
         _stroke: function(shape, skipShadow) {
-            var context = this.context, stroke = shape.getStroke(), strokeWidth = shape.getStrokeWidth(), dashArray = shape.getDashArray();
+            var context = this.context, 
+                stroke = shape.getStroke(), 
+                strokeWidth = shape.getStrokeWidth(), 
+                dashArray = shape.getDashArray();
+
             if(stroke || strokeWidth) {
                 context.save();
                 if (!shape.getStrokeScaleEnabled()) {
@@ -917,7 +1457,7 @@ var Kinetic = {};
             }
         }
     };
-    Kinetic.Global.extend(Kinetic.SceneCanvas, Kinetic.Canvas2D);
+    Kinetic.Util.extend(Kinetic.SceneCanvas, Kinetic.Canvas2D);
 
     Kinetic.HitCanvas = function(config) {
         Kinetic.Canvas2D.call(this, config);
@@ -932,7 +1472,10 @@ var Kinetic = {};
             context.restore();
         },
         _stroke: function(shape) {
-            var context = this.context, stroke = shape.getStroke(), strokeWidth = shape.getStrokeWidth();
+            var context = this.context, 
+                stroke = shape.getStroke(), 
+                strokeWidth = shape.getStrokeWidth();
+
             if(stroke || strokeWidth) {
                 this._applyLineCap(shape);
                 context.save();
@@ -943,1129 +1486,9 @@ var Kinetic = {};
             }
         }
     };
-    Kinetic.Global.extend(Kinetic.HitCanvas, Kinetic.Canvas2D);
+    Kinetic.Util.extend(Kinetic.HitCanvas, Kinetic.Canvas2D);
 
 })();
-
-(function() {
-    /*
-     * The Tween class was ported from an Adobe Flash Tween library
-     * to JavaScript by Xaric.  In the context of KineticJS, a Tween is
-     * an animation of a single Node property.  A Transition is a set of
-     * multiple tweens
-     */
-    Kinetic.Tween = function(propFunc, func, begin, finish, duration) {
-        this._listeners = [];
-        this.addListener(this);
-        this.propFunc = propFunc;
-        this.begin = begin;
-        this._pos = begin;
-        this.setDuration(duration);
-        this.isPlaying = false;
-        this._change = 0;
-        this.prevTime = 0;
-        this.prevPos = 0;
-        this.looping = false;
-        this._time = 0;
-        this._position = 0;
-        this._startTime = 0;
-        this._finish = 0;
-        this.name = '';
-        this.func = func;
-        this.setFinish(finish);
-    };
-    /*
-     * Tween methods
-     */
-    Kinetic.Tween.prototype = {
-        setTime: function(t) {
-            this.prevTime = this._time;
-            if(t > this.getDuration()) {
-                if(this.looping) {
-                    this.rewind(t - this._duration);
-                    this.update();
-                    this.broadcastMessage('onLooped', {
-                        target: this,
-                        type: 'onLooped'
-                    });
-                }
-                else {
-                    this._time = this._duration;
-                    this.update();
-                    this.stop();
-                    this.broadcastMessage('onFinished', {
-                        target: this,
-                        type: 'onFinished'
-                    });
-                }
-            }
-            else if(t < 0) {
-                this.rewind();
-                this.update();
-            }
-            else {
-                this._time = t;
-                this.update();
-            }
-        },
-        getTime: function() {
-            return this._time;
-        },
-        setDuration: function(d) {
-            this._duration = (d === null || d <= 0) ? 100000 : d;
-        },
-        getDuration: function() {
-            return this._duration;
-        },
-        setPosition: function(p) {
-            this.prevPos = this._pos;
-            this.propFunc(p);
-            this._pos = p;
-            this.broadcastMessage('onChanged', {
-                target: this,
-                type: 'onChanged'
-            });
-        },
-        getPosition: function(t) {
-            if(t === undefined) {
-                t = this._time;
-            }
-            return this.func(t, this.begin, this._change, this._duration);
-        },
-        setFinish: function(f) {
-            this._change = f - this.begin;
-        },
-        getFinish: function() {
-            return this.begin + this._change;
-        },
-        start: function() {
-            this.rewind();
-            this.startEnterFrame();
-            this.broadcastMessage('onStarted', {
-                target: this,
-                type: 'onStarted'
-            });
-        },
-        rewind: function(t) {
-            this.stop();
-            this._time = (t === undefined) ? 0 : t;
-            this.fixTime();
-            this.update();
-        },
-        fforward: function() {
-            this._time = this._duration;
-            this.fixTime();
-            this.update();
-        },
-        update: function() {
-            this.setPosition(this.getPosition(this._time));
-        },
-        startEnterFrame: function() {
-            this.stopEnterFrame();
-            this.isPlaying = true;
-            this.onEnterFrame();
-        },
-        onEnterFrame: function() {
-            if(this.isPlaying) {
-                this.nextFrame();
-            }
-        },
-        nextFrame: function() {
-            this.setTime((this.getTimer() - this._startTime) / 1000);
-        },
-        stop: function() {
-            this.stopEnterFrame();
-            this.broadcastMessage('onStopped', {
-                target: this,
-                type: 'onStopped'
-            });
-        },
-        stopEnterFrame: function() {
-            this.isPlaying = false;
-        },
-        continueTo: function(finish, duration) {
-            this.begin = this._pos;
-            this.setFinish(finish);
-            if(this._duration !== undefined) {
-                this.setDuration(duration);
-            }
-            this.start();
-        },
-        resume: function() {
-            this.fixTime();
-            this.startEnterFrame();
-            this.broadcastMessage('onResumed', {
-                target: this,
-                type: 'onResumed'
-            });
-        },
-        yoyo: function() {
-            this.continueTo(this.begin, this._time);
-        },
-        addListener: function(o) {
-            this.removeListener(o);
-            return this._listeners.push(o);
-        },
-        removeListener: function(o) {
-            var a = this._listeners;
-            var i = a.length;
-            while(i--) {
-                if(a[i] == o) {
-                    a.splice(i, 1);
-                    return true;
-                }
-            }
-            return false;
-        },
-        broadcastMessage: function() {
-            var arr = [];
-            for(var i = 0; i < arguments.length; i++) {
-                arr.push(arguments[i]);
-            }
-            var e = arr.shift();
-            var a = this._listeners;
-            var l = a.length;
-            for(var i = 0; i < l; i++) {
-                if(a[i][e]) {
-                    a[i][e].apply(a[i], arr);
-                }
-            }
-        },
-        fixTime: function() {
-            this._startTime = this.getTimer() - this._time * 1000;
-        },
-        getTimer: function() {
-            return new Date().getTime() - this._time;
-        }
-    };
-
-    Kinetic.Tweens = {
-        'back-ease-in': function(t, b, c, d, a, p) {
-            var s = 1.70158;
-            return c * (t /= d) * t * ((s + 1) * t - s) + b;
-        },
-        'back-ease-out': function(t, b, c, d, a, p) {
-            var s = 1.70158;
-            return c * (( t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
-        },
-        'back-ease-in-out': function(t, b, c, d, a, p) {
-            var s = 1.70158;
-            if((t /= d / 2) < 1) {
-                return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
-            }
-            return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
-        },
-        'elastic-ease-in': function(t, b, c, d, a, p) {
-            // added s = 0
-            var s = 0;
-            if(t === 0) {
-                return b;
-            }
-            if((t /= d) == 1) {
-                return b + c;
-            }
-            if(!p) {
-                p = d * 0.3;
-            }
-            if(!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            }
-            else {
-                s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
-        },
-        'elastic-ease-out': function(t, b, c, d, a, p) {
-            // added s = 0
-            var s = 0;
-            if(t === 0) {
-                return b;
-            }
-            if((t /= d) == 1) {
-                return b + c;
-            }
-            if(!p) {
-                p = d * 0.3;
-            }
-            if(!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            }
-            else {
-                s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            return (a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b);
-        },
-        'elastic-ease-in-out': function(t, b, c, d, a, p) {
-            // added s = 0
-            var s = 0;
-            if(t === 0) {
-                return b;
-            }
-            if((t /= d / 2) == 2) {
-                return b + c;
-            }
-            if(!p) {
-                p = d * (0.3 * 1.5);
-            }
-            if(!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            }
-            else {
-                s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            if(t < 1) {
-                return -0.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
-            }
-            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * 0.5 + c + b;
-        },
-        'bounce-ease-out': function(t, b, c, d) {
-            if((t /= d) < (1 / 2.75)) {
-                return c * (7.5625 * t * t) + b;
-            }
-            else if(t < (2 / 2.75)) {
-                return c * (7.5625 * (t -= (1.5 / 2.75)) * t + 0.75) + b;
-            }
-            else if(t < (2.5 / 2.75)) {
-                return c * (7.5625 * (t -= (2.25 / 2.75)) * t + 0.9375) + b;
-            }
-            else {
-                return c * (7.5625 * (t -= (2.625 / 2.75)) * t + 0.984375) + b;
-            }
-        },
-        'bounce-ease-in': function(t, b, c, d) {
-            return c - Kinetic.Tweens['bounce-ease-out'](d - t, 0, c, d) + b;
-        },
-        'bounce-ease-in-out': function(t, b, c, d) {
-            if(t < d / 2) {
-                return Kinetic.Tweens['bounce-ease-in'](t * 2, 0, c, d) * 0.5 + b;
-            }
-            else {
-                return Kinetic.Tweens['bounce-ease-out'](t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
-            }
-        },
-        // duplicate
-        /*
-         strongEaseInOut: function(t, b, c, d) {
-         return c * (t /= d) * t * t * t * t + b;
-         },
-         */
-        'ease-in': function(t, b, c, d) {
-            return c * (t /= d) * t + b;
-        },
-        'ease-out': function(t, b, c, d) {
-            return -c * (t /= d) * (t - 2) + b;
-        },
-        'ease-in-out': function(t, b, c, d) {
-            if((t /= d / 2) < 1) {
-                return c / 2 * t * t + b;
-            }
-            return -c / 2 * ((--t) * (t - 2) - 1) + b;
-        },
-        'strong-ease-in': function(t, b, c, d) {
-            return c * (t /= d) * t * t * t * t + b;
-        },
-        'strong-ease-out': function(t, b, c, d) {
-            return c * (( t = t / d - 1) * t * t * t * t + 1) + b;
-        },
-        'strong-ease-in-out': function(t, b, c, d) {
-            if((t /= d / 2) < 1) {
-                return c / 2 * t * t * t * t * t + b;
-            }
-            return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
-        },
-        'linear': function(t, b, c, d) {
-            return c * t / d + b;
-        }
-    };
-})();
-
-(function() {
-    /*
-    * Last updated November 2011
-    * By Simon Sarris
-    * www.simonsarris.com
-    * sarris@acm.org
-    *
-    * Free to use and distribute at will
-    * So long as you are nice to people, etc
-    */
-
-    /*
-    * The usage of this class was inspired by some of the work done by a forked
-    * project, KineticJS-Ext by Wappworks, which is based on Simon's Transform
-    * class.
-    */
-
-    /**
-     * Transform constructor
-     * @constructor
-     */
-    Kinetic.Transform = function() {
-        this.m = [1, 0, 0, 1, 0, 0];
-    }
-
-    Kinetic.Transform.prototype = {
-        /**
-         * Apply translation
-         * @param {Number} x
-         * @param {Number} y
-         */
-        translate: function(x, y) {
-            this.m[4] += this.m[0] * x + this.m[2] * y;
-            this.m[5] += this.m[1] * x + this.m[3] * y;
-        },
-        /**
-         * Apply scale
-         * @param {Number} sx
-         * @param {Number} sy
-         */
-        scale: function(sx, sy) {
-            this.m[0] *= sx;
-            this.m[1] *= sx;
-            this.m[2] *= sy;
-            this.m[3] *= sy;
-        },
-        /**
-         * Apply rotation
-         * @param {Number} rad  Angle in radians
-         */
-        rotate: function(rad) {
-            var c = Math.cos(rad);
-            var s = Math.sin(rad);
-            var m11 = this.m[0] * c + this.m[2] * s;
-            var m12 = this.m[1] * c + this.m[3] * s;
-            var m21 = this.m[0] * -s + this.m[2] * c;
-            var m22 = this.m[1] * -s + this.m[3] * c;
-            this.m[0] = m11;
-            this.m[1] = m12;
-            this.m[2] = m21;
-            this.m[3] = m22;
-        },
-        /**
-         * Returns the translation
-         * @returns {Object} 2D point(x, y)
-         */
-        getTranslation: function() {
-            return {
-                x: this.m[4],
-                y: this.m[5]
-            };
-        },
-        /**
-         * Transform multiplication
-         * @param {Kinetic.Transform} matrix
-         */
-        multiply: function(matrix) {
-            var m11 = this.m[0] * matrix.m[0] + this.m[2] * matrix.m[1];
-            var m12 = this.m[1] * matrix.m[0] + this.m[3] * matrix.m[1];
-
-            var m21 = this.m[0] * matrix.m[2] + this.m[2] * matrix.m[3];
-            var m22 = this.m[1] * matrix.m[2] + this.m[3] * matrix.m[3];
-
-            var dx = this.m[0] * matrix.m[4] + this.m[2] * matrix.m[5] + this.m[4];
-            var dy = this.m[1] * matrix.m[4] + this.m[3] * matrix.m[5] + this.m[5];
-
-            this.m[0] = m11;
-            this.m[1] = m12;
-            this.m[2] = m21;
-            this.m[3] = m22;
-            this.m[4] = dx;
-            this.m[5] = dy;
-        },
-        /**
-         * Invert the matrix
-         */
-        invert: function() {
-            var d = 1 / (this.m[0] * this.m[3] - this.m[1] * this.m[2]);
-            var m0 = this.m[3] * d;
-            var m1 = -this.m[1] * d;
-            var m2 = -this.m[2] * d;
-            var m3 = this.m[0] * d;
-            var m4 = d * (this.m[2] * this.m[5] - this.m[3] * this.m[4]);
-            var m5 = d * (this.m[1] * this.m[4] - this.m[0] * this.m[5]);
-            this.m[0] = m0;
-            this.m[1] = m1;
-            this.m[2] = m2;
-            this.m[3] = m3;
-            this.m[4] = m4;
-            this.m[5] = m5;
-        },
-        /**
-         * return matrix
-         */
-        getMatrix: function() {
-            return this.m;
-        }
-    };
-})();
-
-(function() {
-    /**
-     * Collection constructor.  Collection extends
-     *  Array.  This class is used in conjunction with get()
-     * @constructor
-     */
-    Kinetic.Collection = function() {
-        var args = [].slice.call(arguments), length = args.length, i = 0;
-
-        this.length = length;
-        for(; i < length; i++) {
-            this[i] = args[i];
-        }
-        return this;
-    }
-    Kinetic.Collection.prototype = new Array();
-    /**
-     * iterate through node array
-     * @name each
-     * @methodOf Kinetic.Collection.prototype
-     * @param {Function} func
-     */
-    Kinetic.Collection.prototype.each = function(func) {
-        for(var n = 0; n < this.length; n++) {
-            func(this[n], n);
-        }
-    };
-
-    Kinetic.Collection.mapMethods = function(arr) {
-        var leng = arr.length,
-            n;
-            
-        for(n = 0; n < leng; n++) {
-            // induce scope
-            (function(i) {
-                var method = arr[i];
-                Kinetic.Collection.prototype[method] = function() {
-                    var len = this.length,
-                        i;
-                        
-                    args = [].slice.call(arguments);
-                    for(i = 0; i < len; i++) {
-                        this[i][method].apply(this[i], args);
-                    }        
-                };
-            })(n);
-        }
-    };
-})();
-
-(function() {
-    /**
-     * Grayscale Filter
-     * @function
-     * @memberOf Kinetic.Filters
-     * @param {Object} imageData
-     * @param {Object} config
-     */
-    Kinetic.Filters.Grayscale = function(imageData, config) {
-        var data = imageData.data;
-        for(var i = 0; i < data.length; i += 4) {
-            var brightness = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
-            // red
-            data[i] = brightness;
-            // green
-            data[i + 1] = brightness;
-            // blue
-            data[i + 2] = brightness;
-        }
-    };
-})();
-
-(function() {
-    /**
-     * Brighten Filter
-     * @function
-     * @memberOf Kinetic.Filters
-     * @param {Object} imageData
-     * @param {Object} config
-     * @param {Integer} config.val brightness number from -255 to 255.&nbsp; Positive values increase the brightness and negative values decrease the brightness, making the image darker
-     */
-    Kinetic.Filters.Brighten = function(imageData, config) {
-        var brightness = config.val || 0;
-        var data = imageData.data;
-        for(var i = 0; i < data.length; i += 4) {
-            // red
-            data[i] += brightness;
-            // green
-            data[i + 1] += brightness;
-            // blue
-            data[i + 2] += brightness;
-        }
-    };
-})();
-
-(function() {
-    /**
-     * Invert Filter
-     * @function
-     * @memberOf Kinetic.Filters
-     * @param {Object} imageData
-     * @param {Object} config
-     */
-    Kinetic.Filters.Invert = function(imageData, config) {
-        var data = imageData.data;
-        for(var i = 0; i < data.length; i += 4) {
-            // red
-            data[i] = 255 - data[i];
-            // green
-            data[i + 1] = 255 - data[i + 1];
-            // blue
-            data[i + 2] = 255 - data[i + 2];
-        }
-    };
-})();
-
-/*
- the Gauss filter
- master repo: https://github.com/pavelpower/kineticjsGaussFilter/
-*/
-(function(Kinetic) {
-    /*
-
-     StackBlur - a fast almost Gaussian Blur For Canvas
-
-     Version:   0.5
-     Author:		Mario Klingemann
-     Contact: 	mario@quasimondo.com
-     Website:	http://www.quasimondo.com/StackBlurForCanvas
-     Twitter:	@quasimondo
-
-     In case you find this class useful - especially in commercial projects -
-     I am not totally unhappy for a small donation to my PayPal account
-     mario@quasimondo.de
-
-     Or support me on flattr:
-     https://flattr.com/thing/72791/StackBlur-a-fast-almost-Gaussian-Blur-Effect-for-CanvasJavascript
-
-     Copyright (c) 2010 Mario Klingemann
-
-     Permission is hereby granted, free of charge, to any person
-     obtaining a copy of this software and associated documentation
-     files (the "Software"), to deal in the Software without
-     restriction, including without limitation the rights to use,
-     copy, modify, merge, publish, distribute, sublicense, and/or sell
-     copies of the Software, and to permit persons to whom the
-     Software is furnished to do so, subject to the following
-     conditions:
-
-     The above copyright notice and this permission notice shall be
-     included in all copies or substantial portions of the Software.
-
-     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-     OTHER DEALINGS IN THE SOFTWARE.
-     */
-
-    function BlurStack() {
-        this.r = 0;
-        this.g = 0;
-        this.b = 0;
-        this.a = 0;
-        this.next = null;
-    }
-
-    var mul_table = [
-        512,512,456,512,328,456,335,512,405,328,271,456,388,335,292,512,
-        454,405,364,328,298,271,496,456,420,388,360,335,312,292,273,512,
-        482,454,428,405,383,364,345,328,312,298,284,271,259,496,475,456,
-        437,420,404,388,374,360,347,335,323,312,302,292,282,273,265,512,
-        497,482,468,454,441,428,417,405,394,383,373,364,354,345,337,328,
-        320,312,305,298,291,284,278,271,265,259,507,496,485,475,465,456,
-        446,437,428,420,412,404,396,388,381,374,367,360,354,347,341,335,
-        329,323,318,312,307,302,297,292,287,282,278,273,269,265,261,512,
-        505,497,489,482,475,468,461,454,447,441,435,428,422,417,411,405,
-        399,394,389,383,378,373,368,364,359,354,350,345,341,337,332,328,
-        324,320,316,312,309,305,301,298,294,291,287,284,281,278,274,271,
-        268,265,262,259,257,507,501,496,491,485,480,475,470,465,460,456,
-        451,446,442,437,433,428,424,420,416,412,408,404,400,396,392,388,
-        385,381,377,374,370,367,363,360,357,354,350,347,344,341,338,335,
-        332,329,326,323,320,318,315,312,310,307,304,302,299,297,294,292,
-        289,287,285,282,280,278,275,273,271,269,267,265,263,261,259];
-
-    var shg_table = [
-        9, 11, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17,
-        17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19,
-        19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20,
-        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21,
-        21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
-        21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22,
-        22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
-        22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23,
-        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
-        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
-        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
-        23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24 ];
-
-    function filterGaussBlurRGBA( imageData, radius) {
-
-        var pixels = imageData.data,
-            width = imageData.width,
-            height = imageData.height;
-
-        var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum, a_sum,
-            r_out_sum, g_out_sum, b_out_sum, a_out_sum,
-            r_in_sum, g_in_sum, b_in_sum, a_in_sum,
-            pr, pg, pb, pa, rbs;
-
-        var div = radius + radius + 1,
-            widthMinus1  = width - 1,
-            heightMinus1 = height - 1,
-            radiusPlus1  = radius + 1,
-            sumFactor = radiusPlus1 * ( radiusPlus1 + 1 ) / 2,
-            stackStart = new BlurStack(),
-            stack = stackStart,
-            stackIn = null,
-            stackOut = null,
-            mul_sum = mul_table[radius],
-            shg_sum = shg_table[radius];
-
-
-        for ( i = 1; i < div; i++ ) {
-            stack = stack.next = new BlurStack();
-            if ( i == radiusPlus1 ) var stackEnd = stack;
-        }
-
-        stack.next = stackStart;
-
-        yw = yi = 0;
-
-        for ( y = 0; y < height; y++ )
-        {
-            r_in_sum = g_in_sum = b_in_sum = a_in_sum = r_sum = g_sum = b_sum = a_sum = 0;
-
-            r_out_sum = radiusPlus1 * ( pr = pixels[yi] );
-            g_out_sum = radiusPlus1 * ( pg = pixels[yi+1] );
-            b_out_sum = radiusPlus1 * ( pb = pixels[yi+2] );
-            a_out_sum = radiusPlus1 * ( pa = pixels[yi+3] );
-
-            r_sum += sumFactor * pr;
-            g_sum += sumFactor * pg;
-            b_sum += sumFactor * pb;
-            a_sum += sumFactor * pa;
-
-            stack = stackStart;
-
-            for( i = 0; i < radiusPlus1; i++ )
-            {
-                stack.r = pr;
-                stack.g = pg;
-                stack.b = pb;
-                stack.a = pa;
-                stack = stack.next;
-            }
-
-            for( i = 1; i < radiusPlus1; i++ )
-            {
-                p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
-                r_sum += ( stack.r = ( pr = pixels[p])) * ( rbs = radiusPlus1 - i );
-                g_sum += ( stack.g = ( pg = pixels[p+1])) * rbs;
-                b_sum += ( stack.b = ( pb = pixels[p+2])) * rbs;
-                a_sum += ( stack.a = ( pa = pixels[p+3])) * rbs;
-
-                r_in_sum += pr;
-                g_in_sum += pg;
-                b_in_sum += pb;
-                a_in_sum += pa;
-
-                stack = stack.next;
-            }
-
-
-            stackIn = stackStart;
-            stackOut = stackEnd;
-            for ( x = 0; x < width; x++ )
-            {
-                pixels[yi+3] = pa = (a_sum * mul_sum) >> shg_sum;
-                if ( pa != 0 )
-                {
-                    pa = 255 / pa;
-                    pixels[yi]   = ((r_sum * mul_sum) >> shg_sum) * pa;
-                    pixels[yi+1] = ((g_sum * mul_sum) >> shg_sum) * pa;
-                    pixels[yi+2] = ((b_sum * mul_sum) >> shg_sum) * pa;
-                } else {
-                    pixels[yi] = pixels[yi+1] = pixels[yi+2] = 0;
-                }
-
-                r_sum -= r_out_sum;
-                g_sum -= g_out_sum;
-                b_sum -= b_out_sum;
-                a_sum -= a_out_sum;
-
-                r_out_sum -= stackIn.r;
-                g_out_sum -= stackIn.g;
-                b_out_sum -= stackIn.b;
-                a_out_sum -= stackIn.a;
-
-                p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
-
-                r_in_sum += ( stackIn.r = pixels[p]);
-                g_in_sum += ( stackIn.g = pixels[p+1]);
-                b_in_sum += ( stackIn.b = pixels[p+2]);
-                a_in_sum += ( stackIn.a = pixels[p+3]);
-
-                r_sum += r_in_sum;
-                g_sum += g_in_sum;
-                b_sum += b_in_sum;
-                a_sum += a_in_sum;
-
-                stackIn = stackIn.next;
-
-                r_out_sum += ( pr = stackOut.r );
-                g_out_sum += ( pg = stackOut.g );
-                b_out_sum += ( pb = stackOut.b );
-                a_out_sum += ( pa = stackOut.a );
-
-                r_in_sum -= pr;
-                g_in_sum -= pg;
-                b_in_sum -= pb;
-                a_in_sum -= pa;
-
-                stackOut = stackOut.next;
-
-                yi += 4;
-            }
-            yw += width;
-        }
-
-
-        for ( x = 0; x < width; x++ )
-        {
-            g_in_sum = b_in_sum = a_in_sum = r_in_sum = g_sum = b_sum = a_sum = r_sum = 0;
-
-            yi = x << 2;
-            r_out_sum = radiusPlus1 * ( pr = pixels[yi]);
-            g_out_sum = radiusPlus1 * ( pg = pixels[yi+1]);
-            b_out_sum = radiusPlus1 * ( pb = pixels[yi+2]);
-            a_out_sum = radiusPlus1 * ( pa = pixels[yi+3]);
-
-            r_sum += sumFactor * pr;
-            g_sum += sumFactor * pg;
-            b_sum += sumFactor * pb;
-            a_sum += sumFactor * pa;
-
-            stack = stackStart;
-
-            for( i = 0; i < radiusPlus1; i++ )
-            {
-                stack.r = pr;
-                stack.g = pg;
-                stack.b = pb;
-                stack.a = pa;
-                stack = stack.next;
-            }
-
-            yp = width;
-
-            for( i = 1; i <= radius; i++ )
-            {
-                yi = ( yp + x ) << 2;
-
-                r_sum += ( stack.r = ( pr = pixels[yi])) * ( rbs = radiusPlus1 - i );
-                g_sum += ( stack.g = ( pg = pixels[yi+1])) * rbs;
-                b_sum += ( stack.b = ( pb = pixels[yi+2])) * rbs;
-                a_sum += ( stack.a = ( pa = pixels[yi+3])) * rbs;
-
-                r_in_sum += pr;
-                g_in_sum += pg;
-                b_in_sum += pb;
-                a_in_sum += pa;
-
-                stack = stack.next;
-
-                if( i < heightMinus1 )
-                {
-                    yp += width;
-                }
-            }
-
-            yi = x;
-            stackIn = stackStart;
-            stackOut = stackEnd;
-            for ( y = 0; y < height; y++ )
-            {
-                p = yi << 2;
-                pixels[p+3] = pa = (a_sum * mul_sum) >> shg_sum;
-                if ( pa > 0 )
-                {
-                    pa = 255 / pa;
-                    pixels[p]   = ((r_sum * mul_sum) >> shg_sum ) * pa;
-                    pixels[p+1] = ((g_sum * mul_sum) >> shg_sum ) * pa;
-                    pixels[p+2] = ((b_sum * mul_sum) >> shg_sum ) * pa;
-                } else {
-                    pixels[p] = pixels[p+1] = pixels[p+2] = 0;
-                }
-
-                r_sum -= r_out_sum;
-                g_sum -= g_out_sum;
-                b_sum -= b_out_sum;
-                a_sum -= a_out_sum;
-
-                r_out_sum -= stackIn.r;
-                g_out_sum -= stackIn.g;
-                b_out_sum -= stackIn.b;
-                a_out_sum -= stackIn.a;
-
-                p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
-
-                r_sum += ( r_in_sum += ( stackIn.r = pixels[p]));
-                g_sum += ( g_in_sum += ( stackIn.g = pixels[p+1]));
-                b_sum += ( b_in_sum += ( stackIn.b = pixels[p+2]));
-                a_sum += ( a_in_sum += ( stackIn.a = pixels[p+3]));
-
-                stackIn = stackIn.next;
-
-                r_out_sum += ( pr = stackOut.r );
-                g_out_sum += ( pg = stackOut.g );
-                b_out_sum += ( pb = stackOut.b );
-                a_out_sum += ( pa = stackOut.a );
-
-                r_in_sum -= pr;
-                g_in_sum -= pg;
-                b_in_sum -= pb;
-                a_in_sum -= pa;
-
-                stackOut = stackOut.next;
-
-                yi += width;
-            }
-        }
-    }
-
-    Kinetic = Kinetic || {};
-    Kinetic.Filters = Kinetic.Filters || {};
-
-    /**
-     * Blur Filter
-     * @function
-     * @memberOf Kinetic.Filters
-     * @param {Object} imageData
-     * @param {Object} config
-     * @param {Integer} config.radius
-     */
-    Kinetic.Filters.Blur = function(imageData, config) {
-        var radius = config.radius;
-
-        radius |= 0;
-
-        filterGaussBlurRGBA(imageData, radius);
-    };
-
-    window['Kinetic'] = Kinetic;
-
-})(Kinetic);
-
-(function(Kinetic) {
-
-	function pixelAt(idata, x, y) {
-		var idx = (y * idata.width + x) * 4;
-		var d = [];
-		d.push(idata.data[idx++], idata.data[idx++], idata.data[idx++], idata.data[idx++]);
-		return d;
-	};
-
-	function rgbDistance(p1, p2) {
-		return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2) + Math.pow(p1[2] - p2[2], 2));
-	};
-
-	function rgbMean(pTab) {
-		var m = [0, 0, 0];
-
-		for (var i = 0; i < pTab.length; i++) {
-			m[0] += pTab[i][0];
-			m[1] += pTab[i][1];
-			m[2] += pTab[i][2];
-		}
-
-		m[0] /= pTab.length;
-		m[1] /= pTab.length;
-		m[2] /= pTab.length;
-
-		return m;
-	};
-
-	function backgroundMask(idata, config) {
-		var rgbv_no = pixelAt(idata, 0, 0);
-		var rgbv_ne = pixelAt(idata, idata.width - 1, 0);
-		var rgbv_so = pixelAt(idata, 0, idata.height - 1);
-		var rgbv_se = pixelAt(idata, idata.width - 1, idata.height - 1);
-
-
-		var thres = (config && config.threshold) ? config.threshold : 10;
-		if (rgbDistance(rgbv_no, rgbv_ne) < thres && rgbDistance(rgbv_ne, rgbv_se) < thres && rgbDistance(rgbv_se, rgbv_so) < thres && rgbDistance(rgbv_so, rgbv_no) < thres) {
-
-			// Mean color
-			var mean = rgbMean([rgbv_ne, rgbv_no, rgbv_se, rgbv_so]);
-
-			// Mask based on color distance
-			var mask = [];
-			for (var i = 0; i < idata.width * idata.height; i++) {
-				var d = rgbDistance(mean, [idata.data[i * 4], idata.data[i * 4 + 1], idata.data[i * 4 + 2]]);
-				mask[i] = (d < thres) ? 0 : 255;
-			}
-
-			return mask;
-		}
-	};
-
-	function applyMask(idata, mask) {
-		for (var i = 0; i < idata.width * idata.height; i++) {
-			idata.data[4 * i + 3] = mask[i];
-		}
-	};
-
-	function erodeMask(mask, sw, sh) {
-
-		var weights = [1, 1, 1, 1, 0, 1, 1, 1, 1];
-		var side = Math.round(Math.sqrt(weights.length));
-		var halfSide = Math.floor(side / 2);
-
-		var maskResult = [];
-		for (var y = 0; y < sh; y++) {
-			for (var x = 0; x < sw; x++) {
-
-				var so = y * sw + x;
-				var a = 0;
-				for (var cy = 0; cy < side; cy++) {
-					for (var cx = 0; cx < side; cx++) {
-						var scy = y + cy - halfSide;
-						var scx = x + cx - halfSide;
-
-						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
-
-							var srcOff = scy * sw + scx;
-							var wt = weights[cy * side + cx];
-
-							a += mask[srcOff] * wt;
-						}
-					}
-				}
-
-				maskResult[so] = (a === 255 * 8) ? 255 : 0;
-			}
-		}
-
-		return maskResult;
-	};
-
-	function dilateMask(mask, sw, sh) {
-
-		var weights = [1, 1, 1, 1, 1, 1, 1, 1, 1];
-		var side = Math.round(Math.sqrt(weights.length));
-		var halfSide = Math.floor(side / 2);
-
-		var maskResult = [];
-		for (var y = 0; y < sh; y++) {
-			for (var x = 0; x < sw; x++) {
-
-				var so = y * sw + x;
-				var a = 0;
-				for (var cy = 0; cy < side; cy++) {
-					for (var cx = 0; cx < side; cx++) {
-						var scy = y + cy - halfSide;
-						var scx = x + cx - halfSide;
-
-						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
-
-							var srcOff = scy * sw + scx;
-							var wt = weights[cy * side + cx];
-
-							a += mask[srcOff] * wt;
-						}
-					}
-				}
-
-				maskResult[so] = (a >= 255 * 4) ? 255 : 0;
-			}
-		}
-
-		return maskResult;
-	};
-
-	function smoothEdgeMask(mask, sw, sh) {
-
-		var weights = [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9];
-		var side = Math.round(Math.sqrt(weights.length));
-		var halfSide = Math.floor(side / 2);
-
-		var maskResult = [];
-		for (var y = 0; y < sh; y++) {
-			for (var x = 0; x < sw; x++) {
-
-				var so = y * sw + x;
-				var a = 0;
-				for (var cy = 0; cy < side; cy++) {
-					for (var cx = 0; cx < side; cx++) {
-						var scy = y + cy - halfSide;
-						var scx = x + cx - halfSide;
-
-						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
-
-							var srcOff = scy * sw + scx;
-							var wt = weights[cy * side + cx];
-
-							a += mask[srcOff] * wt;
-						}
-					}
-				}
-
-				maskResult[so] = a;
-			}
-		}
-
-		return maskResult;
-	}
-	
-	Kinetic = Kinetic || {};
-	Kinetic.Filters = Kinetic.Filters || {};
-
-	/**
-	 * Mask Filter
-	 *
-	 * Only crop unicolor background images for instance
-	 *
-	 * @function
-	 * @memberOf Kinetic.Filters
-	 * @param {Object} imageData
-	 * @param {Object} config
-	 * @param {Integer} config.threshold The RGB euclidian distance threshold (default : 10) 
-	 */
-	Kinetic.Filters.Mask = function(idata, config) {
-		// Detect pixels close to the background color
-		var mask = backgroundMask(idata, config);
-		if (mask) {
-			// Erode
-			mask = erodeMask(mask, idata.width, idata.height);
-
-			// Dilate
-			mask = dilateMask(mask, idata.width, idata.height);
-
-			// Gradient
-			mask = smoothEdgeMask(mask, idata.width, idata.height);
-
-			// Apply mask
-			applyMask(idata, mask);
-			
-			// todo : Update hit region function according to mask
-		}
-
-		return idata;
-	};
-
-	window['Kinetic'] = Kinetic;
-
-})(Kinetic);
 
 (function() {
     // CONSTANTS
@@ -2078,6 +1501,8 @@ var Kinetic = {};
         STAGE = 'Stage',
         X = 'x',
         Y = 'y',
+        UPPER_X = 'X',
+        UPPER_Y = 'Y',
         KINETIC = 'kinetic',
         BEFORE = 'before',
         CHANGE = 'Change',
@@ -2089,39 +1514,18 @@ var Kinetic = {};
         ON = 'on',
         OFF = 'off',
         BEFORE_DRAW = 'beforeDraw',
-        DRAW = 'draw';
+        DRAW = 'draw',
+        BLACK = 'black',
+        RGB = 'RGB',
+        R = 'r',
+        G = 'g',
+        B = 'b',
+        UPPER_R = 'R',
+        UPPER_G = 'G',
+        UPPER_B = 'B',
+        HASH = '#';
         
-    /**
-     * Node constructor. Nodes are entities that can be transformed, layered,
-     * and have bound events. The stage, layers, groups, and shapes all extend Node.
-     * @constructor
-     * @param {Object} config
-     * @param {Number} [config.x]
-     * @param {Number} [config.y]
-     * @param {Number} [config.width]
-     * @param {Number} [config.height]
-     * @param {Boolean} [config.visible]
-     * @param {Boolean} [config.listening] whether or not the node is listening for events
-     * @param {String} [config.id] unique id
-     * @param {String} [config.name] non-unique name
-     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
-     * @param {Number} [config.rotation] rotation in radians
-     * @param {Number} [config.rotationDeg] rotation in degrees
-     * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
-     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
-     *  the entire stage by dragging any portion of the stage
-     * @param {Function} [config.dragBoundFunc]
-     */
-    Kinetic.Node = function(config) {
-        this._nodeInit(config);
-    };
-
-    Kinetic.Node.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Node, {
         _nodeInit: function(config) {
             this._id = Kinetic.Global.idCounter++;
             this.eventListeners = {};
@@ -2241,11 +1645,8 @@ var Kinetic = {};
             go._removeId(this.getId());
             go._removeName(this.getName(), this._id);
 
-            // stop transition
-            if(this.trans) {
-                this.trans.stop();
-            }
-
+            // TODO: stop transitions
+ 
             this.remove();
         },
         /**
@@ -2255,8 +1656,14 @@ var Kinetic = {};
          * @param {String} attr  
          */
         getAttr: function(attr) {
-            var method = GET + Kinetic.Type._capitalize(attr);
-            return this[method](); 
+            var method = GET + Kinetic.Util._capitalize(attr);
+            if(Kinetic.Util._isFunction(this[method])) {
+                return this[method]();
+            }
+            // otherwise get directly
+            else {
+                return this.attrs[attr];
+            }
         },
         /**
          * get attrs
@@ -2287,9 +1694,9 @@ var Kinetic = {};
             
             if(config) {
                 for(key in config) {
-                    method = SET + Kinetic.Type._capitalize(key);
+                    method = SET + Kinetic.Util._capitalize(key);
                     // use setter if available
-                    if(Kinetic.Type._isFunction(this[method])) {
+                    if(Kinetic.Util._isFunction(this[method])) {
                         this[method](config[key]);
                     }
                     // otherwise set directly
@@ -2429,9 +1836,9 @@ var Kinetic = {};
          * @param {Number} y
          */
         setPosition: function() {
-            var pos = Kinetic.Type._getXY([].slice.call(arguments));
-            this.setAttr(X, pos.x);
-            this.setAttr(Y, pos.y);
+            var pos = Kinetic.Util._getXY([].slice.call(arguments));
+            this.setX(pos.x);
+            this.setY(pos.y);
         },
         /**
          * get node position relative to parent
@@ -2464,7 +1871,7 @@ var Kinetic = {};
          * @param {Number} y
          */
         setAbsolutePosition: function() {
-            var pos = Kinetic.Type._getXY([].slice.call(arguments)),
+            var pos = Kinetic.Util._getXY([].slice.call(arguments)),
                 trans = this._clearTransform(),
                 it;
                 
@@ -2495,7 +1902,7 @@ var Kinetic = {};
          * @param {Number} y
          */
         move: function() {
-            var pos = Kinetic.Type._getXY([].slice.call(arguments)),
+            var pos = Kinetic.Util._getXY([].slice.call(arguments)),
                 x = this.getX(),
                 y = this.getY();
 
@@ -2544,7 +1951,7 @@ var Kinetic = {};
          * @param {Number} deg
          */
         rotateDeg: function(deg) {
-            this.setRotation(this.getRotation() + Kinetic.Type._degToRad(deg));
+            this.setRotation(this.getRotation() + Kinetic.Util._degToRad(deg));
         },
         /**
          * move node to the top of its siblings
@@ -2641,7 +2048,7 @@ var Kinetic = {};
          * @methodOf Kinetic.Node.prototype
          */
         toObject: function() {
-            var type = Kinetic.Type, 
+            var type = Kinetic.Util, 
                 obj = {}, 
                 attrs = this.getAttrs(),
                 key, val;
@@ -2733,22 +2140,17 @@ var Kinetic = {};
             }, true);
             return am;
         },
-        /**
-         * get transform of the node
-         * @name getTransform
-         * @methodOf Kinetic.Node.prototype
-         */
-        getTransform: function() {
+        _getAndCacheTransform: function() {
             var m = new Kinetic.Transform(), 
                 x = this.getX(), 
                 y = this.getY(), 
                 rotation = this.getRotation(),
-                scale = this.getScale(), 
-                scaleX = scale.x, 
-                scaleY = scale.y, 
-                offset = this.getOffset(), 
-                offsetX = offset.x, 
-                offsetY = offset.y;
+                scaleX = this.getScaleX(), 
+                scaleY = this.getScaleY(), 
+                skewX = this.getSkewX(), 
+                skewY = this.getSkewY(), 
+                offsetX = this.getOffsetX(), 
+                offsetY = this.getOffsetY();
                 
             if(x !== 0 || y !== 0) {
                 m.translate(x, y);
@@ -2756,14 +2158,33 @@ var Kinetic = {};
             if(rotation !== 0) {
                 m.rotate(rotation);
             }
+            if(skewX !== 0 || skewY !== 0) {
+                m.skew(skewX, skewY);
+            }
             if(scaleX !== 1 || scaleY !== 1) {
                 m.scale(scaleX, scaleY);
             }
             if(offsetX !== 0 || offsetY !== 0) {
                 m.translate(-1 * offsetX, -1 * offsetY);
             }
-
+             
+            // cache result
+            this.cachedTransform = m;
             return m;
+        },
+        /**
+         * get transform of the node
+         * @name getTransform
+         * @methodOf Kinetic.Node.prototype
+         */
+        getTransform: function(useCache) {
+            var cachedTransform = this.cachedTransform;
+            if (useCache && cachedTransform) {
+                return cachedTransform;
+            }
+            else {
+                return this._getAndCacheTransform();
+            }
         },
         /**
          * clone node.  Returns a new Node instance with identical attributes
@@ -2863,7 +2284,7 @@ var Kinetic = {};
          *  is very high quality
          */
         toImage: function(config) {
-            Kinetic.Type._getImage(this.toDataURL(config), function(img) {
+            Kinetic.Util._getImage(this.toDataURL(config), function(img) {
                 config.callback(img);
             });
         },
@@ -2876,7 +2297,7 @@ var Kinetic = {};
          */
         setSize: function() {
             // set stage dimensions
-            var size = Kinetic.Type._getSize(Array.prototype.slice.call(arguments));
+            var size = Kinetic.Util._getSize(Array.prototype.slice.call(arguments));
             this.setWidth(size.width);
             this.setHeight(size.height);
         },
@@ -2926,33 +2347,28 @@ var Kinetic = {};
             }
         },
         _clearTransform: function() {
-            var scale = this.getScale(), 
-              offset = this.getOffset(),
-              trans = {
-                  x: this.getX(),
-                  y: this.getY(),
-                  rotation: this.getRotation(),
-                  scale: {
-                      x: scale.x,
-                      y: scale.y
-                  },
-                  offset: {
-                      x: offset.x,
-                      y: offset.y
-                  }
-              };
+
+            var trans = {
+                x: this.getX(),
+                y: this.getY(),
+                rotation: this.getRotation(),
+                scaleX: this.getScaleX(),
+                scaleY: this.getScaleY(),
+                offsetX: this.getOffsetX(),
+                offsetY: this.getOffsetY(),
+                skewX: this.getSkewX(),
+                skewY: this.getSkewY()
+            };
 
             this.attrs.x = 0;
             this.attrs.y = 0;
             this.attrs.rotation = 0;
-            this.attrs.scale = {
-                x: 1,
-                y: 1
-            };
-            this.attrs.offset = {
-                x: 0,
-                y: 0
-            };
+            this.attrs.scaleX = 1;
+            this.attrs.scaleY = 1;
+            this.attrs.offsetX = 0;
+            this.attrs.offsetY = 0;
+            this.attrs.skewX = 0;
+            this.attrs.skewY = 0;
 
             return trans;
         },
@@ -2962,9 +2378,11 @@ var Kinetic = {};
             for(key in trans) {
                 this.attrs[key] = trans[key];
             }
+
+            this.cachedTransform = null;
         },
         _fireBeforeChangeEvent: function(attr, oldVal, newVal) {
-            this._handleEvent(BEFORE + Kinetic.Type._capitalize(attr) + CHANGE, {
+            this._handleEvent(BEFORE + Kinetic.Util._capitalize(attr) + CHANGE, {
                 oldVal: oldVal,
                 newVal: newVal
             });
@@ -3070,8 +2488,8 @@ var Kinetic = {};
          */
         draw: function() {
             var evt = {
-                    node: this
-                };
+                node: this
+            };
             
             this.fire(BEFORE_DRAW, evt);
             this.drawScene();
@@ -3081,79 +2499,159 @@ var Kinetic = {};
         shouldDrawHit: function() { 
             return this.isVisible() && this.isListening() && !Kinetic.Global.isDragging(); 
         }
-    };
+    });
 
     // add getter and setter methods
+    Kinetic.Node.addGetterSetter = function(constructor, attr, def, isTransform) {
+        this.addGetter(constructor, attr, def);
+        this.addSetter(constructor, attr, isTransform);
+    };
+    Kinetic.Node.addPointGetterSetter = function(constructor, attr, def, isTransform) {
+        this.addPointGetter(constructor, attr);
+        this.addPointSetter(constructor, attr);  
 
-    Kinetic.Node.addGetterSetter = function(constructor, arr, def) {
-        this.addGetter(constructor, arr, def);
-        this.addSetter(constructor, arr);
+        // add invdividual component getters and setters
+        this.addGetter(constructor, attr + UPPER_X, def);
+        this.addGetter(constructor, attr + UPPER_Y, def);
+        this.addSetter(constructor, attr + UPPER_X, isTransform);
+        this.addSetter(constructor, attr + UPPER_Y, isTransform);
     };
-    Kinetic.Node.addPointGetterSetter = function(constructor, arr, def) {
-        this.addGetter(constructor, arr, def);
-        this.addPointSetter(constructor, arr);     
+    Kinetic.Node.addRotationGetterSetter = function(constructor, attr, def, isTransform) {
+        this.addRotationGetter(constructor, attr, def);
+        this.addRotationSetter(constructor, attr, isTransform);    
     };
-    Kinetic.Node.addRotationGetterSetter = function(constructor, arr, def) {
-        this.addRotationGetter(constructor, arr, def);
-        this.addRotationSetter(constructor, arr);    
+    Kinetic.Node.addColorGetterSetter = function(constructor, attr) {
+        this.addGetter(constructor, attr);
+        this.addSetter(constructor, attr); 
+  
+        // component getters 
+        this.addColorRGBGetter(constructor, attr);
+        this.addColorComponentGetter(constructor, attr, R);
+        this.addColorComponentGetter(constructor, attr, G);
+        this.addColorComponentGetter(constructor, attr, B);
+
+        // component setters
+        this.addColorRGBSetter(constructor, attr);
+        this.addColorComponentSetter(constructor, attr, R);
+        this.addColorComponentSetter(constructor, attr, G);
+        this.addColorComponentSetter(constructor, attr, B);
     };
-    Kinetic.Node.addSetter = function(constructor, attr) {
+    Kinetic.Node.addColorRGBGetter = function(constructor, attr) {
+        var method = GET + Kinetic.Util._capitalize(attr) + RGB;
+        constructor.prototype[method] = function() {
+            return Kinetic.Util.getRGB(this.attrs[attr]);
+        };
+    };
+    Kinetic.Node.addColorRGBSetter = function(constructor, attr) {
+        var method = SET + Kinetic.Util._capitalize(attr) + RGB;
+
+        constructor.prototype[method] = function(obj) {
+            var r = obj && obj.r !== undefined ? obj.r | 0 : this.getAttr(attr + UPPER_R),
+                g = obj && obj.g !== undefined ? obj.g | 0 : this.getAttr(attr + UPPER_G),
+                b = obj && obj.b !== undefined ? obj.b | 0 : this.getAttr(attr + UPPER_B);
+
+            this.setAttr(attr, HASH + Kinetic.Util._rgbToHex(r, g, b));
+        };
+    };
+    Kinetic.Node.addColorComponentGetter = function(constructor, attr, c) {
+        var prefix = GET + Kinetic.Util._capitalize(attr),
+            method = prefix + Kinetic.Util._capitalize(c);
+        constructor.prototype[method] = function() {
+            return this[prefix + RGB]()[c];
+        };
+    };
+    Kinetic.Node.addColorComponentSetter = function(constructor, attr, c) {
+        var prefix = SET + Kinetic.Util._capitalize(attr),
+            method = prefix + Kinetic.Util._capitalize(c);
+        constructor.prototype[method] = function(val) {
+            var obj = {};
+            obj[c] = val;
+            this[prefix + RGB](obj);
+        };
+    };
+    Kinetic.Node.addSetter = function(constructor, attr, isTransform) {
         var that = this,
-            method = SET + Kinetic.Type._capitalize(attr);
+            method = SET + Kinetic.Util._capitalize(attr);
             
         constructor.prototype[method] = function(val) {
             this.setAttr(attr, val);
+            if (isTransform) {
+                this.cachedTransform = null;
+            }
         };
     };
     Kinetic.Node.addPointSetter = function(constructor, attr) {
         var that = this,
-            method = SET + Kinetic.Type._capitalize(attr);
+            baseMethod = SET + Kinetic.Util._capitalize(attr);
             
-        constructor.prototype[method] = function() {
-            var pos = Kinetic.Type._getXY([].slice.call(arguments));
-            
-            // default
-            if (!this.attrs[attr]) {
-                this.attrs[attr] = {x:1,y:1};  
-            }
-            
-            if(pos && pos.x === undefined) {
-                pos.x = this.attrs[attr].x;
-            }
-            if(pos && pos.y === undefined) {
-                pos.y = this.attrs[attr].y;
-            }
-            this.setAttr(attr, pos);
+        constructor.prototype[baseMethod] = function() {
+            var pos = Kinetic.Util._getXY([].slice.call(arguments)),
+                oldVal = this.attrs[attr]; 
+                x = 0,
+                y = 0;
+
+            if (pos) {
+              x = pos.x;
+              y = pos.y;
+
+              this._fireBeforeChangeEvent(attr, oldVal, pos);
+              if (x !== undefined) {
+                this[baseMethod + UPPER_X](x);
+              }
+              if (y !== undefined) {
+                this[baseMethod + UPPER_Y](y);
+              }
+              this._fireChangeEvent(attr, oldVal, pos);
+            }    
         };
     };
-    Kinetic.Node.addRotationSetter = function(constructor, attr) {
+    Kinetic.Node.addRotationSetter = function(constructor, attr, isTransform) {
         var that = this,
-            method = SET + Kinetic.Type._capitalize(attr);
+            method = SET + Kinetic.Util._capitalize(attr);
             
         // radians
         constructor.prototype[method] = function(val) {
             this.setAttr(attr, val);
+            if (isTransform) {
+                this.cachedTransform = null;
+            }
         };
         // degrees
         constructor.prototype[method + DEG] = function(deg) {
-            this.setAttr(attr, Kinetic.Type._degToRad(deg));
+            this.setAttr(attr, Kinetic.Util._degToRad(deg));
+            if (isTransform) {
+                this.cachedTransform = null;
+            }
         };
     };
     Kinetic.Node.addGetter = function(constructor, attr, def) {
         var that = this,
-            method = GET + Kinetic.Type._capitalize(attr);
-            
+            method = GET + Kinetic.Util._capitalize(attr);
+           
         constructor.prototype[method] = function(arg) {
             var val = this.attrs[attr];
             if (val === undefined) {
                 val = def; 
             }
+
             return val;    
+        };
+    };
+    Kinetic.Node.addPointGetter = function(constructor, attr) {
+        var that = this,
+            baseMethod = GET + Kinetic.Util._capitalize(attr);
+            
+        constructor.prototype[baseMethod] = function(arg) {
+            var that = this;
+            return {
+                x: that[baseMethod + UPPER_X](),
+                y: that[baseMethod + UPPER_Y]()
+            };  
         };
     };
     Kinetic.Node.addRotationGetter = function(constructor, attr, def) {
         var that = this,
-            method = GET + Kinetic.Type._capitalize(attr);
+            method = GET + Kinetic.Util._capitalize(attr);
             
         // radians
         constructor.prototype[method] = function() {
@@ -3169,7 +2667,7 @@ var Kinetic = {};
             if (val === undefined) {
                 val = def; 
             }
-            return Kinetic.Type._radToDeg(val);
+            return Kinetic.Util._radToDeg(val);
         };
     };
     /**
@@ -3222,9 +2720,7 @@ var Kinetic = {};
         return no;
     };
     // add getters setters
-    Kinetic.Node.addGetterSetter(Kinetic.Node, 'x', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Node, 'y', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Node, 'opacity', 1);
+    Kinetic.Node.addGetterSetter(Kinetic.Node, 'x', 0, true);
 
     /**
      * set x position
@@ -3234,11 +2730,27 @@ var Kinetic = {};
      */
 
     /**
+     * get x position
+     * @name getX
+     * @methodOf Kinetic.Node.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Node, 'y', 0, true);
+
+    /**
      * set y position
      * @name setY
      * @methodOf Kinetic.Node.prototype
      * @param {Number} y
      */
+
+    /**
+     * get y position
+     * @name getY
+     * @methodOf Kinetic.Node.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Node, 'opacity', 1);
 
     /**
      * set opacity.  Opacity values range from 0 to 1.
@@ -3250,31 +2762,20 @@ var Kinetic = {};
      */
 
     /**
-     * get x position
-     * @name getX
-     * @methodOf Kinetic.Node.prototype
-     */
-
-    /**
-     * get y position
-     * @name getY
-     * @methodOf Kinetic.Node.prototype
-     */
-
-    /**
      * get opacity.
      * @name getOpacity
      * @methodOf Kinetic.Node.prototype
      */
 
     Kinetic.Node.addGetter(Kinetic.Node, 'name');
-    Kinetic.Node.addGetter(Kinetic.Node, 'id');
 
-    /**
+     /**
      * get name
      * @name getName
      * @methodOf Kinetic.Node.prototype
      */
+
+    Kinetic.Node.addGetter(Kinetic.Node, 'id');
 
     /**
      * get id
@@ -3282,7 +2783,7 @@ var Kinetic = {};
      * @methodOf Kinetic.Node.prototype
      */
 
-    Kinetic.Node.addRotationGetterSetter(Kinetic.Node, 'rotation', 0);
+    Kinetic.Node.addRotationGetterSetter(Kinetic.Node, 'rotation', 0, true);
 
     /**
      * set rotation in radians
@@ -3310,8 +2811,7 @@ var Kinetic = {};
      * @methodOf Kinetic.Node.prototype
      */
 
-    Kinetic.Node.addPointGetterSetter(Kinetic.Node, 'scale', {x:1,y:1});
-    Kinetic.Node.addPointGetterSetter(Kinetic.Node, 'offset', {x:0,y:0});
+    Kinetic.Node.addPointGetterSetter(Kinetic.Node, 'scale', 1, true);
 
     /**
      * set scale
@@ -3321,12 +2821,18 @@ var Kinetic = {};
      * @methodOf Kinetic.Node.prototype
      */
 
-    /**
-     * set offset.  A node's offset defines the position and rotation point
-     * @name setOffset
-     * @methodOf Kinetic.Node.prototype
+     /**
+     * set scale x
+     * @name setScaleX
      * @param {Number} x
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * set scale y
+     * @name setScaleY
      * @param {Number} y
+     * @methodOf Kinetic.Node.prototype
      */
 
     /**
@@ -3335,16 +2841,103 @@ var Kinetic = {};
      * @methodOf Kinetic.Node.prototype
      */
 
+     /**
+     * get scale x
+     * @name getScaleX
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * get scale y
+     * @name getScaleY
+     * @methodOf Kinetic.Node.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Node, 'skew', 0, true);
+
+    /**
+     * set skew
+     * @name setSkew
+     * @param {Number} x
+     * @param {Number} y
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * set skew x
+     * @name setSkewX
+     * @param {Number} x
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * set skew y
+     * @name setSkewY
+     * @param {Number} y
+     * @methodOf Kinetic.Node.prototype
+     */
+
+    /**
+     * get skew 
+     * @name getSkew
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * get skew x
+     * @name getSkewX
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * get skew y
+     * @name getSkewY
+     * @methodOf Kinetic.Node.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Node, 'offset', 0, true);
+
+    /**
+     * set offset.  A node's offset defines the position and rotation point
+     * @name setOffset
+     * @methodOf Kinetic.Node.prototype
+     * @param {Number} x
+     * @param {Number} y
+     */
+
+     /**
+     * set offset x
+     * @name setOffsetX
+     * @methodOf Kinetic.Node.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set offset y
+     * @name setOffsetY
+     * @methodOf Kinetic.Node.prototype
+     * @param {Number} y
+     */
+
     /**
      * get offset
      * @name getOffset
      * @methodOf Kinetic.Node.prototype
      */
 
+     /**
+     * get offset x
+     * @name getOffsetX
+     * @methodOf Kinetic.Node.prototype
+     */
+
+     /**
+     * get offset y
+     * @name getOffsetY
+     * @methodOf Kinetic.Node.prototype
+     */
+
     Kinetic.Node.addSetter(Kinetic.Node, 'width');
-    Kinetic.Node.addSetter(Kinetic.Node, 'height');
-    Kinetic.Node.addSetter(Kinetic.Node, 'listening');
-    Kinetic.Node.addSetter(Kinetic.Node, 'visible');
 
     /**
      * set width
@@ -3353,6 +2946,8 @@ var Kinetic = {};
      * @param {Number} width
      */
 
+    Kinetic.Node.addSetter(Kinetic.Node, 'height');
+
     /**
      * set height
      * @name setHeight
@@ -3360,12 +2955,16 @@ var Kinetic = {};
      * @param {Number} height
      */
 
+    Kinetic.Node.addSetter(Kinetic.Node, 'listening');
+
     /**
      * listen or don't listen to events
      * @name setListening
      * @methodOf Kinetic.Node.prototype
      * @param {Boolean} listening
      */
+
+    Kinetic.Node.addSetter(Kinetic.Node, 'visible');
 
     /**
      * set visible
@@ -3393,15 +2992,14 @@ var Kinetic = {};
 
 (function() {
     /**
-     * Stage constructor.  A stage is used to contain multiple layers and handle
-     * animations
+     * Animation constructor.  A stage is used to contain multiple layers and handle
      * @constructor
      * @param {Function} func function executed on each animation frame
-     * @param {Kinetic.Node} [node] node to be redrawn.&nbsp; Can be a layer or the stage.  Not specifying a node will result in no redraw.
+     * @param {Kinetic.Layer|Array} [layers] layer(s) to be redrawn.&nbsp; Can be a layer, an array of layers, or null.  Not specifying a node will result in no redraw.
      */
-    Kinetic.Animation = function(func, node) {
+    Kinetic.Animation = function(func, layers) {
         this.func = func;
-        this.node = node;
+        this.setLayers(layers);
         this.id = Kinetic.Animation.animIdCounter++;
         this.frame = {
             time: 0,
@@ -3413,6 +3011,64 @@ var Kinetic = {};
      * Animation methods
      */
     Kinetic.Animation.prototype = {
+        /**
+         * set layers to be redrawn on each animation frame
+         * @name setLayers
+         * @methodOf Kinetic.Animation.prototype
+         * @param {Kinetic.Layer|Array} [layers] layer(s) to be redrawn.&nbsp; Can be a layer, an array of layers, or null.  Not specifying a node will result in no redraw.
+         */
+        setLayers: function(layers) {
+            var lays = []; 
+            // if passing in no layers
+            if (!layers) {
+                lays = [];
+            }
+            // if passing in an array of Layers
+            else if (Kinetic.Util._isArray(layers)) {
+                lays = layers;
+            }
+            // if passing in a Layer
+            else {
+                lays = [layers];
+            }
+
+            this.layers = lays;
+        },
+        /**
+         * get layers
+         * @name getLayers
+         * @methodOf Kinetic.Animation.prototype
+         */
+        getLayers: function() {
+            return this.layers;
+        },
+        /**
+         * add layer.  Returns true if the layer was added, and false if it was not
+         * @name addLayer
+         * @methodOf Kinetic.Animation.prototype
+         * @param {Kinetic.Layer} layer
+         */
+        addLayer: function(layer) {
+            var layers = this.layers,
+                len, n;
+
+            if (layers) {
+                len = layers.length;
+
+                // don't add the layer if it already exists
+                for (n = 0; n < len; n++) {
+                    if (layers[n]._id === layer._id) {
+                        return false; 
+                    } 
+                } 
+            }
+            else {
+                this.layers = [];
+            }
+
+            this.layers.push(layer);
+            return true;
+        },
         /**
          * determine if animation is running or not.  returns true or false
          * @name isRunning
@@ -3457,10 +3113,6 @@ var Kinetic = {};
     Kinetic.Animation.animIdCounter = 0;
     Kinetic.Animation.animRunning = false;
 
-    Kinetic.Animation.fixedRequestAnimFrame = function(callback) {
-        window.setTimeout(callback, 1000 / 60);
-    };
-
     Kinetic.Animation._addAnimation = function(anim) {
         this.animations.push(anim);
         this._handleAnimation();
@@ -3476,7 +3128,9 @@ var Kinetic = {};
     };
 
     Kinetic.Animation._runFrames = function() {
-        var nodes = {}, animations = this.animations;
+        var layerHash = {}, 
+            animations = this.animations,
+            anim, layers, func, n, i, layersLen, layer, key;
         /*
          * loop through all animations and execute animation
          *  function.  if the animation object has specified node,
@@ -3488,20 +3142,29 @@ var Kinetic = {};
          * WARNING: don't cache animations.length because it could change while
          * the for loop is running, causing a JS error
          */
-        for(var n = 0; n < animations.length; n++) {
-            var anim = animations[n], node = anim.node, func = anim.func;
+        for(n = 0; n < animations.length; n++) {
+            anim = animations[n];
+            layers = anim.layers; 
+            func = anim.func;
+
             anim._updateFrameObject(new Date().getTime());
-            if(node && node._id !== undefined) {
-                nodes[node._id] = node;
+            layersLen = layers.length;
+
+            for (i=0; i<layersLen; i++) {
+                layer = layers[i]
+                if(layer._id !== undefined) {
+                    layerHash[layer._id] = layer;
+                }
             }
+
             // if animation object has a function, execute it
             if(func) {
-                func(anim.frame);
+                func.call(anim, anim.frame);
             }
         }
 
-        for(var key in nodes) {
-            nodes[key].draw();
+        for(key in layerHash) {
+            layerHash[key].draw();
         }
     };
     Kinetic.Animation._animationLoop = function() {
@@ -3524,21 +3187,453 @@ var Kinetic = {};
         }
     };
     RAF = (function() {
-        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || Kinetic.Animation.fixedRequestAnimFrame;
+        return window.requestAnimationFrame 
+            || window.webkitRequestAnimationFrame 
+            || window.mozRequestAnimationFrame 
+            || window.oRequestAnimationFrame 
+            || window.msRequestAnimationFrame 
+            || FRAF;
     })();
 
+    function FRAF(callback) {
+        window.setTimeout(callback, 1000 / 60);
+    }
+
     Kinetic.Animation.requestAnimFrame = function(callback) {
-        var raf = Kinetic.DD && Kinetic.DD.isDragging ? this.fixedRequestAnimFrame : RAF;
+        var raf = Kinetic.DD && Kinetic.DD.isDragging ? FRAF : RAF;
         raf(callback);
     };
     
     var moveTo = Kinetic.Node.prototype.moveTo;
     Kinetic.Node.prototype.moveTo = function(container) {
-    	moveTo.call(this, container);
+        moveTo.call(this, container);
     };
 
-})();
+    Kinetic.Layer.batchAnim = new Kinetic.Animation(function() {
+        if (this.getLayers().length === 0) {
+            this.stop();
+        }
+        this.setLayers([]);
+    });
 
+    /**
+     * get batch draw
+     * @name batchDraw
+     * @methodOf Kinetic.Layer.prototype
+     */
+    Kinetic.Layer.prototype.batchDraw = function() {
+        var batchAnim = Kinetic.Layer.batchAnim;
+        batchAnim.addLayer(this);  
+
+        if (!batchAnim.isRunning()) {
+            batchAnim.start(); 
+        } 
+    };
+})();
+(function() {
+    var blacklist = {
+        node: 1,
+        duration: 1,
+        easing: 1,
+        onFinish: 1,
+        yoyo: 1
+    },
+
+    PAUSED = 1,
+    PLAYING = 2,
+    REVERSING = 3;
+
+    function createTween(node, key, easing, end, duration, yoyo) {
+        var method = 'set' + Kinetic.Util._capitalize(key);
+        return new Tween(key, function(i) {
+            node[method](i);  
+        }, easing, node['get' + Kinetic.Util._capitalize(key)](), end, duration * 1000, yoyo);
+    }
+
+    Kinetic.Tween = function(config) {
+        var that = this,
+            node = config.node,
+            nodeId = node._id,
+            duration = config.duration || 1,
+            easing = config.easing || Kinetic.Easings.Linear,
+            yoyo = !!config.yoyo,
+            key, tween;
+
+        this.tweens = [];
+        this.node = node;
+        // event handlers
+        this.onFinish = config.onFinish;
+
+        this.anim = new Kinetic.Animation(function() {
+            that.onEnterFrame();
+        }, node.getLayer());
+
+        for (key in config) {
+            if (blacklist[key] === undefined) {
+                tween = createTween(node, key, easing, config[key], duration, yoyo); 
+                this.tweens.push(tween);
+                this._addListeners(tween);
+                Kinetic.Tween.add(nodeId, key, this);
+            }
+        }
+
+        this.reset();
+    };
+
+    Kinetic.Tween.tweens = {};
+
+    Kinetic.Tween.add = function(nodeId, prop, ktween) {
+        var key = nodeId + '-' + prop,
+            tween = Kinetic.Tween.tweens[key];
+
+        if (tween) {
+            tween._removeTween(prop);
+        }
+        
+        Kinetic.Tween.tweens[key] = ktween;   
+    };
+
+
+    Kinetic.Tween.prototype = {
+        _iterate: function(func) {
+            var tweens = this.tweens,
+                n = 0,
+                tween = tweens[n];
+
+            while(tween) {
+                func(tween, n++);
+                tween = tweens[n];
+            }  
+        },
+        _addListeners: function(tween) {
+            var that = this;
+
+            // start listeners
+            tween.onPlay = function() {
+                that.anim.start();
+            };
+            tween.onReverse = function() {
+                that.anim.start();
+            };
+
+            // stop listeners
+            tween.onPause = function() {
+                that.anim.stop();
+            };
+            tween.onFinish = function() {
+                if (that.onFinish) {
+                    that.onFinish();
+                }
+            };
+        },
+        play: function() {
+            this._iterate(function(tween) {
+                tween.play();
+            });
+        },
+        reverse: function() {
+            this._iterate(function(tween) {
+                tween.reverse();
+            });
+        },
+        reset: function() {
+            this._iterate(function(tween) {
+                tween.reset();
+            });
+            this.node.getLayer().draw();
+        },
+        seek: function(t) {
+            this._iterate(function(tween) {
+                tween.seek(t * 1000);
+            });
+            this.node.getLayer().draw();
+        },
+        pause: function() {
+            this._iterate(function(tween) {
+                tween.pause();
+            });
+        },
+        finish: function() {
+            this._iterate(function(tween) {
+                tween.finish();
+            });
+            this.node.getLayer().draw();
+        },
+        onEnterFrame: function() {
+            this._iterate(function(tween) {
+                tween.onEnterFrame();
+            });
+        },
+        destroy: function() {
+
+        },
+        _removeTween: function(prop) {
+            var that = this;
+            this._iterate(function(tween, n) {
+                if (tween.prop === prop) {
+                    that.tweens.splice(n, 1);
+                }
+            });
+        }
+    };
+
+    var Tween = function(prop, propFunc, func, begin, finish, duration, yoyo) {
+        this.prop = prop;
+        this.propFunc = propFunc;
+        this.begin = begin;
+        this._pos = begin;
+        this.duration = duration;
+        this._change = 0;
+        this.prevPos = 0;
+        this.yoyo = yoyo;
+        this._time = 0;
+        this._position = 0;
+        this._startTime = 0;
+        this._finish = 0;
+        this.func = func;
+        this._change = finish - this.begin;
+        this.pause();
+    };
+    /*
+     * Tween methods
+     */
+    Tween.prototype = {
+        fire: function(str) {
+            var handler = this[str];
+            if (handler) {
+                handler();
+            }
+        },
+        setTime: function(t) {
+            if(t > this.duration) {
+                if(this.yoyo) {
+                    this._time = this.duration;
+                    this.reverse();
+                }
+                else {
+                    this.finish();
+                }
+            }
+            else if(t < 0) {
+                if(this.yoyo) {
+                    this._time = 0;
+                    this.play();
+                }
+                else {
+                    this.reset();
+                }
+            }
+            else {
+                this._time = t;
+                this.update();
+            }
+        },
+        getTime: function() {
+            return this._time;
+        },
+        setPosition: function(p) {
+            this.prevPos = this._pos;
+            this.propFunc(p);
+            this._pos = p;
+        },
+        getPosition: function(t) {
+            if(t === undefined) {
+                t = this._time;
+            }
+            return this.func(t, this.begin, this._change, this.duration);
+        },
+        play: function() {
+            this.state = PLAYING;
+            this._startTime = this.getTimer() - this._time;
+            this.onEnterFrame();
+            this.fire('onPlay');
+        },
+        reverse: function() {
+            this.state = REVERSING;
+            this._time = this.duration - this._time;
+            this._startTime = this.getTimer() - this._time;
+            this.onEnterFrame();
+            this.fire('onReverse');
+        },
+        seek: function(t) {
+            this.pause();
+            this._time = t;
+            this.update();
+            this.fire('onSeek');
+        },
+        reset: function() {
+            this.pause();
+            this._time = 0;
+            this.update();
+            this.fire('onReset');
+        },
+        finish: function() {
+            this.pause();
+            this._time = this.duration;
+            this.update();
+            this.fire('onFinish');
+        },
+        update: function() {
+            this.setPosition(this.getPosition(this._time));
+        },
+        onEnterFrame: function() {
+            var t = this.getTimer() - this._startTime;
+            if(this.state === PLAYING) {
+                this.setTime(t);
+            }
+            else if (this.state === REVERSING) {
+                this.setTime(this.duration - t);
+            }
+        },
+        pause: function() {
+            this.state = PAUSED; 
+            this.fire('onPause');
+        },
+        getTimer: function() {
+            return new Date().getTime();
+        }
+    };
+
+    /*
+    * These eases were ported from an Adobe Flash tweening library to JavaScript
+    * by Xaric
+    */
+    Kinetic.Easings = {
+        'BackEaseIn': function(t, b, c, d, a, p) {
+            var s = 1.70158;
+            return c * (t /= d) * t * ((s + 1) * t - s) + b;
+        },
+        'BackEaseOut': function(t, b, c, d, a, p) {
+            var s = 1.70158;
+            return c * (( t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+        },
+        'BackEaseInOut': function(t, b, c, d, a, p) {
+            var s = 1.70158;
+            if((t /= d / 2) < 1) {
+                return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
+            }
+            return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
+        },
+        'ElasticEaseIn': function(t, b, c, d, a, p) {
+            // added s = 0
+            var s = 0;
+            if(t === 0) {
+                return b;
+            }
+            if((t /= d) == 1) {
+                return b + c;
+            }
+            if(!p) {
+                p = d * 0.3;
+            }
+            if(!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            }
+            else {
+                s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+        },
+        'ElasticEaseOut': function(t, b, c, d, a, p) {
+            // added s = 0
+            var s = 0;
+            if(t === 0) {
+                return b;
+            }
+            if((t /= d) == 1) {
+                return b + c;
+            }
+            if(!p) {
+                p = d * 0.3;
+            }
+            if(!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            }
+            else {
+                s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            return (a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b);
+        },
+        'ElasticEaseInOut': function(t, b, c, d, a, p) {
+            // added s = 0
+            var s = 0;
+            if(t === 0) {
+                return b;
+            }
+            if((t /= d / 2) == 2) {
+                return b + c;
+            }
+            if(!p) {
+                p = d * (0.3 * 1.5);
+            }
+            if(!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            }
+            else {
+                s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            if(t < 1) {
+                return -0.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+            }
+            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * 0.5 + c + b;
+        },
+        'BounceEaseOut': function(t, b, c, d) {
+            if((t /= d) < (1 / 2.75)) {
+                return c * (7.5625 * t * t) + b;
+            }
+            else if(t < (2 / 2.75)) {
+                return c * (7.5625 * (t -= (1.5 / 2.75)) * t + 0.75) + b;
+            }
+            else if(t < (2.5 / 2.75)) {
+                return c * (7.5625 * (t -= (2.25 / 2.75)) * t + 0.9375) + b;
+            }
+            else {
+                return c * (7.5625 * (t -= (2.625 / 2.75)) * t + 0.984375) + b;
+            }
+        },
+        'BounceEaseIn': function(t, b, c, d) {
+            return c - Kinetic.Easings.BounceEaseOut(d - t, 0, c, d) + b;
+        },
+        'BounceEaseInOut': function(t, b, c, d) {
+            if(t < d / 2) {
+                return Kinetic.Easings.BounceEaseIn(t * 2, 0, c, d) * 0.5 + b;
+            }
+            else {
+                return Kinetic.Easings.BounceEaseOut(t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
+            }
+        },
+        'EaseIn': function(t, b, c, d) {
+            return c * (t /= d) * t + b;
+        },
+        'EaseOut': function(t, b, c, d) {
+            return -c * (t /= d) * (t - 2) + b;
+        },
+        'EaseInOut': function(t, b, c, d) {
+            if((t /= d / 2) < 1) {
+                return c / 2 * t * t + b;
+            }
+            return -c / 2 * ((--t) * (t - 2) - 1) + b;
+        },
+        'StrongEaseIn': function(t, b, c, d) {
+            return c * (t /= d) * t * t * t * t + b;
+        },
+        'StrongEaseOut': function(t, b, c, d) {
+            return c * (( t = t / d - 1) * t * t * t * t + 1) + b;
+        },
+        'StrongEaseInOut': function(t, b, c, d) {
+            if((t /= d / 2) < 1) {
+                return c / 2 * t * t * t * t * t + b;
+            }
+            return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
+        },
+        'Linear': function(t, b, c, d) {
+            return c * t / d + b;
+        }
+    };
+})();
 (function() {
     Kinetic.DD = {
         // properties
@@ -3628,8 +3723,7 @@ var Kinetic = {};
             layer = this.getLayer(), 
             pos = stage.getPointerPosition(),
             m = this.getTransform().getTranslation(), 
-            ap = this.getAbsolutePosition(), 
-            animNode = layer || this;
+            ap = this.getAbsolutePosition();
                 
         if(pos) {
             if (dd.node) {
@@ -3639,7 +3733,7 @@ var Kinetic = {};
             dd.node = this;
             dd.offset.x = pos.x - ap.x;
             dd.offset.y = pos.y - ap.y;
-            dd.anim.node = animNode;
+            dd.anim.setLayers(layer || this.getLayers());
             dd.anim.start();
         }
     };
@@ -3784,171 +3878,6 @@ var Kinetic = {};
 })();
 
 (function() {
-    function createTween(obj, key, easingFunc, start, end, duration) {
-        var tween = new Kinetic.Tween(function(i) {
-           obj[key] = i;
-        }, easingFunc, start, end, duration);
-        return tween;
-    }
-    /**
-     * Transition constructor.  The transitionTo() Node method
-     *  returns a reference to the transition object which you can use
-     *  to stop, resume, or restart the transition
-     * @constructor
-     */
-    Kinetic.Transition = function(node, config) {
-        var that = this,
-            easing = config.easing || 'linear',
-            easingFunc = Kinetic.Tweens[easing],
-            duration = config.duration || 0,
-            configVal = null,
-            lastTweenIndex = 0,
-            obj = {}, 
-            x = 0, 
-            y = 0; 
-
-        this.tweens = [];
-        this.attrs = {};
-        this.node = node;
-
-        for (var key in config) {
-            if(key !== 'duration' && key !== 'easing' && key !== 'callback') {
-                configVal = config[key];   
-                obj = node.getAttr(key); 
-                if(Kinetic.Type._isObject(obj)) {
-                    configValX = configVal.x; 
-                    configValY = configVal.y;
-
-                    this.attrs[key] = {};
-                    if (configValX !== undefined) {
-                        that.tweens.push(createTween(this.attrs[key], 'x', easingFunc, obj.x, configValX, duration));
-                    }
-                    if (configValY !== undefined) { 
-                        that.tweens.push(createTween(this.attrs[key], 'y', easingFunc, obj.y, configValY, duration));
-                    } 
-                }
-                else {
-                    that.tweens.push(createTween(this.attrs, key, easingFunc, node.getAttr(key), configVal, duration));
-                } 
-            }
-        }
-
-        lastTweenIndex = this.tweens.length - 1;
-
-        // map first tween event to transition event
-        this.tweens[lastTweenIndex].onStarted = function() {
-
-        };
-        this.tweens[lastTweenIndex].onStopped = function() {
-            node.transAnim.stop();
-        };
-        this.tweens[lastTweenIndex].onResumed = function() {
-            node.transAnim.start();
-        };
-        this.tweens[lastTweenIndex].onLooped = function() {
-
-        };
-        this.tweens[lastTweenIndex].onChanged = function() {
-
-        };
-        this.tweens[lastTweenIndex].onFinished = function() {
-            var newAttrs = {};
-            // create new attr obj
-            for(var key in config) {
-                if(key !== 'duration' && key !== 'easing' && key !== 'callback') {
-                    newAttrs[key] = config[key];
-                }
-            }
-            node.transAnim.stop();
-            node.setAttrs(newAttrs);
-            if(config.callback) {
-                config.callback.call(node);
-            }
-        };
-    };
-    /*
-     * Transition methods
-     */
-    Kinetic.Transition.prototype = {
-        /**
-         * start transition
-         * @name start
-         * @methodOf Kinetic.Transition.prototype
-         */
-        start: function() {
-            for(var n = 0; n < this.tweens.length; n++) {
-                this.tweens[n].start();
-            }
-        },
-        /**
-         * stop transition
-         * @name stop
-         * @methodOf Kinetic.Transition.prototype
-         */
-        stop: function() {
-            for(var n = 0; n < this.tweens.length; n++) {
-                this.tweens[n].stop();
-            }
-        },
-        /**
-         * resume transition
-         * @name resume
-         * @methodOf Kinetic.Transition.prototype
-         */
-        resume: function() {
-            for(var n = 0; n < this.tweens.length; n++) {
-                this.tweens[n].resume();
-            }
-        },
-        _onEnterFrame: function() {
-            for(var n = 0; n < this.tweens.length; n++) {
-                this.tweens[n].onEnterFrame();
-            }
-            // now that the temp attrs object has been updated,
-            // set the node attrs
-            this.node.setAttrs(this.attrs);
-        },
-        _add: function(tween) {
-            this.tweens.push(tween);
-        }
-    };
-
-    /**
-     * transition node to another state.  Any property that can accept a real
-     *  number can be transitioned, including x, y, rotation, opacity, strokeWidth,
-     *  radius, scale.x, scale.y, offset.x, offset.y, etc.
-     * @name transitionTo
-     * @methodOf Kinetic.Node.prototype
-     * @param {Object} config
-     * @config {Number} duration duration that the transition runs in seconds
-     * @config {String} [easing] easing function.  can be linear, ease-in, ease-out, ease-in-out,
-     *  back-ease-in, back-ease-out, back-ease-in-out, elastic-ease-in, elastic-ease-out,
-     *  elastic-ease-in-out, bounce-ease-out, bounce-ease-in, bounce-ease-in-out,
-     *  strong-ease-in, strong-ease-out, or strong-ease-in-out
-     *  linear is the default
-     * @config {Function} [callback] callback function to be executed when
-     *  transition completes
-     */
-    Kinetic.Node.prototype.transitionTo = function(config) {
-        var that = this, trans = new Kinetic.Transition(this, config);
-
-        if(!this.transAnim) {
-            this.transAnim = new Kinetic.Animation();
-        }
-        this.transAnim.func = function() {
-            trans._onEnterFrame();
-        };
-        this.transAnim.node = this.nodeType === 'Stage' ? this : this.getLayer();
-
-        // auto start
-        trans.start();
-        this.transAnim.start();
-        this.trans = trans;
-        return trans;
-    };
-})();
-
-(function() {
     /**
      * Container constructor.&nbsp; Containers are used to contain nodes or other containers
      * @constructor
@@ -3963,25 +3892,21 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
      * @param {Function} [config.clipFunc] clipping function
 
      */
-    Kinetic.Container = function(config) {
-        this._containerInit(config);
-    };
-
-    Kinetic.Container.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Container, {
         _containerInit: function(config) {
             this.children = [];
             Kinetic.Node.call(this, config);
@@ -4143,7 +4068,7 @@ var Kinetic = {};
          * @param {Object} point
          */
         getIntersections: function() {
-            var pos = Kinetic.Type._getXY(Array.prototype.slice.call(arguments));
+            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments));
             var arr = [];
             var shapes = this.get('Shape');
 
@@ -4169,8 +4094,7 @@ var Kinetic = {};
         drawScene: function(canvas) {
             var layer = this.getLayer(),
                 clip = !!this.getClipFunc(),
-                stage = this.getStage(),
-                children, len;
+                children, n, len;
                 
             if (!canvas && layer) {
                 canvas = layer.getCanvas(); 
@@ -4184,7 +4108,7 @@ var Kinetic = {};
                 children = this.children; 
                 len = children.length;
                 
-                for(var n = 0; n < len; n++) {
+                for(n = 0; n < len; n++) {
                     children[n].drawScene(canvas);
                 }
                 
@@ -4217,9 +4141,9 @@ var Kinetic = {};
                 }
             }
         }
-    };
+    });
 
-    Kinetic.Global.extend(Kinetic.Container, Kinetic.Node);
+    Kinetic.Util.extend(Kinetic.Container, Kinetic.Node);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Container, 'clipFunc');
@@ -4239,72 +4163,6 @@ var Kinetic = {};
 })();
 
 (function() {
-    /**
-     * Shape constructor.  Shapes are primitive objects such as rectangles,
-     *  circles, text, lines, etc.
-     * @constructor
-     * @augments Kinetic.Node
-     * @param {Object} config
-     * @param {String} [config.fill] fill color
-     * @param {Image} [config.fillPatternImage] fill pattern image
-     * @param {Number} [config.fillPatternX]
-     * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
-     * @param {Number} [config.fillPatternRotation]
-     * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
-     * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
-     * @param {Number} [config.fillRadialGradientStartRadius]
-     * @param {Number} [config.fillRadialGradientEndRadius]
-     * @param {Array} [config.fillRadialGradientColorStops] array of color stops
-     * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
-     * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
-     * @param {String} [config.stroke] stroke color
-     * @param {Number} [config.strokeWidth] stroke width
-     * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
-     * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
-     * @param {String} [config.lineJoin] can be miter, round, or bevel.  The default
-     *  is miter
-     * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
-     *  is butt
-     * @param {String} [config.shadowColor]
-     * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
-     * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
-     *  between 0 and 1
-     * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
-     * @param {Array} [config.dashArray]
-     * @param {Boolean} [config.dashArrayEnabled] flag which enables or disables the dashArray.  The default value is true
-     * @param {Number} [config.x]
-     * @param {Number} [config.y]
-     * @param {Number} [config.width]
-     * @param {Number} [config.height]
-     * @param {Boolean} [config.visible]
-     * @param {Boolean} [config.listening] whether or not the node is listening for events
-     * @param {String} [config.id] unique id
-     * @param {String} [config.name] non-unique name
-     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
-     * @param {Number} [config.rotation] rotation in radians
-     * @param {Number} [config.rotationDeg] rotation in degrees
-     * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
-     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
-     *  the entire stage by dragging any portion of the stage
-     * @param {Function} [config.dragBoundFunc]
-     */
-    Kinetic.Shape = function(config) {
-        this._initShape(config);
-    };
     function _fillFunc(context) {
         context.fill();
     }
@@ -4318,7 +4176,7 @@ var Kinetic = {};
         context.stroke();
     }
 
-    Kinetic.Shape.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Shape, {
         _initShape: function(config) {
             this.nodeType = 'Shape';
             this._fillFunc = _fillFunc;
@@ -4331,7 +4189,7 @@ var Kinetic = {};
             var key;
 
             while(true) {
-                key = Kinetic.Type._getRandomColorKey();
+                key = Kinetic.Util.getRandomColor();
                 if(key && !( key in shapes)) {
                     break;
                 }
@@ -4366,15 +4224,15 @@ var Kinetic = {};
          * @methodOf Kinetic.Shape.prototype
          */
         hasShadow: function() {
-            return !!(this.getShadowColor() || this.getShadowBlur() || this.getShadowOffset());
+            return !!(this.getShadowColor() || this.getShadowBlur() || this.getShadowOffsetX() || this.getShadowOffsetY());
         },
         /**
-         * returns whether or not a fill will be rendered
+         * returns whether or not a fill is present
          * @name hasFill
          * @methodOf Kinetic.Shape.prototype
          */
         hasFill: function() {
-            return !!(this.getFill() || this.getFillPatternImage() || this.getFillLinearGradientStartPoint() || this.getFillRadialGradientStartPoint());
+            return !!(this.getFill() || this.getFillPatternImage() || this.getFillLinearGradientColorStops() || this.getFillRadialGradientColorStops());
         },
         _get: function(selector) {
             return this.nodeType === selector || this.shapeType === selector ? [this] : [];
@@ -4391,7 +4249,7 @@ var Kinetic = {};
          *  element is the y component
          */
         intersects: function() {
-            var pos = Kinetic.Type._getXY(Array.prototype.slice.call(arguments));
+            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments));
             var stage = this.getStage();
             var hitCanvas = stage.hitCanvas;
             hitCanvas.clear();
@@ -4472,8 +4330,7 @@ var Kinetic = {};
             delete Kinetic.Global.shapes[this.colorKey];
         },
         drawScene: function(canvas) {
-            var attrs = this.getAttrs(), 
-                drawFunc = attrs.drawFunc, 
+            var drawFunc = this.getDrawFunc(), 
                 canvas = canvas || this.getLayer().getCanvas(), 
                 context = canvas.getContext();
 
@@ -4509,42 +4366,78 @@ var Kinetic = {};
                 this.setDrawHitFunc(this.drawHitFunc);
             }
         }
-    };
-    Kinetic.Global.extend(Kinetic.Shape, Kinetic.Node);
+    });
+    Kinetic.Util.extend(Kinetic.Shape, Kinetic.Node);
 
     // add getters and setters
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'stroke');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'lineJoin');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'lineCap');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeWidth');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'drawFunc');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'drawHitFunc');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'dashArray');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowColor');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowBlur');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowOpacity');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternImage');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fill');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternX');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternY');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillLinearGradientColorStops');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientStartRadius');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientEndRadius');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientColorStops');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternRepeat');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillEnabled', true);
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeEnabled', true);
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowEnabled', true);
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'dashArrayEnabled', true);
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPriority', 'color');
-    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeScaleEnabled', true);
+    Kinetic.Node.addColorGetterSetter(Kinetic.Shape, 'stroke');
 
     /**
      * set stroke color
      * @name setStroke
      * @methodOf Kinetic.Shape.prototype
-     * @param {String} stroke
+     * @param {String} color
      */
+
+     /**
+     * set stroke color with an object literal
+     * @name setStrokeRGB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Obect} color requires an object literal containing an r, g, and b component
+     */
+
+     /**
+     * set stroke color red component
+     * @name setStrokeR
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} red
+     */
+
+     /**
+     * set stroke color green component
+     * @name setStrokeG
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} green
+     */
+
+     /**
+     * set stroke color blue component
+     * @name setStrokeB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} blue
+     */
+
+     /**
+     * get stroke color
+     * @name getStroke
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get stroke color as an object literal
+     * @name getStrokeRGB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get stroke color red component
+     * @name getStrokeR
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get stroke color green component
+     * @name getStrokeG
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get stroke color blue component
+     * @name getStrokeB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'lineJoin');
 
     /**
      * set line join
@@ -4554,12 +4447,29 @@ var Kinetic = {};
      *  default is miter
      */
 
+     /**
+     * get line join
+     * @name getLineJoin
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'lineCap');
+
     /**
      * set line cap.  Can be butt, round, or square
      * @name setLineCap
      * @methodOf Kinetic.Shape.prototype
      * @param {String} lineCap
      */
+
+     /**
+     * get line cap
+     * @name getLineCap
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeWidth');
 
     /**
      * set stroke width
@@ -4568,6 +4478,14 @@ var Kinetic = {};
      * @param {Number} strokeWidth
      */
 
+     /**
+     * get stroke width
+     * @name getStrokeWidth
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'drawFunc');
+
     /**
      * set draw function
      * @name setDrawFunc
@@ -4575,12 +4493,28 @@ var Kinetic = {};
      * @param {Function} drawFunc drawing function
      */
 
+     /**
+     * get draw function
+     * @name getDrawFunc
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'drawHitFunc');
+
     /**
      * set draw hit function used for hit detection
      * @name setDrawHitFunc
      * @methodOf Kinetic.Shape.prototype
      * @param {Function} drawHitFunc drawing function used for hit detection
      */
+
+     /**
+     * get draw hit function
+     * @name getDrawHitFunc
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'dashArray');
 
     /**
      * set dash array.
@@ -4595,12 +4529,80 @@ var Kinetic = {};
      *  apart
      */
 
+     /**
+     * get dash array
+     * @name getDashArray
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addColorGetterSetter(Kinetic.Shape, 'shadowColor');
+
     /**
      * set shadow color
      * @name setShadowColor
      * @methodOf Kinetic.Shape.prototype
      * @param {String} color
      */
+
+     /**
+     * set shadow color with an object literal
+     * @name setShadowColorRGB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Obect} color requires an object literal containing an r, g, and b component
+     */
+
+     /**
+     * set shadow color red component
+     * @name setShadowColorR
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} red
+     */
+
+     /**
+     * set shadow color green component
+     * @name setShadowColorG
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} green
+     */
+
+     /**
+     * set shadow color blue component
+     * @name setShadowColorB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} blue
+     */
+
+     /**
+     * get shadow color
+     * @name getShadowColor
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow color as an object literal
+     * @name getShadowColorRGB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow color red component
+     * @name getShadowColorR
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow color green component
+     * @name getShadowColorG
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow color blue component
+     * @name getShadowColorB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowBlur');
 
     /**
      * set shadow blur
@@ -4609,12 +4611,28 @@ var Kinetic = {};
      * @param {Number} blur
      */
 
+     /**
+     * get shadow blur
+     * @name getShadowBlur
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowOpacity');
+
     /**
      * set shadow opacity
      * @name setShadowOpacity
      * @methodOf Kinetic.Shape.prototype
      * @param {Number} opacity must be a value between 0 and 1
      */
+
+     /**
+     * get shadow opacity
+     * @name getShadowOpacity
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternImage');
 
     /**
      * set fill pattern image
@@ -4623,12 +4641,80 @@ var Kinetic = {};
      * @param {Image} image object
      */
 
+     /**
+     * get fill pattern image
+     * @name getFillPatternImage
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addColorGetterSetter(Kinetic.Shape, 'fill');
+
     /**
      * set fill color
      * @name setFill
      * @methodOf Kinetic.Shape.prototype
      * @param {String} color
      */
+
+     /**
+     * set fill color with an object literal
+     * @name setFillRGB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Obect} color requires an object literal containing an r, g, and b component
+     */
+
+     /**
+     * set fill color red component
+     * @name setFillR
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} red
+     */
+
+     /**
+     * set fill color green component
+     * @name setFillG
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} green
+     */
+
+     /**
+     * set fill color blue component
+     * @name setFillB
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Integer} blue
+     */
+
+     /**
+     * get fill color
+     * @name getFill
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill color as an object literal
+     * @name getFillRGB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill color red component
+     * @name getFillR
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill color green component
+     * @name getFillG
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill color blue component
+     * @name getFillB
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternX');
 
     /**
      * set fill pattern x
@@ -4637,12 +4723,28 @@ var Kinetic = {};
      * @param {Number} x
      */
 
+     /**
+     * get fill pattern x
+     * @name getFillPatternX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternY');
+
     /**
      * set fill pattern y
      * @name setFillPatternY
      * @methodOf Kinetic.Shape.prototype
      * @param {Number} y
      */
+
+     /**
+     * get fill pattern y
+     * @name getFillPatternY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillLinearGradientColorStops');
 
     /**
      * set fill linear gradient color stops
@@ -4651,12 +4753,29 @@ var Kinetic = {};
      * @param {Array} colorStops
      */
 
+     /**
+     * get fill linear gradient color stops
+     * @name getFillLinearGradientColorStops
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Array} colorStops
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientStartRadius');
+
     /**
      * set fill radial gradient start radius
      * @name setFillRadialGradientStartRadius
      * @methodOf Kinetic.Shape.prototype
      * @param {Number} radius
      */
+
+     /**
+     * get fill radial gradient start radius
+     * @name getFillRadialGradientStartRadius
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientEndRadius');
 
     /**
      * set fill radial gradient end radius
@@ -4665,6 +4784,14 @@ var Kinetic = {};
      * @param {Number} radius
      */
 
+     /**
+     * get fill radial gradient end radius
+     * @name getFillRadialGradientEndRadius
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillRadialGradientColorStops');
+
     /**
      * set fill radial gradient color stops
      * @name setFillRadialGradientColorStops
@@ -4672,12 +4799,88 @@ var Kinetic = {};
      * @param {Number} colorStops
      */
 
+     /**
+     * get fill radial gradient color stops
+     * @name getFillRadialGradientColorStops
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPatternRepeat');
+
     /**
      * set fill pattern repeat
      * @name setFillPatternRepeat
      * @methodOf Kinetic.Shape.prototype
      * @param {Number} repeat can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
      */
+
+     /**
+     * get fill pattern repeat
+     * @name getFillPatternRepeat
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillEnabled', true);
+
+    /**
+     * set fill enabled
+     * @name setFillEnabled
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Boolean} enabled
+     */
+
+     /**
+     * get fill enabled
+     * @name getFillEnabled
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeEnabled', true);
+
+    /**
+     * set stroke enabled
+     * @name setStrokeEnabled
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Boolean} enabled
+     */
+
+     /**
+     * get stroke enabled
+     * @name getStrokeEnabled
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'shadowEnabled', true);
+
+    /**
+     * set shadow enabled
+     * @name setShadowEnabled
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Boolean} enabled
+     */
+
+     /**
+     * get shadow enabled
+     * @name getShadowEnabled
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'dashArrayEnabled', true);
+
+    /**
+     * set dash array enabled
+     * @name setDashArrayEnabled
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Boolean} enabled
+     */
+
+     /**
+     * get dash array enabled
+     * @name getDashArrayEnabled
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'fillPriority', 'color');
 
     /**
      * set fill priority
@@ -4687,134 +4890,28 @@ var Kinetic = {};
      *  The default is color.
      */
 
-    /**
-     * get stroke color
-     * @name getStroke
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get line join
-     * @name getLineJoin
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get line cap
-     * @name getLineCap
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get stroke width
-     * @name getStrokeWidth
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get draw function
-     * @name getDrawFunc
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get draw hit function
-     * @name getDrawHitFunc
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get dash array
-     * @name getDashArray
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get shadow color
-     * @name getShadowColor
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get shadow blur
-     * @name getShadowBlur
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get shadow opacity
-     * @name getShadowOpacity
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill pattern image
-     * @name getFillPatternImage
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill color
-     * @name getFill
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill pattern x
-     * @name getFillPatternX
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill pattern y
-     * @name getFillPatternY
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill linear gradient color stops
-     * @name getFillLinearGradientColorStops
-     * @methodOf Kinetic.Shape.prototype
-     * @param {Array} colorStops
-     */
-
-    /**
-     * get fill radial gradient start radius
-     * @name getFillRadialGradientStartRadius
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill radial gradient end radius
-     * @name getFillRadialGradientEndRadius
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill radial gradient color stops
-     * @name getFillRadialGradientColorStops
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill pattern repeat
-     * @name getFillPatternRepeat
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
+     /**
      * get fill priority
      * @name getFillPriority
      * @methodOf Kinetic.Shape.prototype
      */
 
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillPatternOffset');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillPatternScale');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillLinearGradientStartPoint');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillLinearGradientEndPoint');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillRadialGradientStartPoint');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillRadialGradientEndPoint');
-    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'shadowOffset');
+    Kinetic.Node.addGetterSetter(Kinetic.Shape, 'strokeScaleEnabled', true);
+
+     /**
+     * set stroke scale enabled
+     * @name setStrokeScaleEnabled
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Boolean} enabled
+     */
+
+     /**
+     * get stroke scale enabled
+     * @name getStrokeScaleEnabled
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillPatternOffset', 0);
 
     /**
      * set fill pattern offset
@@ -4823,12 +4920,80 @@ var Kinetic = {};
      * @param {Number|Array|Object} offset
      */
 
+     /**
+     * set fill pattern offset x
+     * @name setFillPatternOffsetX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill pattern offset y
+     * @name setFillPatternOffsetY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill pattern offset
+     * @name getFillPatternOffset
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill pattern offset x
+     * @name getFillPatternOffsetX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill pattern offset y
+     * @name getFillPatternOffsetY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillPatternScale', 1);
+
     /**
      * set fill pattern scale
      * @name setFillPatternScale
      * @methodOf Kinetic.Shape.prototype
      * @param {Number|Array|Object} scale
      */
+
+     /**
+     * set fill pattern scale x
+     * @name setFillPatternScaleX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill pattern scale y
+     * @name setFillPatternScaleY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill pattern scale
+     * @name getFillPatternScale
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill pattern scale x
+     * @name getFillPatternScaleX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill pattern scale y
+     * @name getFillPatternScaleY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillLinearGradientStartPoint', 0);
 
     /**
      * set fill linear gradient start point
@@ -4837,12 +5002,80 @@ var Kinetic = {};
      * @param {Number|Array|Object} startPoint
      */
 
+     /**
+     * set fill linear gradient start point x
+     * @name setFillLinearGradientStartPointX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill linear gradient start point y
+     * @name setFillLinearGradientStartPointY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill linear gradient start point
+     * @name getFillLinearGradientStartPoint
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill linear gradient start point x
+     * @name getFillLinearGradientStartPointX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill linear gradient start point y
+     * @name getFillLinearGradientStartPointY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillLinearGradientEndPoint', 0);
+
     /**
      * set fill linear gradient end point
      * @name setFillLinearGradientEndPoint
      * @methodOf Kinetic.Shape.prototype
      * @param {Number|Array|Object} endPoint
      */
+
+     /**
+     * set fill linear gradient end point x
+     * @name setFillLinearGradientEndPointX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill linear gradient end point y
+     * @name setFillLinearGradientEndPointY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill linear gradient end point
+     * @name getFillLinearGradientEndPoint
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill linear gradient end point x
+     * @name getFillLinearGradientEndPointX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill linear gradient end point y
+     * @name getFillLinearGradientEndPointY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillRadialGradientStartPoint', 0);
 
     /**
      * set fill radial gradient start point
@@ -4851,12 +5084,80 @@ var Kinetic = {};
      * @param {Number|Array|Object} startPoint
      */
 
+     /**
+     * set fill radial gradient start point x
+     * @name setFillRadialGradientStartPointX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill radial gradient start point y
+     * @name setFillRadialGradientStartPointY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill radial gradient start point
+     * @name getFillRadialGradientStartPoint
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill radial gradient start point x
+     * @name getFillRadialGradientStartPointX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill radial gradient start point y
+     * @name getFillRadialGradientStartPointY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'fillRadialGradientEndPoint', 0);
+
     /**
      * set fill radial gradient end point
      * @name setFillRadialGradientEndPoint
      * @methodOf Kinetic.Shape.prototype
      * @param {Number|Array|Object} endPoint
      */
+
+     /**
+     * set fill radial gradient end point x
+     * @name setFillRadialGradientEndPointX
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
+     */
+
+     /**
+     * set fill radial gradient end point y
+     * @name setFillRadialGradientEndPointY
+     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
+     */
+
+     /**
+     * get fill radial gradient end point
+     * @name getFillRadialGradientEndPoint
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill radial gradient end point x
+     * @name getFillRadialGradientEndPointX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get fill radial gradient end point y
+     * @name getFillRadialGradientEndPointY
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+    Kinetic.Node.addPointGetterSetter(Kinetic.Shape, 'shadowOffset', 0);
 
     /**
      * set shadow offset
@@ -4865,45 +5166,35 @@ var Kinetic = {};
      * @param {Number|Array|Object} offset
      */
 
-    /**
-     * get fill pattern offset
-     * @name getFillPatternOffset
+     /**
+     * set shadow offset x
+     * @name setShadowOffsetX
      * @methodOf Kinetic.Shape.prototype
+     * @param {Number} x
      */
 
-    /**
-     * get fill pattern scale
-     * @name getFillPatternScale
+     /**
+     * set shadow offset y
+     * @name setShadowOffsetY
      * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill linear gradient start point
-     * @name getFillLinearGradientStartPoint
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill linear gradient end point
-     * @name getFillLinearGradientEndPoint
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill radial gradient start point
-     * @name getFillRadialGradientStartPoint
-     * @methodOf Kinetic.Shape.prototype
-     */
-
-    /**
-     * get fill radial gradient end point
-     * @name getFillRadialGradientEndPoint
-     * @methodOf Kinetic.Shape.prototype
+     * @param {Number} y
      */
 
     /**
      * get shadow offset
      * @name getShadowOffset
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow offset x
+     * @name getShadowOffsetX
+     * @methodOf Kinetic.Shape.prototype
+     */
+
+     /**
+     * get shadow offset y
+     * @name getShadowOffsetY
      * @methodOf Kinetic.Shape.prototype
      */
 
@@ -4973,41 +5264,8 @@ var Kinetic = {};
         ctx['_' + eventName](evt);
       }, false);
     }
-    
-    /**
-     * Stage constructor.  A stage is used to contain multiple layers
-     * @constructor
-     * @augments Kinetic.Container
-     * @param {Object} config
-     * @param {String|DomElement} config.container Container id or DOM element
-     * @param {Number} [config.x]
-     * @param {Number} [config.y]
-     * @param {Number} [config.width]
-     * @param {Number} [config.height]
-     * @param {Boolean} [config.visible]
-     * @param {Boolean} [config.listening] whether or not the node is listening for events
-     * @param {String} [config.id] unique id
-     * @param {String} [config.name] non-unique name
-     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
-     * @param {Number} [config.rotation] rotation in radians
-     * @param {Number} [config.rotationDeg] rotation in degrees
-     * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
-     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
-     *  the entire stage by dragging any portion of the stage
-     * @param {Function} [config.dragBoundFunc]
-     * @param {Function} [config.clipFunc] clipping function
 
-     */
-    Kinetic.Stage = function(config) {
-        this._initStage(config);
-    };
-
-    Kinetic.Stage.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Stage, {
         _initStage: function(config) {
             this.createAttrs();
             // call super constructor
@@ -5100,7 +5358,7 @@ var Kinetic = {};
             var content = this.content;
             Kinetic.Node.prototype.remove.call(this);
 
-            if(content && Kinetic.Type._isInDocument(content)) {
+            if(content && Kinetic.Util._isInDocument(content)) {
                 this.getContainer().removeChild(content);
             }
         },
@@ -5213,7 +5471,7 @@ var Kinetic = {};
             var cb = config.callback;
 
             config.callback = function(dataUrl) {
-                Kinetic.Type._getImage(dataUrl, function(img) {
+                Kinetic.Util._getImage(dataUrl, function(img) {
                     cb(img);
                 });
             };
@@ -5226,7 +5484,7 @@ var Kinetic = {};
          * @param {Object} pos point object
          */
         getIntersection: function() {
-            var pos = Kinetic.Type._getXY(Array.prototype.slice.call(arguments)),
+            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments)),
                 layers = this.getChildren(),
                 len = layers.length,
                 end = len - 1,
@@ -5287,6 +5545,14 @@ var Kinetic = {};
         getLayer: function() {
             return null;
         },
+        /**
+         * get layers
+         * @name getLayers
+         * @methodOf Kinetic.Stage.prototype
+         */
+         getLayers: function() {
+             return this.getChildren();
+         },
         _setPointerPosition: function(evt) {
             if(!evt) {
                 evt = window.event;
@@ -5552,8 +5818,8 @@ var Kinetic = {};
                 this.content.addEventListener(baseEvent, handler, false);
             }
         }
-    };
-    Kinetic.Global.extend(Kinetic.Stage, Kinetic.Container);
+    });
+    Kinetic.Util.extend(Kinetic.Stage, Kinetic.Container);
 
     // add getters and setters
     Kinetic.Node.addGetter(Kinetic.Stage, 'container');
@@ -5566,42 +5832,7 @@ var Kinetic = {};
 })();
 
 (function() {
-    /**
-     * Layer constructor.  Layers are tied to their own canvas element and are used
-     * to contain groups or shapes
-     * @constructor
-     * @augments Kinetic.Container
-     * @param {Object} config
-     * @param {Boolean} [config.clearBeforeDraw] set this property to false if you don't want
-     * to clear the canvas before each layer draw.  The default value is true.
-     * @param {Number} [config.x]
-     * @param {Number} [config.y]
-     * @param {Number} [config.width]
-     * @param {Number} [config.height]
-     * @param {Boolean} [config.visible]
-     * @param {Boolean} [config.listening] whether or not the node is listening for events
-     * @param {String} [config.id] unique id
-     * @param {String} [config.name] non-unique name
-     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
-     * @param {Number} [config.rotation] rotation in radians
-     * @param {Number} [config.rotationDeg] rotation in degrees
-     * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
-     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
-     *  the entire stage by dragging any portion of the stage
-     * @param {Function} [config.dragBoundFunc]
-     * @param {Function} [config.clipFunc] clipping function
-
-     */
-    Kinetic.Layer = function(config) {
-        this._initLayer(config);
-    };
-
-    Kinetic.Layer.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Layer, {
         _initLayer: function(config) {
             this.nodeType = 'Layer';
             this.createAttrs();
@@ -5615,18 +5846,17 @@ var Kinetic = {};
         /**
          * get intersection object that contains shape and pixel data
          * @name getIntersection
-         * @methodOf Kinetic.Stage.prototype
-         * @param {Object} pos point object
+         * @methodOf Kinetic.Layer.prototype
          */
         getIntersection: function() {
-            var pos = Kinetic.Type._getXY(Array.prototype.slice.call(arguments)),
+            var pos = Kinetic.Util._getXY(Array.prototype.slice.call(arguments)),
                 p, colorKey, shape;
 
             if(this.isVisible() && this.isListening()) {
                 p = this.hitCanvas.context.getImageData(pos.x | 0, pos.y | 0, 1, 1).data;
                 // this indicates that a hit pixel may have been found
                 if(p[3] === 255) {
-                    colorKey = Kinetic.Type._rgbToHex(p[0], p[1], p[2]);
+                    colorKey = Kinetic.Util._rgbToHex(p[0], p[1], p[2]);
                     shape = Kinetic.Global.shapes[colorKey];
                     return {
                         shape: shape,
@@ -5772,12 +6002,12 @@ var Kinetic = {};
             var stage = this.getStage(), canvas = this.getCanvas(), element = canvas.element;
             Kinetic.Node.prototype.remove.call(this);
 
-            if(stage && canvas && Kinetic.Type._isInDocument(element)) {
+            if(stage && canvas && Kinetic.Util._isInDocument(element)) {
                 stage.content.removeChild(element);
             }
         }
-    };
-    Kinetic.Global.extend(Kinetic.Layer, Kinetic.Container);
+    });
+    Kinetic.Util.extend(Kinetic.Layer, Kinetic.Container);
 
     // add getters and setters
     Kinetic.Node.addGetterSetter(Kinetic.Layer, 'clearBeforeDraw', true);
@@ -5799,47 +6029,15 @@ var Kinetic = {};
 })();
 
 (function() {
-    /**
-     * Group constructor.  Groups are used to contain shapes or other groups.
-     * @constructor
-     * @augments Kinetic.Container
-     * @param {Object} config
-     * @param {Number} [config.x]
-     * @param {Number} [config.y]
-     * @param {Number} [config.width]
-     * @param {Number} [config.height]
-     * @param {Boolean} [config.visible]
-     * @param {Boolean} [config.listening] whether or not the node is listening for events
-     * @param {String} [config.id] unique id
-     * @param {String} [config.name] non-unique name
-     * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
-     * @param {Number} [config.rotation] rotation in radians
-     * @param {Number} [config.rotationDeg] rotation in degrees
-     * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
-     * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
-     *  the entire stage by dragging any portion of the stage
-     * @param {Function} [config.dragBoundFunc]
-     * @param {Function} [config.clipFunc] clipping function
-
-     */
-    Kinetic.Group = function(config) {
-        this._initGroup(config);
-    };
-
-    Kinetic.Group.prototype = {
+    Kinetic.Util.addMethods(Kinetic.Group, {
         _initGroup: function(config) {
             this.nodeType = 'Group';
             this.createAttrs();
             // call super constructor
             Kinetic.Container.call(this, config);
         }
-    };
-    Kinetic.Global.extend(Kinetic.Group, Kinetic.Container);
+    });
+    Kinetic.Util.extend(Kinetic.Group, Kinetic.Container);
 })();
 
 (function() {
@@ -5850,24 +6048,45 @@ var Kinetic = {};
      * @param {Object} config
      * @param {Number} [config.cornerRadius]
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -5876,10 +6095,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -5894,14 +6117,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -5946,21 +6169,21 @@ var Kinetic = {};
         }
     };
 
-    Kinetic.Global.extend(Kinetic.Rect, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Rect, Kinetic.Shape);
 
     Kinetic.Node.addGetterSetter(Kinetic.Rect, 'cornerRadius', 0);
 
     /**
      * set corner radius
      * @name setCornerRadius
-     * @methodOf Kinetic.Shape.prototype
+     * @methodOf Kinetic.Rect.prototype
      * @param {Number} corner radius
      */
 
     /**
      * get corner radius
      * @name getCornerRadius
-     * @methodOf Kinetic.Shape.prototype
+     * @methodOf Kinetic.Rect.prototype
      */
 
 })();
@@ -5973,24 +6196,45 @@ var Kinetic = {};
      * @param {Object} config
      * @param {Number} config.radius
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -5999,10 +6243,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6017,14 +6265,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6063,7 +6311,7 @@ var Kinetic = {};
             this.setRadius(height / 2);
         }
     };
-    Kinetic.Global.extend(Kinetic.Circle, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Circle, Kinetic.Shape);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Circle, 'radius', 0);
@@ -6093,24 +6341,45 @@ var Kinetic = {};
      * @param {Number} config.radius
      * @param {Boolean} [config.clockwise]
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -6119,10 +6388,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6137,14 +6410,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6171,18 +6444,16 @@ var Kinetic = {};
             canvas.fillStroke(this);
         },
         setAngleDeg: function(deg) {
-            this.setAngle(Kinetic.Type._degToRad(deg));
+            this.setAngle(Kinetic.Util._degToRad(deg));
         },
         getAngleDeg: function() {
-            return Kinetic.Type._radToDeg(this.getAngle());
+            return Kinetic.Util._radToDeg(this.getAngle());
         }
     };
-    Kinetic.Global.extend(Kinetic.Wedge, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Wedge, Kinetic.Shape);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Wedge, 'radius', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Wedge, 'angle', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Wedge, 'clockwise', false);
 
     /**
      * set radius
@@ -6191,19 +6462,41 @@ var Kinetic = {};
      * @param {Number} radius
      */
 
+     /**
+     * get radius
+     * @name getRadius
+     * @methodOf Kinetic.Wedge.prototype
+     */
+
+    Kinetic.Node.addRotationGetterSetter(Kinetic.Wedge, 'angle', 0);
+
     /**
      * set angle
      * @name setAngle
      * @methodOf Kinetic.Wedge.prototype
      * @param {Number} angle
      */
-    
-    /**
+
+     /**
      * set angle in degrees
      * @name setAngleDeg
      * @methodOf Kinetic.Wedge.prototype
      * @param {Number} angleDeg
      */
+
+     /**
+     * get angle
+     * @name getAngle
+     * @methodOf Kinetic.Wedge.prototype
+     */
+
+     /**
+     * get angle in degrees
+     * @name getAngleDeg
+     * @methodOf Kinetic.Wedge.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Wedge, 'clockwise', false);
 
     /**
      * set clockwise draw direction.  If set to true, the wedge will be drawn clockwise
@@ -6211,24 +6504,6 @@ var Kinetic = {};
      * @name setClockwise
      * @methodOf Kinetic.Wedge.prototype
      * @param {Boolean} clockwise
-     */
-
-    /**
-     * get radius
-     * @name getRadius
-     * @methodOf Kinetic.Wedge.prototype
-     */
-
-    /**
-     * get angle
-     * @name getAngle
-     * @methodOf Kinetic.Wedge.prototype
-     */
-    
-    /**
-     * get angle in degrees
-     * @name getAngleDeg
-     * @methodOf Kinetic.Wedge.prototype
      */
 
     /**
@@ -6246,24 +6521,45 @@ var Kinetic = {};
      * @param {Object} config
      * @param {Number|Array|Object} config.radius defines x and y radius
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -6272,10 +6568,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6290,14 +6590,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6346,10 +6646,10 @@ var Kinetic = {};
             });
         }
     };
-    Kinetic.Global.extend(Kinetic.Ellipse, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Ellipse, Kinetic.Shape);
 
     // add getters setters
-    Kinetic.Node.addPointGetterSetter(Kinetic.Ellipse, 'radius', {x:0,y:0});
+    Kinetic.Node.addPointGetterSetter(Kinetic.Ellipse, 'radius', 0);
 
     /**
      * set radius
@@ -6374,7 +6674,8 @@ var Kinetic = {};
 (function() {
     // CONSTANTS
     var IMAGE = 'Image',
-        CROP = 'crop';
+        CROP = 'crop',
+        SET = 'set';
     
     /**
      * Image constructor
@@ -6384,24 +6685,45 @@ var Kinetic = {};
      * @param {ImageObject} config.image
      * @param {Object} [config.crop]
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -6410,10 +6732,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6428,14 +6754,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6459,9 +6785,22 @@ var Kinetic = {};
                 params, 
                 that = this, 
                 context = canvas.getContext(),
-                image = this.getImage(),
                 crop = this.getCrop(),
-                cropX, cropY, cropWidth, cropHeight;
+                cropX, cropY, cropWidth, cropHeight, image;
+
+            // if a filter is set, and the filter needs to be updated, reapply
+            if (this.getFilter() && this._applyFilter) {
+                this.applyFilter();
+                this._applyFilter = false;
+            }
+
+            // NOTE: this.filterCanvas may be set by the above code block
+            if (this.filterCanvas) {
+                image = this.filterCanvas.getElement();
+            }
+            else {
+                image = this.getImage();
+            }
 
             context.beginPath();
             context.rect(0, 0, width, height);
@@ -6516,35 +6855,46 @@ var Kinetic = {};
          * apply filter
          * @name applyFilter
          * @methodOf Kinetic.Image.prototype
-         * @param {Object} config
-         * @param {Function} filter filter function
-         * @param {Object} [config] optional config object used to configure filter
-         * @param {Function} [callback] callback function to be called once
-         *  filter has been applied
          */
-        applyFilter: function(filter, config, callback) {
+        applyFilter: function() {
             var image = this.getImage(),
-                canvas = new Kinetic.Canvas({
-                    width: image.width, 
-                    height: image.height
-                }),
-                context = canvas.getContext(),
-                that = this;
-                
-            context.drawImage(image, 0, 0);
-            try {
-                var imageData = context.getImageData(0, 0, canvas.getWidth(), canvas.getHeight());
-                filter(imageData, config);
-                Kinetic.Type._getImage(imageData, function(imageObj) {
-                    that.setImage(imageObj);
-                    if(callback) {
-                        callback();
-                    }
+                that = this,
+                width = this.getWidth(),
+                height = this.getHeight(),
+                filter = this.getFilter(),
+                filterCanvas, context, imageData;
+
+            if (this.filterCanvas){
+                filterCanvas = this.filterCanvas;
+            }
+            else {
+                filterCanvas = this.filterCanvas = new Kinetic.SceneCanvas({
+                    width: width, 
+                    height: height
                 });
             }
-            catch(e) {
-                Kinetic.Global.warn('Unable to apply filter. ' + e.message);
+
+            context = filterCanvas.getContext();
+
+            try {
+                this._drawImage(context, [image, 0, 0, width, height]);
+                imageData = context.getImageData(0, 0, filterCanvas.getWidth(), filterCanvas.getHeight());
+                filter.call(this, imageData);
+                context.putImageData(imageData, 0, 0);
             }
+            catch(e) {
+                this.clearFilter();
+                Kinetic.Util.warn('Unable to apply filter. ' + e.message);
+            }
+        },
+        /**
+         * clear filter
+         * @name clearFilter
+         * @methodOf Kinetic.Image.prototype
+         */
+        clearFilter: function() {
+            this.filterCanvas = null;
+            this._applyFilter = false;
         },
         /**
          * set crop
@@ -6558,11 +6908,11 @@ var Kinetic = {};
          */
         setCrop: function() {
             var config = [].slice.call(arguments),
-                pos = Kinetic.Type._getXY(config),
-                size = Kinetic.Type._getSize(config),
-                both = Kinetic.Type._merge(pos, size);
+                pos = Kinetic.Util._getXY(config),
+                size = Kinetic.Util._getSize(config),
+                both = Kinetic.Util._merge(pos, size);
                 
-            this.setAttr(CROP, Kinetic.Type._merge(both, this.getCrop()));
+            this.setAttr(CROP, Kinetic.Util._merge(both, this.getCrop()));
         },
         /**
          * create image hit region which enables more accurate hit detection mapping of the image
@@ -6589,7 +6939,7 @@ var Kinetic = {};
             try {
                 imageData = context.getImageData(0, 0, width, height);
                 data = imageData.data;
-                rgbColorKey = Kinetic.Type._hexToRgb(this.colorKey);
+                rgbColorKey = Kinetic.Util._hexToRgb(this.colorKey);
                 
                 // replace non transparent pixels with color key
                 for(i = 0, n = data.length; i < n; i += 4) {
@@ -6600,7 +6950,7 @@ var Kinetic = {};
                     }
                 }
 
-                Kinetic.Type._getImage(imageData, function(imageObj) {
+                Kinetic.Util._getImage(imageData, function(imageObj) {
                     that.imageHitRegion = imageObj;
                     if(callback) {
                         callback();
@@ -6608,7 +6958,7 @@ var Kinetic = {};
                 });
             }
             catch(e) {
-                Kinetic.Global.warn('Unable to create image hit region. ' + e.message);
+                Kinetic.Util.warn('Unable to create image hit region. ' + e.message);
             }
         },
         /**
@@ -6636,11 +6986,26 @@ var Kinetic = {};
             }
         }
     };
-    Kinetic.Global.extend(Kinetic.Image, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Image, Kinetic.Shape);
+
+
+    Kinetic.Node.addFilterGetterSetter = function(constructor, attr, def) {
+        this.addGetter(constructor, attr, def);
+        this.addFilterSetter(constructor, attr);
+    };
+
+    Kinetic.Node.addFilterSetter = function(constructor, attr) {
+        var that = this,
+            method = SET + Kinetic.Util._capitalize(attr);
+            
+        constructor.prototype[method] = function(val) {
+            this.setAttr(attr, val);
+            this._applyFilter = true;
+        };
+    };
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Image, 'image');
-    Kinetic.Node.addGetter(Kinetic.Image, 'crop');
 
     /**
      * set image
@@ -6650,14 +7015,31 @@ var Kinetic = {};
      */
 
     /**
+     * get image
+     * @name getImage
+     * @methodOf Kinetic.Image.prototype
+     */
+     
+    Kinetic.Node.addGetter(Kinetic.Image, 'crop');
+
+    /**
      * get crop
      * @name getCrop
      * @methodOf Kinetic.Image.prototype
      */
 
+     Kinetic.Node.addFilterGetterSetter(Kinetic.Image, 'filter');
+
+     /**
+     * set filter
+     * @name setFilter
+     * @methodOf Kinetic.Image.prototype
+     * @param {Function} filter
+     */
+
     /**
-     * get image
-     * @name getImage
+     * get filter
+     * @name getFilter
      * @methodOf Kinetic.Image.prototype
      */
 })();
@@ -6671,24 +7053,45 @@ var Kinetic = {};
      * @param {Array} config.points can be a flattened array of points, an array of point arrays, or an array of point objects.
      *  e.g. [0,1,2,3], [[0,1],[2,3]] and [{x:0,y:1},{x:2,y:3}] are equivalent
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -6697,10 +7100,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6715,14 +7122,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6758,7 +7165,7 @@ var Kinetic = {};
          *  of Numbers.  e.g. [{x:1,y:2},{x:3,y:4}] or [1,2,3,4]
          */
         setPoints: function(val) {
-            this.setAttr('points', Kinetic.Type._getPoints(val));
+            this.setAttr('points', Kinetic.Util._getPoints(val));
         },
         /**
          * get points array
@@ -6771,7 +7178,7 @@ var Kinetic = {};
             return this.attrs.points || [];
         }
     };
-    Kinetic.Global.extend(Kinetic.Polygon, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Polygon, Kinetic.Shape);
 })();
 
 (function() {
@@ -6819,24 +7226,45 @@ var Kinetic = {};
      * @param {Number} [config.lineHeight] default is 1
      * @param {String} [config.wrap] can be word, char, or none. Default is word
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -6845,10 +7273,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -6863,14 +7295,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -6969,7 +7401,7 @@ var Kinetic = {};
          * @param {String} text
          */
         setText: function(text) {
-            var str = Kinetic.Type._isString(text) ? text : text.toString();
+            var str = Kinetic.Util._isString(text) ? text : text.toString();
             this.setAttr(TEXT, str);
         },
         /**
@@ -7139,21 +7571,10 @@ var Kinetic = {};
              this.textWidth = textWidth;
          }
     };
-    Kinetic.Global.extend(Kinetic.Text, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Text, Kinetic.Shape);
  
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Text, 'fontFamily', CALIBRI);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'fontSize', 12);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'fontStyle', NORMAL);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'padding', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'align', LEFT);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'lineHeight', 1);
-    Kinetic.Node.addGetterSetter(Kinetic.Text, 'wrap', WORD);
-
-    Kinetic.Node.addGetter(Kinetic.Text, TEXT, EMPTY_STRING);
-    
-    Kinetic.Node.addSetter(Kinetic.Text, 'width');
-    Kinetic.Node.addSetter(Kinetic.Text, 'height');
 
     /**
      * set font family
@@ -7162,12 +7583,28 @@ var Kinetic = {};
      * @param {String} fontFamily
      */
 
+     /**
+     * get font family
+     * @name getFontFamily
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'fontSize', 12);
+
     /**
      * set font size in pixels
      * @name setFontSize
      * @methodOf Kinetic.Text.prototype
      * @param {int} fontSize
      */
+
+     /**
+     * get font size
+     * @name getFontSize
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'fontStyle', NORMAL);
 
     /**
      * set font style.  Can be 'normal', 'italic', or 'bold'.  'normal' is the default.
@@ -7176,12 +7613,28 @@ var Kinetic = {};
      * @param {String} fontStyle
      */
 
+     /**
+     * get font style
+     * @name getFontStyle
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'padding', 0);
+
     /**
      * set padding
      * @name setPadding
      * @methodOf Kinetic.Text.prototype
      * @param {int} padding
      */
+
+     /**
+     * get padding
+     * @name getPadding
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'align', LEFT);
 
     /**
      * set horizontal align of text
@@ -7190,6 +7643,14 @@ var Kinetic = {};
      * @param {String} align align can be 'left', 'center', or 'right'
      */
 
+     /**
+     * get horizontal align
+     * @name getAlign
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'lineHeight', 1);
+
     /**
      * set line height
      * @name setLineHeight
@@ -7197,46 +7658,51 @@ var Kinetic = {};
      * @param {Number} lineHeight default is 1
      */
 
-    /**
-     * get font family
-     * @name getFontFamily
-     * @methodOf Kinetic.Text.prototype
-     */
-
-    /**
-     * get font size
-     * @name getFontSize
-     * @methodOf Kinetic.Text.prototype
-     */
-
-    /**
-     * get font style
-     * @name getFontStyle
-     * @methodOf Kinetic.Text.prototype
-     */
-
-    /**
-     * get padding
-     * @name getPadding
-     * @methodOf Kinetic.Text.prototype
-     */
-
-    /**
-     * get horizontal align
-     * @name getAlign
-     * @methodOf Kinetic.Text.prototype
-     */
-
-    /**
+     /**
      * get line height
      * @name getLineHeight
      * @methodOf Kinetic.Text.prototype
      */
 
+    Kinetic.Node.addGetterSetter(Kinetic.Text, 'wrap', WORD);
+
+    /**
+     * set wrap
+     * @name setWrap
+     * @methodOf Kinetic.Text.prototype
+     * @param {String} wrap can be word, char, or none. Default is word
+     */
+
+     /**
+     * get wrap
+     * @name getWrap
+     * @methodOf Kinetic.Text.prototype
+     */
+
+    Kinetic.Node.addGetter(Kinetic.Text, TEXT, EMPTY_STRING);
+
     /**
      * get text
      * @name getText
      * @methodOf Kinetic.Text.prototype
+     */
+    
+    Kinetic.Node.addSetter(Kinetic.Text, 'width');
+
+    /**
+     * set width
+     * @name setWidth
+     * @methodOf Kinetic.Text.prototype
+     * @param {Number|String} width default is auto
+     */
+
+    Kinetic.Node.addSetter(Kinetic.Text, 'height'); 
+
+    /**
+     * set height
+     * @name setHeight
+     * @methodOf Kinetic.Text.prototype
+     * @param {Number|String} height default is auto
      */
 })();
 
@@ -7249,24 +7715,45 @@ var Kinetic = {};
      * @param {Array} config.points can be a flattened array of points, an array of point arrays, or an array of point objects.
      *  e.g. [0,1,2,3], [[0,1],[2,3]] and [{x:0,y:1},{x:2,y:3}] are equivalent
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -7275,10 +7762,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -7293,14 +7784,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -7338,7 +7829,7 @@ var Kinetic = {};
          *  of Numbers.  e.g. [{x:1,y:2},{x:3,y:4}] or [1,2,3,4]
          */
         setPoints: function(val) {
-            this.setAttr('points', Kinetic.Type._getPoints(val));
+            this.setAttr('points', Kinetic.Util._getPoints(val));
         },
         /**
          * get points array
@@ -7351,7 +7842,7 @@ var Kinetic = {};
             return this.attrs.points || [];
         }
     };
-    Kinetic.Global.extend(Kinetic.Line, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Line, Kinetic.Shape);
 })();
 
 (function() {
@@ -7365,24 +7856,45 @@ var Kinetic = {};
      *  e.g. [0,1,2,3], [[0,1],[2,3]] and [{x:0,y:1},{x:2,y:3}] are equivalent
      * @param {Number} [config.tension] default value is 1.  Higher values will result in a more curvy line.  A value of 0 will result in no interpolation.
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -7391,10 +7903,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -7409,14 +7925,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -7510,7 +8026,7 @@ var Kinetic = {};
             this.allPoints = allPoints;
         }
     };
-    Kinetic.Global.extend(Kinetic.Spline, Kinetic.Line);
+    Kinetic.Util.extend(Kinetic.Spline, Kinetic.Line);
 
     // add getters setters
     Kinetic.Node.addGetter(Kinetic.Spline, 'tension', 1);
@@ -7533,24 +8049,45 @@ var Kinetic = {};
      *  e.g. [0,1,2,3], [[0,1],[2,3]] and [{x:0,y:1},{x:2,y:3}] are equivalent
      * @param {Number} [config.tension] default value is 1.  Higher values will result in a more curvy line.  A value of 0 will result in no interpolation.
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -7559,10 +8096,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -7577,14 +8118,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -7640,7 +8181,7 @@ var Kinetic = {};
         }
     };
 
-    Kinetic.Global.extend(Kinetic.Blob, Kinetic.Spline);
+    Kinetic.Util.extend(Kinetic.Blob, Kinetic.Spline);
 })();
 
 (function() {
@@ -7654,24 +8195,45 @@ var Kinetic = {};
      * @param {Integer} [config.index] animation index
      * @param {Image} image image object
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -7680,10 +8242,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -7698,14 +8264,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -7767,7 +8333,7 @@ var Kinetic = {};
              *  below.  The anim object only needs the layer reference for
              *  redraw
              */
-            this.anim.node = layer;
+            this.anim.setLayers(layer);
 
             this.interval = setInterval(function() {
                 var index = that.getIndex();
@@ -7816,14 +8382,10 @@ var Kinetic = {};
             }
         }
     };
-    Kinetic.Global.extend(Kinetic.Sprite, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Sprite, Kinetic.Shape);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'animation');
-    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'animations');
-    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'image');
-    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'index', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'frameRate', 17);
 
     /**
      * set animation key
@@ -7832,12 +8394,28 @@ var Kinetic = {};
      * @param {String} anim animation key
      */
 
+     /**
+     * get animation key
+     * @name getAnimation
+     * @methodOf Kinetic.Sprite.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'animations');
+
     /**
-     * set animations object
+     * set animations map
      * @name setAnimations
      * @methodOf Kinetic.Sprite.prototype
      * @param {Object} animations
      */
+
+     /**
+     * get animations map
+     * @name getAnimations
+     * @methodOf Kinetic.Sprite.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'image');
 
     /**
      * set image 
@@ -7846,6 +8424,14 @@ var Kinetic = {};
      * @param {Image} image 
      */
 
+     /**
+     * get image
+     * @name getImage
+     * @methodOf Kinetic.Sprite.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'index', 0);
+
     /**
      * set animation frame index
      * @name setIndex
@@ -7853,29 +8439,28 @@ var Kinetic = {};
      * @param {Integer} index frame index
      */
 
-    /**
-     * get animation key
-     * @name getAnimation
-     * @methodOf Kinetic.Sprite.prototype
-     */
-
-    /**
-     * get animations object
-     * @name getAnimations
-     * @methodOf Kinetic.Sprite.prototype
-     */
-
-    /**
-     * get image
-     * @name getImage
-     * @methodOf Kinetic.Sprite.prototype
-     */
-
-    /**
+     /**
      * get animation frame index
      * @name getIndex
      * @methodOf Kinetic.Sprite.prototype
      */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Sprite, 'frameRate', 17);
+
+    /**
+     * set frame rate in frames / second.  Default is 17 frames per second.  Increase this number to make the sprite
+     *  animation run faster, and decrease the number to make the sprite animation run slower
+     * @name setFrameRate
+     * @methodOf Kinetic.Sprite.prototype
+     * @param {Integer} frameRate
+     */
+
+     /**
+     * get frame rate
+     * @name getFrameRate
+     * @methodOf Kinetic.Sprite.prototype
+     */
+
 })();
 
 (function() {
@@ -7887,24 +8472,45 @@ var Kinetic = {};
      * @param {Object} config
      * @param {String} config.data SVG data string
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -7913,10 +8519,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -7931,14 +8541,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -8006,7 +8616,7 @@ var Kinetic = {};
             canvas.fillStroke(this);
         }
     };
-    Kinetic.Global.extend(Kinetic.Path, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Path, Kinetic.Shape);
 
     Kinetic.Path.getLineLength = function(x1, y1, x2, y2) {
         return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
@@ -8508,24 +9118,45 @@ var Kinetic = {};
      * @param {String} [config.fontStyle] can be normal, bold, or italic.  Default is normal
      * @param {String} config.text
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -8534,10 +9165,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -8552,14 +9187,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -8857,14 +9492,10 @@ var Kinetic = {};
     // map TextPath methods to Text
     Kinetic.TextPath.prototype._getContextFont = Kinetic.Text.prototype._getContextFont;
     
-    Kinetic.Global.extend(Kinetic.TextPath, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.TextPath, Kinetic.Shape);
 
     // add setters and getters
     Kinetic.Node.addGetterSetter(Kinetic.TextPath, 'fontFamily', CALIBRI);
-    Kinetic.Node.addGetterSetter(Kinetic.TextPath, 'fontSize', 12);
-    Kinetic.Node.addGetterSetter(Kinetic.TextPath, 'fontStyle', NORMAL);
-    
-    Kinetic.Node.addGetter(Kinetic.TextPath, 'text', EMPTY_STRING);
 
     /**
      * set font family
@@ -8873,12 +9504,28 @@ var Kinetic = {};
      * @param {String} fontFamily
      */
 
+     /**
+     * get font family
+     * @name getFontFamily
+     * @methodOf Kinetic.TextPath.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.TextPath, 'fontSize', 12);
+
     /**
      * set font size
      * @name setFontSize
      * @methodOf Kinetic.TextPath.prototype
      * @param {int} fontSize
      */
+
+     /**
+     * get font size
+     * @name getFontSize
+     * @methodOf Kinetic.TextPath.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.TextPath, 'fontStyle', NORMAL);
 
     /**
      * set font style.  Can be 'normal', 'italic', or 'bold'.  'normal' is the default.
@@ -8887,23 +9534,13 @@ var Kinetic = {};
      * @param {String} fontStyle
      */
 
-    /**
-     * get font family
-     * @name getFontFamily
-     * @methodOf Kinetic.TextPath.prototype
-     */
-
-    /**
-     * get font size
-     * @name getFontSize
-     * @methodOf Kinetic.TextPath.prototype
-     */
-
-    /**
+     /**
      * get font style
      * @name getFontStyle
      * @methodOf Kinetic.TextPath.prototype
      */
+    
+    Kinetic.Node.addGetter(Kinetic.TextPath, 'text', EMPTY_STRING);
 
     /**
      * get text
@@ -8921,24 +9558,45 @@ var Kinetic = {};
      * @param {Number} config.sides
      * @param {Number} config.radius
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -8947,10 +9605,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -8965,14 +9627,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -9004,11 +9666,10 @@ var Kinetic = {};
             canvas.fillStroke(this);
         }
     };
-    Kinetic.Global.extend(Kinetic.RegularPolygon, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.RegularPolygon, Kinetic.Shape);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.RegularPolygon, 'radius', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.RegularPolygon, 'sides', 0);
 
     /**
      * set radius
@@ -9017,17 +9678,19 @@ var Kinetic = {};
      * @param {Number} radius
      */
 
+     /**
+     * get radius
+     * @name getRadius
+     * @methodOf Kinetic.RegularPolygon.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.RegularPolygon, 'sides', 0);
+
     /**
      * set number of sides
      * @name setSides
      * @methodOf Kinetic.RegularPolygon.prototype
      * @param {int} sides
-     */
-    
-    /**
-     * get radius
-     * @name getRadius
-     * @methodOf Kinetic.RegularPolygon.prototype
      */
 
     /**
@@ -9047,24 +9710,45 @@ var Kinetic = {};
      * @param {Number} config.innerRadius
      * @param {Number} config.outerRadius
      * @param {String} [config.fill] fill color
+     * @param {Object} [config.fillRGB] set fill color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.fillR] set fill red component
+     * @param {Integer} [config.fillG] set fill green component
+     * @param {Integer} [config.fillB] set fill blue component
      * @param {Image} [config.fillPatternImage] fill pattern image
      * @param {Number} [config.fillPatternX]
      * @param {Number} [config.fillPatternY]
-     * @param {Array|Object} [config.fillPatternOffset] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillPatternScale] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillPatternOffset] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternOffsetX] 
+     * @param {Number} [config.fillPatternOffsetY] 
+     * @param {Number|Array|Object} [config.fillPatternScale] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillPatternScaleX]
+     * @param {Number} [config.fillPatternScaleY]
      * @param {Number} [config.fillPatternRotation]
      * @param {String} [config.fillPatternRepeat] can be 'repeat', 'repeat-x', 'repeat-y', or 'no-repeat'.  The default is 'no-repeat'
-     * @param {Array|Object} [config.fillLinearGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillLinearGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientStartPointX]
+     * @param {Number} [config.fillLinearGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number|Array|Object} [config.fillLinearGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillLinearGradientEndPointX]
+     * @param {Number} [config.fillLinearGradientEndPointY]
      * @param {Array} [config.fillLinearGradientColorStops] array of color stops
-     * @param {Array|Object} [config.fillRadialGradientStartPoint] array with two elements or object with x and y component
-     * @param {Array|Object} [config.fillRadialGradientEndPoint] array with two elements or object with x and y component
+     * @param {Number|Array|Object} [config.fillRadialGradientStartPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientStartPointX]
+     * @param {Number} [config.fillRadialGradientStartPointY]
+     * @param {Number|Array|Object} [config.fillRadialGradientEndPoint] number, array with two elements, or object with x and y component
+     * @param {Number} [config.fillRadialGradientEndPointX] 
+     * @param {Number} [config.fillRadialGradientEndPointY] 
      * @param {Number} [config.fillRadialGradientStartRadius]
      * @param {Number} [config.fillRadialGradientEndRadius]
      * @param {Array} [config.fillRadialGradientColorStops] array of color stops
      * @param {Boolean} [config.fillEnabled] flag which enables or disables the fill.  The default value is true
      * @param {String} [config.fillPriority] can be color, linear-gradient, radial-graident, or pattern.  The default value is color.  The fillPriority property makes it really easy to toggle between different fill types.  For example, if you want to toggle between a fill color style and a fill pattern style, simply set the fill property and the fillPattern properties, and then use setFillPriority('color') to render the shape with a color fill, or use setFillPriority('pattern') to render the shape with the pattern fill configuration
      * @param {String} [config.stroke] stroke color
+     * @param {Object} [config.strokeRGB] set stroke color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.strokeR] set stroke red component
+     * @param {Integer} [config.strokeG] set stroke green component
+     * @param {Integer} [config.strokeB] set stroke blue component
      * @param {Number} [config.strokeWidth] stroke width
      * @param {Boolean} [config.strokeScaleEnabled] flag which enables or disables stroke scale.  The default is true
      * @param {Boolean} [config.strokeEnabled] flag which enables or disables the stroke.  The default value is true
@@ -9073,10 +9757,14 @@ var Kinetic = {};
      * @param {String} [config.lineCap] can be butt, round, or sqare.  The default
      *  is butt
      * @param {String} [config.shadowColor]
+     * @param {Object} [config.shadowColorRGB] set shadowColor color with an object literal containing an r, g, and b component
+     * @param {Integer} [config.shadowColorR] set shadowColor red component
+     * @param {Integer} [config.shadowColorG] set shadowColor green component
+     * @param {Integer} [config.shadowColorB] set shadowColor blue component
      * @param {Number} [config.shadowBlur]
-     * @param {Obect} [config.shadowOffset]
-     * @param {Number} [config.shadowOffset.x]
-     * @param {Number} [config.shadowOffset.y]
+     * @param {Object} [config.shadowOffset]
+     * @param {Number} [config.shadowOffsetX]
+     * @param {Number} [config.shadowOffsetY]
      * @param {Number} [config.shadowOpacity] shadow opacity.  Can be any real number
      *  between 0 and 1
      * @param {Boolean} [config.shadowEnabled] flag which enables or disables the shadow.  The default value is true
@@ -9091,14 +9779,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -9133,12 +9821,10 @@ var Kinetic = {};
             canvas.fillStroke(this);
         }
     };
-    Kinetic.Global.extend(Kinetic.Star, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.Star, Kinetic.Shape);
 
     // add getters setters
     Kinetic.Node.addGetterSetter(Kinetic.Star, 'numPoints', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Star, 'innerRadius', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.Star, 'outerRadius', 0);
 
     /**
      * set number of points
@@ -9147,12 +9833,13 @@ var Kinetic = {};
      * @param {Integer} points
      */
 
-    /**
-     * set outer radius
-     * @name setOuterRadius
+     /**
+     * get number of points
+     * @name getNumPoints
      * @methodOf Kinetic.Star.prototype
-     * @param {Number} radius
      */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Star, 'innerRadius', 0);
 
     /**
      * set inner radius
@@ -9161,21 +9848,24 @@ var Kinetic = {};
      * @param {Number} radius
      */
 
-    /**
-     * get number of points
-     * @name getNumPoints
-     * @methodOf Kinetic.Star.prototype
-     */
-
-    /**
-     * get outer radius
-     * @name getOuterRadius
-     * @methodOf Kinetic.Star.prototype
-     */
-
-    /**
+     /**
      * get inner radius
      * @name getInnerRadius
+     * @methodOf Kinetic.Star.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.Star, 'outerRadius', 0);
+
+    /**
+     * set outer radius
+     * @name setOuterRadius
+     * @methodOf Kinetic.Star.prototype
+     * @param {Number} radius
+     */
+
+     /**
+     * get outer radius
+     * @name getOuterRadius
      * @methodOf Kinetic.Star.prototype
      */
 })();
@@ -9220,14 +9910,14 @@ var Kinetic = {};
      * @param {String} [config.id] unique id
      * @param {String} [config.name] non-unique name
      * @param {Number} [config.opacity] determines node opacity.  Can be any number between 0 and 1
-     * @param {Object} [config.scale]
-     * @param {Number} [config.scale.x]
-     * @param {Number} [config.scale.y]
+     * @param {Object} [config.scale] set scale
+     * @param {Number} [config.scaleX] set scale x
+     * @param {Number} [config.scaleY] set scale y
      * @param {Number} [config.rotation] rotation in radians
      * @param {Number} [config.rotationDeg] rotation in degrees
      * @param {Object} [config.offset] offset from center point and rotation point
-     * @param {Number} [config.offset.x]
-     * @param {Number} [config.offset.y]
+     * @param {Number} [config.offsetX] set offset x
+     * @param {Number} [config.offsetY] set offset y
      * @param {Boolean} [config.draggable] makes the node draggable.  When stages are draggable, you can drag and drop
      *  the entire stage by dragging any portion of the stage
      * @param {Function} [config.dragBoundFunc]
@@ -9305,7 +9995,7 @@ var Kinetic = {};
 
     /**
      * get LabelRect shape for the label.  You need to access the LabelRect shape in order to update
-     * the pointer propertie and the corner radius
+     * the pointer properties and the corner radius
      * @name getRect
      * @methodOf Kinetic.Label.prototype
      */
@@ -9317,7 +10007,7 @@ var Kinetic = {};
      * @methodOf Kinetic.Label.prototype
      */
     
-    Kinetic.Global.extend(Kinetic.Label, Kinetic.Group);
+    Kinetic.Util.extend(Kinetic.Label, Kinetic.Group);
     Kinetic.Node.addGetterSetter(Kinetic.Label, 'text');
     Kinetic.Node.addGetterSetter(Kinetic.Label, 'rect');
        
@@ -9391,12 +10081,8 @@ var Kinetic = {};
         }
     };
     
-    Kinetic.Global.extend(Kinetic.LabelRect, Kinetic.Shape);
+    Kinetic.Util.extend(Kinetic.LabelRect, Kinetic.Shape);
     Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'pointerDirection', NONE);
-    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'pointerWidth', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'pointerHeight', 0);
-    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'cornerRadius', 0);
-
 
     /**
      * set pointer Direction
@@ -9407,6 +10093,14 @@ var Kinetic = {};
      */
 
      /**
+     * get pointer Direction
+     * @name getPointerDirection
+     * @methodOf Kinetic.LabelRect.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'pointerWidth', 0);
+
+    /**
      * set pointer width 
      * @name setPointerWidth
      * @methodOf Kinetic.LabelRect.prototype
@@ -9414,11 +10108,27 @@ var Kinetic = {};
      */
 
      /**
+     * get pointer width 
+     * @name getPointerWidth
+     * @methodOf Kinetic.LabelRect.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'pointerHeight', 0);
+
+    /**
      * set pointer height 
      * @name setPointerHeight
      * @methodOf Kinetic.LabelRect.prototype
      * @param {Number} pointerHeight
      */
+
+     /**
+     * get pointer height 
+     * @name getPointerHeight
+     * @methodOf Kinetic.LabelRect.prototype
+     */
+
+    Kinetic.Node.addGetterSetter(Kinetic.LabelRect, 'cornerRadius', 0);
 
     /**
      * set corner radius
@@ -9428,26 +10138,625 @@ var Kinetic = {};
      */
 
     /**
-     * get pointer Direction
-     * @name getPointerDirection
-     * @methodOf Kinetic.LabelRect.prototype
-     */
-
-     /**
-     * get pointer width 
-     * @name getPointerWidth
-     * @methodOf Kinetic.LabelRect.prototype
-     */
-
-     /**
-     * get pointer height 
-     * @name getPointerHeight
-     * @methodOf Kinetic.LabelRect.prototype
-     */
-
-    /**
      * get corner radius
      * @name getCornerRadius
      * @methodOf Kinetic.LabelRect.prototype
      */
 })();
+(function() {
+    /**
+     * Grayscale Filter
+     * @function
+     * @memberOf Kinetic.Filters
+     * @param {Object} imageData
+     */
+    Kinetic.Filters.Grayscale = function(imageData) {
+        var data = imageData.data;
+        for(var i = 0; i < data.length; i += 4) {
+            var brightness = 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
+            // red
+            data[i] = brightness;
+            // green
+            data[i + 1] = brightness;
+            // blue
+            data[i + 2] = brightness;
+        }
+    };
+})();
+
+(function() {
+    /**
+     * Brighten Filter.  
+     * @function
+     * @memberOf Kinetic.Filters
+     * @param {Object} imageData
+     */
+    Kinetic.Filters.Brighten = function(imageData) {
+        var brightness = this.getFilterBrightness();
+        var data = imageData.data;
+        for(var i = 0; i < data.length; i += 4) {
+            // red
+            data[i] += brightness;
+            // green
+            data[i + 1] += brightness;
+            // blue
+            data[i + 2] += brightness;
+        }
+    };
+
+    Kinetic.Node.addFilterGetterSetter(Kinetic.Image, 'filterBrightness', 0);
+    /**
+    * get filter brightness.  The brightness is a number between -255 and 255.&nbsp; Positive values 
+    *  increase the brightness and negative values decrease the brightness, making the image darker
+    * @name getFilterBrightness
+    * @methodOf Kinetic.Image.prototype
+    */
+
+    /**
+    * set filter brightness
+    * @name setFilterBrightness
+    * @methodOf Kinetic.Image.prototype
+    */
+})();
+
+(function() {
+    /**
+     * Invert Filter
+     * @function
+     * @memberOf Kinetic.Filters
+     * @param {Object} imageData
+     */
+    Kinetic.Filters.Invert = function(imageData) {
+        var data = imageData.data;
+        for(var i = 0; i < data.length; i += 4) {
+            // red
+            data[i] = 255 - data[i];
+            // green
+            data[i + 1] = 255 - data[i + 1];
+            // blue
+            data[i + 2] = 255 - data[i + 2];
+        }
+    };
+})();
+
+/*
+ the Gauss filter
+ master repo: https://github.com/pavelpower/kineticjsGaussFilter/
+*/
+(function() {
+    /*
+
+     StackBlur - a fast almost Gaussian Blur For Canvas
+
+     Version:   0.5
+     Author:		Mario Klingemann
+     Contact: 	mario@quasimondo.com
+     Website:	http://www.quasimondo.com/StackBlurForCanvas
+     Twitter:	@quasimondo
+
+     In case you find this class useful - especially in commercial projects -
+     I am not totally unhappy for a small donation to my PayPal account
+     mario@quasimondo.de
+
+     Or support me on flattr:
+     https://flattr.com/thing/72791/StackBlur-a-fast-almost-Gaussian-Blur-Effect-for-CanvasJavascript
+
+     Copyright (c) 2010 Mario Klingemann
+
+     Permission is hereby granted, free of charge, to any person
+     obtaining a copy of this software and associated documentation
+     files (the "Software"), to deal in the Software without
+     restriction, including without limitation the rights to use,
+     copy, modify, merge, publish, distribute, sublicense, and/or sell
+     copies of the Software, and to permit persons to whom the
+     Software is furnished to do so, subject to the following
+     conditions:
+
+     The above copyright notice and this permission notice shall be
+     included in all copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+     OTHER DEALINGS IN THE SOFTWARE.
+     */
+
+    function BlurStack() {
+        this.r = 0;
+        this.g = 0;
+        this.b = 0;
+        this.a = 0;
+        this.next = null;
+    }
+
+    var mul_table = [
+        512,512,456,512,328,456,335,512,405,328,271,456,388,335,292,512,
+        454,405,364,328,298,271,496,456,420,388,360,335,312,292,273,512,
+        482,454,428,405,383,364,345,328,312,298,284,271,259,496,475,456,
+        437,420,404,388,374,360,347,335,323,312,302,292,282,273,265,512,
+        497,482,468,454,441,428,417,405,394,383,373,364,354,345,337,328,
+        320,312,305,298,291,284,278,271,265,259,507,496,485,475,465,456,
+        446,437,428,420,412,404,396,388,381,374,367,360,354,347,341,335,
+        329,323,318,312,307,302,297,292,287,282,278,273,269,265,261,512,
+        505,497,489,482,475,468,461,454,447,441,435,428,422,417,411,405,
+        399,394,389,383,378,373,368,364,359,354,350,345,341,337,332,328,
+        324,320,316,312,309,305,301,298,294,291,287,284,281,278,274,271,
+        268,265,262,259,257,507,501,496,491,485,480,475,470,465,460,456,
+        451,446,442,437,433,428,424,420,416,412,408,404,400,396,392,388,
+        385,381,377,374,370,367,363,360,357,354,350,347,344,341,338,335,
+        332,329,326,323,320,318,315,312,310,307,304,302,299,297,294,292,
+        289,287,285,282,280,278,275,273,271,269,267,265,263,261,259];
+
+    var shg_table = [
+        9, 11, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17,
+        17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19,
+        19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20,
+        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21,
+        21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
+        21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22,
+        22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22,
+        22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23,
+        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+        23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23,
+        23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24 ];
+
+    function filterGaussBlurRGBA( imageData, radius) {
+
+        var pixels = imageData.data,
+            width = imageData.width,
+            height = imageData.height;
+
+        var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum, a_sum,
+            r_out_sum, g_out_sum, b_out_sum, a_out_sum,
+            r_in_sum, g_in_sum, b_in_sum, a_in_sum,
+            pr, pg, pb, pa, rbs;
+
+        var div = radius + radius + 1,
+            widthMinus1  = width - 1,
+            heightMinus1 = height - 1,
+            radiusPlus1  = radius + 1,
+            sumFactor = radiusPlus1 * ( radiusPlus1 + 1 ) / 2,
+            stackStart = new BlurStack(),
+            stack = stackStart,
+            stackIn = null,
+            stackOut = null,
+            mul_sum = mul_table[radius],
+            shg_sum = shg_table[radius];
+
+        for ( i = 1; i < div; i++ ) {
+            stack = stack.next = new BlurStack();
+            if ( i == radiusPlus1 ) var stackEnd = stack;
+        }
+
+        stack.next = stackStart;
+
+        yw = yi = 0;
+
+        for ( y = 0; y < height; y++ )
+        {
+            r_in_sum = g_in_sum = b_in_sum = a_in_sum = r_sum = g_sum = b_sum = a_sum = 0;
+
+            r_out_sum = radiusPlus1 * ( pr = pixels[yi] );
+            g_out_sum = radiusPlus1 * ( pg = pixels[yi+1] );
+            b_out_sum = radiusPlus1 * ( pb = pixels[yi+2] );
+            a_out_sum = radiusPlus1 * ( pa = pixels[yi+3] );
+
+            r_sum += sumFactor * pr;
+            g_sum += sumFactor * pg;
+            b_sum += sumFactor * pb;
+            a_sum += sumFactor * pa;
+
+            stack = stackStart;
+
+            for( i = 0; i < radiusPlus1; i++ )
+            {
+                stack.r = pr;
+                stack.g = pg;
+                stack.b = pb;
+                stack.a = pa;
+                stack = stack.next;
+            }
+
+            for( i = 1; i < radiusPlus1; i++ )
+            {
+                p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
+                r_sum += ( stack.r = ( pr = pixels[p])) * ( rbs = radiusPlus1 - i );
+                g_sum += ( stack.g = ( pg = pixels[p+1])) * rbs;
+                b_sum += ( stack.b = ( pb = pixels[p+2])) * rbs;
+                a_sum += ( stack.a = ( pa = pixels[p+3])) * rbs;
+
+                r_in_sum += pr;
+                g_in_sum += pg;
+                b_in_sum += pb;
+                a_in_sum += pa;
+
+                stack = stack.next;
+            }
+
+
+            stackIn = stackStart;
+            stackOut = stackEnd;
+            for ( x = 0; x < width; x++ )
+            {
+                pixels[yi+3] = pa = (a_sum * mul_sum) >> shg_sum;
+                if ( pa != 0 )
+                {
+                    pa = 255 / pa;
+                    pixels[yi]   = ((r_sum * mul_sum) >> shg_sum) * pa;
+                    pixels[yi+1] = ((g_sum * mul_sum) >> shg_sum) * pa;
+                    pixels[yi+2] = ((b_sum * mul_sum) >> shg_sum) * pa;
+                } else {
+                    pixels[yi] = pixels[yi+1] = pixels[yi+2] = 0;
+                }
+
+                r_sum -= r_out_sum;
+                g_sum -= g_out_sum;
+                b_sum -= b_out_sum;
+                a_sum -= a_out_sum;
+
+                r_out_sum -= stackIn.r;
+                g_out_sum -= stackIn.g;
+                b_out_sum -= stackIn.b;
+                a_out_sum -= stackIn.a;
+
+                p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
+
+                r_in_sum += ( stackIn.r = pixels[p]);
+                g_in_sum += ( stackIn.g = pixels[p+1]);
+                b_in_sum += ( stackIn.b = pixels[p+2]);
+                a_in_sum += ( stackIn.a = pixels[p+3]);
+
+                r_sum += r_in_sum;
+                g_sum += g_in_sum;
+                b_sum += b_in_sum;
+                a_sum += a_in_sum;
+
+                stackIn = stackIn.next;
+
+                r_out_sum += ( pr = stackOut.r );
+                g_out_sum += ( pg = stackOut.g );
+                b_out_sum += ( pb = stackOut.b );
+                a_out_sum += ( pa = stackOut.a );
+
+                r_in_sum -= pr;
+                g_in_sum -= pg;
+                b_in_sum -= pb;
+                a_in_sum -= pa;
+
+                stackOut = stackOut.next;
+
+                yi += 4;
+            }
+            yw += width;
+        }
+
+
+        for ( x = 0; x < width; x++ )
+        {
+            g_in_sum = b_in_sum = a_in_sum = r_in_sum = g_sum = b_sum = a_sum = r_sum = 0;
+
+            yi = x << 2;
+            r_out_sum = radiusPlus1 * ( pr = pixels[yi]);
+            g_out_sum = radiusPlus1 * ( pg = pixels[yi+1]);
+            b_out_sum = radiusPlus1 * ( pb = pixels[yi+2]);
+            a_out_sum = radiusPlus1 * ( pa = pixels[yi+3]);
+
+            r_sum += sumFactor * pr;
+            g_sum += sumFactor * pg;
+            b_sum += sumFactor * pb;
+            a_sum += sumFactor * pa;
+
+            stack = stackStart;
+
+            for( i = 0; i < radiusPlus1; i++ )
+            {
+                stack.r = pr;
+                stack.g = pg;
+                stack.b = pb;
+                stack.a = pa;
+                stack = stack.next;
+            }
+
+            yp = width;
+
+            for( i = 1; i <= radius; i++ )
+            {
+                yi = ( yp + x ) << 2;
+
+                r_sum += ( stack.r = ( pr = pixels[yi])) * ( rbs = radiusPlus1 - i );
+                g_sum += ( stack.g = ( pg = pixels[yi+1])) * rbs;
+                b_sum += ( stack.b = ( pb = pixels[yi+2])) * rbs;
+                a_sum += ( stack.a = ( pa = pixels[yi+3])) * rbs;
+
+                r_in_sum += pr;
+                g_in_sum += pg;
+                b_in_sum += pb;
+                a_in_sum += pa;
+
+                stack = stack.next;
+
+                if( i < heightMinus1 )
+                {
+                    yp += width;
+                }
+            }
+
+            yi = x;
+            stackIn = stackStart;
+            stackOut = stackEnd;
+            for ( y = 0; y < height; y++ )
+            {
+                p = yi << 2;
+                pixels[p+3] = pa = (a_sum * mul_sum) >> shg_sum;
+                if ( pa > 0 )
+                {
+                    pa = 255 / pa;
+                    pixels[p]   = ((r_sum * mul_sum) >> shg_sum ) * pa;
+                    pixels[p+1] = ((g_sum * mul_sum) >> shg_sum ) * pa;
+                    pixels[p+2] = ((b_sum * mul_sum) >> shg_sum ) * pa;
+                } else {
+                    pixels[p] = pixels[p+1] = pixels[p+2] = 0;
+                }
+
+                r_sum -= r_out_sum;
+                g_sum -= g_out_sum;
+                b_sum -= b_out_sum;
+                a_sum -= a_out_sum;
+
+                r_out_sum -= stackIn.r;
+                g_out_sum -= stackIn.g;
+                b_out_sum -= stackIn.b;
+                a_out_sum -= stackIn.a;
+
+                p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
+
+                r_sum += ( r_in_sum += ( stackIn.r = pixels[p]));
+                g_sum += ( g_in_sum += ( stackIn.g = pixels[p+1]));
+                b_sum += ( b_in_sum += ( stackIn.b = pixels[p+2]));
+                a_sum += ( a_in_sum += ( stackIn.a = pixels[p+3]));
+
+                stackIn = stackIn.next;
+
+                r_out_sum += ( pr = stackOut.r );
+                g_out_sum += ( pg = stackOut.g );
+                b_out_sum += ( pb = stackOut.b );
+                a_out_sum += ( pa = stackOut.a );
+
+                r_in_sum -= pr;
+                g_in_sum -= pg;
+                b_in_sum -= pb;
+                a_in_sum -= pa;
+
+                stackOut = stackOut.next;
+
+                yi += width;
+            }
+        }
+    }
+
+    /**
+     * Blur Filter
+     * @function
+     * @memberOf Kinetic.Filters
+     * @param {Object} imageData
+     */
+    Kinetic.Filters.Blur = function(imageData) {
+        var radius = this.getFilterRadius() | 0;
+
+        if (radius > 0) {
+            filterGaussBlurRGBA(imageData, radius);
+        }
+    };
+
+    Kinetic.Node.addFilterGetterSetter(Kinetic.Image, 'filterRadius', 0);
+
+})();
+
+(function() {
+
+	function pixelAt(idata, x, y) {
+		var idx = (y * idata.width + x) * 4;
+		var d = [];
+		d.push(idata.data[idx++], idata.data[idx++], idata.data[idx++], idata.data[idx++]);
+		return d;
+	};
+
+	function rgbDistance(p1, p2) {
+		return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2) + Math.pow(p1[2] - p2[2], 2));
+	};
+
+	function rgbMean(pTab) {
+		var m = [0, 0, 0];
+
+		for (var i = 0; i < pTab.length; i++) {
+			m[0] += pTab[i][0];
+			m[1] += pTab[i][1];
+			m[2] += pTab[i][2];
+		}
+
+		m[0] /= pTab.length;
+		m[1] /= pTab.length;
+		m[2] /= pTab.length;
+
+		return m;
+	};
+
+	function backgroundMask(idata, threshold) {
+		var rgbv_no = pixelAt(idata, 0, 0);
+		var rgbv_ne = pixelAt(idata, idata.width - 1, 0);
+		var rgbv_so = pixelAt(idata, 0, idata.height - 1);
+		var rgbv_se = pixelAt(idata, idata.width - 1, idata.height - 1);
+
+
+		var thres = threshold || 10; 
+		if (rgbDistance(rgbv_no, rgbv_ne) < thres && rgbDistance(rgbv_ne, rgbv_se) < thres && rgbDistance(rgbv_se, rgbv_so) < thres && rgbDistance(rgbv_so, rgbv_no) < thres) {
+
+			// Mean color
+			var mean = rgbMean([rgbv_ne, rgbv_no, rgbv_se, rgbv_so]);
+
+			// Mask based on color distance
+			var mask = [];
+			for (var i = 0; i < idata.width * idata.height; i++) {
+				var d = rgbDistance(mean, [idata.data[i * 4], idata.data[i * 4 + 1], idata.data[i * 4 + 2]]);
+				mask[i] = (d < thres) ? 0 : 255;
+			}
+
+			return mask;
+		}
+	};
+
+	function applyMask(idata, mask) {
+		for (var i = 0; i < idata.width * idata.height; i++) {
+			idata.data[4 * i + 3] = mask[i];
+		}
+	};
+
+	function erodeMask(mask, sw, sh) {
+
+		var weights = [1, 1, 1, 1, 0, 1, 1, 1, 1];
+		var side = Math.round(Math.sqrt(weights.length));
+		var halfSide = Math.floor(side / 2);
+
+		var maskResult = [];
+		for (var y = 0; y < sh; y++) {
+			for (var x = 0; x < sw; x++) {
+
+				var so = y * sw + x;
+				var a = 0;
+				for (var cy = 0; cy < side; cy++) {
+					for (var cx = 0; cx < side; cx++) {
+						var scy = y + cy - halfSide;
+						var scx = x + cx - halfSide;
+
+						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
+
+							var srcOff = scy * sw + scx;
+							var wt = weights[cy * side + cx];
+
+							a += mask[srcOff] * wt;
+						}
+					}
+				}
+
+				maskResult[so] = (a === 255 * 8) ? 255 : 0;
+			}
+		}
+
+		return maskResult;
+	};
+
+	function dilateMask(mask, sw, sh) {
+
+		var weights = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+		var side = Math.round(Math.sqrt(weights.length));
+		var halfSide = Math.floor(side / 2);
+
+		var maskResult = [];
+		for (var y = 0; y < sh; y++) {
+			for (var x = 0; x < sw; x++) {
+
+				var so = y * sw + x;
+				var a = 0;
+				for (var cy = 0; cy < side; cy++) {
+					for (var cx = 0; cx < side; cx++) {
+						var scy = y + cy - halfSide;
+						var scx = x + cx - halfSide;
+
+						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
+
+							var srcOff = scy * sw + scx;
+							var wt = weights[cy * side + cx];
+
+							a += mask[srcOff] * wt;
+						}
+					}
+				}
+
+				maskResult[so] = (a >= 255 * 4) ? 255 : 0;
+			}
+		}
+
+		return maskResult;
+	};
+
+	function smoothEdgeMask(mask, sw, sh) {
+
+		var weights = [1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9];
+		var side = Math.round(Math.sqrt(weights.length));
+		var halfSide = Math.floor(side / 2);
+
+		var maskResult = [];
+		for (var y = 0; y < sh; y++) {
+			for (var x = 0; x < sw; x++) {
+
+				var so = y * sw + x;
+				var a = 0;
+				for (var cy = 0; cy < side; cy++) {
+					for (var cx = 0; cx < side; cx++) {
+						var scy = y + cy - halfSide;
+						var scx = x + cx - halfSide;
+
+						if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
+
+							var srcOff = scy * sw + scx;
+							var wt = weights[cy * side + cx];
+
+							a += mask[srcOff] * wt;
+						}
+					}
+				}
+
+				maskResult[so] = a;
+			}
+		}
+
+		return maskResult;
+	}
+	
+	/**
+	 * Mask Filter
+	 *
+	 * Only crop unicolor background images for instance
+	 *
+	 * @function
+	 * @memberOf Kinetic.Filters
+	 * @param {Object} imageData
+	 */
+	Kinetic.Filters.Mask = function(idata) {
+		// Detect pixels close to the background color
+		var threshold = this.getFilterThreshold(),
+		    mask = backgroundMask(idata, threshold);
+		if (mask) {
+			// Erode
+			mask = erodeMask(mask, idata.width, idata.height);
+
+			// Dilate
+			mask = dilateMask(mask, idata.width, idata.height);
+
+			// Gradient
+			mask = smoothEdgeMask(mask, idata.width, idata.height);
+
+			// Apply mask
+			applyMask(idata, mask);
+			
+			// todo : Update hit region function according to mask
+		}
+
+		return idata;
+	};
+
+	Kinetic.Node.addFilterGetterSetter(Kinetic.Image, 'filterThreshold', 0);
+
+	//threshold The RGB euclidian distance threshold (default : 10) 
+
+})();
+
