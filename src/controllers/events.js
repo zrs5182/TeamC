@@ -3,8 +3,8 @@ var container = document.getElementById("container");
 
 var stage = new Kinetic.Stage({
 	container : 'container',
-	width : window.innerWidth,
-	height : window.innerHeight,
+	width : screen.width,
+	height : screen.height,
 	getWidth : function() {
 		return this.width;
 	},
