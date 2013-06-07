@@ -6,12 +6,15 @@ var amCanvas = {
 }
 var canvasController = {
 	newCanvas : function() {
+		nodeList.nodes=[];
 		localStorage.clear();
-		stage.clear();
+		layer.removeChildren();
+		stage.removeChildren();
 		stage.setOffsetX(-amCanvas.centerX);
 		stage.setPosition(0);
 		stage.setScale(1);
 		stage.add(layer);
+		nextClaimNumber=0;
 		canvasController.addClaim("contention");
 	},
 	displayLoad : function() {
@@ -44,9 +47,8 @@ var canvasController = {
 		var claim = nodeList.nodes[myId];
 		var gridX = amCanvas.gridX;
 		var gridY = amCanvas.gridY;
-		var scale = layer.getScale().x;
-		var center = 0;
-		var realX = Math.round(((claim.x - nodeList.nodes[0].x) * (amCanvas.gridX * 1.5) + center + 37) * scale) + stage.getAbsoluteTransform().getTranslation().x;
+		var scale = stage.getScale().x;
+		var realX = Math.round(((claim.x - nodeList.nodes[0].x) * (amCanvas.gridX * 1.5) + 37) * scale) + stage.getAbsoluteTransform().getTranslation().x;
 		var realY = Math.round(((claim.y * amCanvas.gridY * 1.5) + 37) * scale) + stage.getAbsoluteTransform().getTranslation().y;
 		document.getElementById('myTextArea').style.left = realX + "px";
 		document.getElementById('myTextArea').style.top = realY + "px";
@@ -64,6 +66,13 @@ var canvasController = {
 		var thisText = stage.get('.complexText')[myId];
 		thisText.setText(nodeList.nodes[myId].text);
 	},
+	fixText: function(){
+		for(node in nodeList.nodes){
+			if(stage.get(".complexText")[node]){
+				stage.get(".complexText")[node].setX(((nodeList.nodes[node].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3)) + 30)
+			}
+		}
+	},
 	addClaim : function(type, parent) {
 		parent = ( typeof parent == 'undefined') ? null : parent;
 		var myId = nextClaimNumber;
@@ -71,43 +80,45 @@ var canvasController = {
 		nodeList.newNode(myId, type, parent);
 		amTree.buchheim(0);
 		canvasController.drawClaim(myId);
-		//document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
-		//setTimeout(function() {document.getElementsByName('working')[0].focus();}, 100);
+		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
+		document.getElementsByName('working')[0].focus();
 	},
-	/*removeClaim : function(id) {
-		layer.destroy();
-		layer = new Kinetic.Layer();
-		stage.add(layer);
-		var node = nodeList.nodes[id];
-
-		if (node != 0) {
-			var parent = nodeList.nodes[node.parent];
-			console.log(parent.children.splice(node.number - 1, 1) + " removed");
-			store.set(parent.id, parent);
-		}
-		localStorage.removeItem(id);
-		console.log(parent.children);
-		for (var key in localStorage) {
-			if (key != "canvas") {
-				canvasController.drawClaim(nodeList.nodes[key].id);
-				console.log(layer.children);
-				for (var shape in layer.children) {
-					console.log(shape.name);
-					if (shape.name != "connector") {
-						shape.drawHitFunc();
+	removeClaim : function(id){
+		if(id===0){
+			canvasController.newCanvas();
+		}else{
+			var claim = nodeList.nodes[id];
+			for(var i = claim.children.length-1; i>=0; i--){
+				console.log("removing "+claim.children[i]);
+				canvasController.removeClaim(claim.children[i]);
+			}
+			var parent = nodeList.nodes[nodeList.nodes[id].parent];
+			parent.children.splice(claim.number-1,1);
+			nodeList.nodes.splice(nodeList.nodes.indexOf(claim),1);
+			nextClaimNumber--;
+			for(var node in nodeList.nodes){
+				if(nodeList.nodes[node].id>id){
+					nodeList.nodes[node].id--;
+				}
+				if(nodeList.nodes[node].parent>id){
+					nodeList.nodes[node].parent--;
+				}
+				if(nodeList.nodes[node].ancestor>id){
+					nodeList.nodes[node].ancestor=nodeList.nodes[node].id;
+				}
+				for(var child in nodeList.nodes[node].children){
+					if(nodeList.nodes[node].children[child]>id){
+						nodeList.nodes[node].children[child]--;
 					}
 				}
 			}
+			layer.removeChildren();
+			for(var node in nodeList.nodes){
+				canvasController.drawClaim(nodeList.nodes[node].id);
+			}
+			amTree.buchheim(0);
 		}
-		setTimeout(function() {
-			readyTree(0);
-		}, 100);
-		setTimeout(function() {
-			firstWalk(0);
-			secondWalk(0);
-			fixText(0);
-		}, 500);
-	},*/
+	},
 	drawClaim : function(myId) {
 		var claim = new Kinetic.Shape({
 			id : myId,
@@ -159,7 +170,7 @@ var canvasController = {
 			opacity : 1
 		});
 		var claimAddLeft = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			name : "claimAddLeft",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
@@ -205,7 +216,7 @@ var canvasController = {
 			opacity : 0
 		});
 		var claimAddRight = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			name : "claimAddRight",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
@@ -251,7 +262,7 @@ var canvasController = {
 			opacity : 0
 		});
 		var claimAddBottom = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			name : "claimAddBottom",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
@@ -298,7 +309,7 @@ var canvasController = {
 		});
 
 		var claimTextArea = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
 				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
@@ -345,7 +356,7 @@ var canvasController = {
 			opacity : 1
 		});
 		var supportButton = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
 				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
@@ -385,7 +396,7 @@ var canvasController = {
 		});
 
 		var refuteButton = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
 				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
@@ -429,7 +440,7 @@ var canvasController = {
 		});
 
 		var deleteButton = new Kinetic.Shape({
-			id : myId,
+			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
 				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
@@ -467,9 +478,8 @@ var canvasController = {
 			opacity : 1
 
 		});
-
 		var complexText = new Kinetic.Text({
-			id : myId,
+			//id : myId,
 			name : "complexText",
 			x : ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3)) + 30,
 			y : (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + 30,
@@ -484,7 +494,7 @@ var canvasController = {
 		});
 		if (myId !== 0) {
 			var connector = new Kinetic.Shape({
-				id : myId,
+				//id : myId,
 				drawFunc : function(canvas) {
 					var context = canvas.getContext();
 					var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
@@ -607,18 +617,20 @@ var canvasController = {
 
 			});
 		}
-		layer.add(claim);
-		layer.add(claimTextArea);
-		layer.add(supportButton);
-		layer.add(refuteButton);
-		layer.add(deleteButton);
-		layer.add(complexText);
-		layer.add(claimAddLeft);
-		layer.add(claimAddRight);
-		layer.add(claimAddBottom);
+		var group = new Kinetic.Group({id:myId});
+		group.add(claim);
+		group.add(claimTextArea);
+		group.add(supportButton);
+		group.add(refuteButton);
+		group.add(deleteButton);
+		group.add(complexText);
+		group.add(claimAddLeft);
+		group.add(claimAddRight);
+		group.add(claimAddBottom);
 		if (myId !== 0) {
-			layer.add(connector);
+			group.add(connector);
 		}
+		layer.add(group);
 		layer.draw();
 	}
 };

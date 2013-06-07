@@ -19,20 +19,26 @@ var nextClaimNumber = 0;
 canvasController.newCanvas();
 
 var moving = 0;
+var dragging = 0;
 var selected = null;
+stage.on('dragstart', function() {
+        layer.setListening(0);
+      });
+stage.on('dragend', function() {
+        layer.setListening(1);
+        layer.draw();
+      });
 layer.on('click', function(event) {
 	if(moving===0){
 		var node = event.targetNode;
 		var myName = node.attrs.name;
-		var myId = node.attrs.id;
+		var myId = node.getParent().getId();
 		var myType = nodeList.nodes[myId].type;
-		//console.log(myName+" clicked");
 		if (myName === "complexText" || myName === "claimTextArea") {
 			var div = document.getElementById('myTextArea');
 			div.innerHTML = canvasController.makeTextArea(myId);
 			document.getElementsByName('working')[0].focus();
 		} else if (myName === "supportButton") {
-			//console.log("support clicked");
 			canvasController.addClaim("support", myId);
 		} else if (myName === "refuteButton") {
 			if (myType === "refute") {
@@ -41,18 +47,19 @@ layer.on('click', function(event) {
 				canvasController.addClaim("refute", myId);
 			}
 		} else if (myName === "deleteButton") {
-	
+			canvasController.removeClaim(myId);
 		} else if (myName === "claim" || myName === "connector") {
-			for (element in layer.children) {
-				if ((layer.children[element].attrs.id != myId && layer.children[element].attrs.name!="claimAddLeft" && layer.children[element].attrs.name!="claimAddRight" && layer.children[element].attrs.name!="claimAddBottom") || layer.children[element].attrs.name === "connector") {
-					layer.children[element].setAttr("opacity", 0.25);
-				}else{
-					layer.children[element].setAttr("opacity",1);
+			for (var element in layer.children) {
+				for (var child in layer.children[element].children){
+					if ((layer.children[element].children[child].attrs.id != myId && layer.children[element].children[child].attrs.name!="claimAddLeft" && layer.children[element].children[child].attrs.name!="claimAddRight" && layer.children[element].children[child].attrs.name!="claimAddBottom") || layer.children[element].children[child].attrs.name === "connector") {
+						layer.children[element].children[child].setAttr("opacity", 0.25);
+					}else{
+						layer.children[element].children[child].setAttr("opacity",1);
+					}
 				}
 			}
 			moving=1;
 			selected = myId;
-			//console.log(selected+" selected");
 			document.getElementById("container").style.backgroundColor='lightgray';
 			layer.draw();
 		}
@@ -61,14 +68,15 @@ layer.on('click', function(event) {
 		var myName = node.attrs.name;
 		var myId = node.attrs.id;
 		var myType = nodeList.nodes[myId].type;
-		//console.log(myName+","+myId);
 		if ((myName === "claim" || myName === "connector")&& myId===selected) {
-			for (element in layer.children) {
-				if (layer.children[element].attrs.id != myId || layer.children[element].attrs.name === "connector") {
-					layer.children[element].setAttr("opacity", 1);
-				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
-					layer.children[element].setAttr("opacity",0);
+			for (var element in layer.children) {
+				for (var child in layer.children[element].children){
+					if (layer.children[element].children[child].attrs.id != myId || layer.children[element].children[child].attrs.name === "connector") {
+						layer.children[element].children[child].setAttr("opacity", 1);
+					}
+					if (layer.children[element].children[child].attrs.name==="claimAddLeft" || layer.children[element].children[child].attrs.name==="claimAddRight" || layer.children[element].children[child].attrs.name==="claimAddBottom"){
+						layer.children[element].children[child].setAttr("opacity",0);
+					}
 				}
 			}
 			moving=0;

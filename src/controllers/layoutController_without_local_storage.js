@@ -6,18 +6,19 @@ var nodeList = {
 	resetList: function(){
 		for(item in this.nodes){
 			var node = nodeList.nodes[item];
+			node.ancestor=node.id;
 			node.x=0;
 			node.mod=0;
 			node.shift=0;
 			node.change=0;
 			node.thread=null;
+			node.leftBrother = null;
 			node.leftMostSibling = null;
 			if(node.parent!=null && node.id!=nodeList.nodes[node.parent].children[0]){
 				node.leftMostSibling = nodeList.nodes[node.parent].children[0];
 				}
 			if(node.parent!=null){
 				node.number = nodeList.nodes[node.parent].children.indexOf(node.id)+1;
-				node.leftBrother = null;
 				if(node.number>1){
 					node.leftBrother = nodeList.nodes[node.parent].children[node.number-2];
 				}
@@ -56,10 +57,19 @@ var amTree = {
 		nodeList.resetList();
 		this.firstWalk(root);
 		this.secondWalk(root);
+		canvasController.fixText();
 		layer.draw();
 		localStorage.setItem("nodeList",JSON.stringify(nodeList.nodes));
 	},
 	firstWalk: function(node){
+		//console.log(node);
+		/*for(var child in nodeList.nodes){
+			console.log(nodeList.nodes[child].id);
+			if(nodeList.nodes[child].id==node){
+				var v = nodeList.nodes[child];
+				break;
+			}
+		}*/
 		var v = nodeList.nodes[node];
 		if(v.children[0]==null){
 			if(v.leftBrother){
