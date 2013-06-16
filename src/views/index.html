@@ -69,41 +69,37 @@
 				<li>
 					<img src="hamburger.png" onClick="canvasController.displayMenu()">
 				</li>
-				<div id="nav">
-
-					<li class="spaced">
+				<li>
+					<div id="nav">
 						<ul>
-							<a id="downloader"> <img src="save.png" alt="save" onClick="fileController.save()"> </a>
-					</li>
-					<li class="spaced">
-						<a href="#"><img src="folder.png" alt="load" onclick="canvasController.displayLoad()"></a>
-					</li>
-
-					<li>
-						<a href="#"><img src="undo.png" alt="revert"></a>
-					</li>
-					<li>
-						<a href="#"><img src="compass.png" alt="center map" onclick="canvasController.centerMap()"></a>
-					</li>
-					<li>
-						<a href="#"><img src="paper_airplane.png" alt="email project file"></a>
-					</li>
-					<li>
-						<a href="#"><img src="picture.png"></a>
+							<li class="spaced">							
+									<a id="downloader"> <img src="save.png" alt="save" onClick="fileController.save()"> </a>
+							</li>
+							<li class="spaced">
+								<a href="#"><img src="folder.png" alt="load" onclick="canvasController.displayLoad()"></a>
+							</li>
+							<li class="spaced">
+								<a href="#"><img src="undo.png" alt="revert"></a>
+							</li>
+							<li class="spaced">
+								<a href="#"><img src="compass.png" alt="center map" onclick="canvasController.centerMap()"></a>
+							</li>
+							<li class="spaced">
+								<a href="#"><img src="picture.png"></a>
+							</li>
+						</ul>
+					</div>
+				</li>
+				<li>
+					<ul>
+						<li>
+							<div style="display:none;" id="loadArea">
+								<input type="file"  id="files" name="files[]"  />
+							</div>
+						</li>
+					</ul>
+				</li>
 			</ul>
-			</li>
-			<li>
-				<ul>
-					<li>
-						<div style="display:none;" id="loadArea">
-							<input type="file"  id="files" name="files[]"  />
-						</div>
-					</li>
-				</ul>
-			</li>
-			</ul>
-		</div>
-
-		</div>
+	</div>
 	</body>
 </html>
