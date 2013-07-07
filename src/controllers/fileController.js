@@ -21,7 +21,7 @@ var fileController = {
 	save: function(){
         var save_pattern=/(\S)/i
         var filename=prompt("Save As...","argument_map");
-    if(!save_pattern.test(filename)){
+    if(!save_pattern.test(filename) || filename == null){
             filename="argument_map";
         }
         filename=filename+".am";
