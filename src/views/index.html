@@ -67,25 +67,25 @@
 		<div id="menuArea">
 			<ul>
 				<li>
-					<img src="hamburger.png" onClick="canvasController.displayMenu()">
+					<img src="hamburger.png" onClick="canvasController.displayMenu()" title="Un/hide menu" />
 				</li>
 				<li>
 					<div id="nav">
 						<ul>
 							<li class="spaced">							
-									<a id="downloader"> <img src="save.png" alt="save" onClick="return fileController.save()"> </a>
+									<a id="downloader" title="Save..."><img src="save.png" alt="save" onClick="return fileController.save()" /> </a>
 							</li>
 							<li class="spaced">
-								<a href="#"><img src="folder.png" alt="load" onclick="canvasController.displayLoad()"></a>
+								<a href="#" title="Load..."><img src="folder.png" alt="load" onclick="canvasController.displayLoad()" /></a>
 							</li>
 							<li class="spaced">
-								<a href="#"><img src="undo.png" alt="revert"></a>
+								<a href="#" title="Undo"><img src="undo.png" alt="revert" /></a>
 							</li>
 							<li class="spaced">
-								<a href="#"><img src="compass.png" alt="center map" onclick="canvasController.centerMap()"></a>
+								<a href="#" title="Center workspace"><img src="compass.png" alt="center map" onclick="canvasController.centerMap()" /></a>
 							</li>
 							<li class="spaced">
-								<a href="#"><img src="picture.png"></a>
+								<a href="#" title="Export image"><img src="picture.png" /></a>
 							</li>
 						</ul>
 					</div>
