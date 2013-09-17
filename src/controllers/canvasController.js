@@ -28,14 +28,16 @@ var canvasController = {
 		}
 	},
 	displayMenu : function() {
-		var menu = document.getElementById("nav");
-		var currentMenuDisplay = menu.style.display;
-		if (currentMenuDisplay == "none") {
-			menu.style.display = "block";
-		} else {
-			menu.style.display = "none";
-			document.getElementById("loadArea").style.display = "none";
-		}
+	    // Hide or suppress the "hamburger" menu.
+	    var menu = document.getElementById("nav");
+	    var currentMenuDisplay = menu.style.display;
+
+	    if (currentMenuDisplay != "block") {
+		menu.style.display = "block";
+	    } else {
+		menu.style.display = "none";
+		document.getElementById("loadArea").style.display = "none";
+	    }
 	},
 	centerMap: function(){
 		stage.setPosition(0,0);
