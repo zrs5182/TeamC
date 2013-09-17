@@ -19,13 +19,24 @@ var fileController = {
 		return true;
 	},
 	save: function(){
-        var save_pattern=/(\S)/i
-        var filename=prompt("Save As...","argument_map");
-    if(!save_pattern.test(filename) || filename == null){
-            filename="argument_map";
-        }
-        filename=filename+".am";
-        document.getElementById("downloader").download=filename;
-        document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
+	    var save_pattern=/(\S)/i;
+	    var extension_pattern = /.am$/;
+	    var filename=prompt("Save As...","argument_map");
+
+	    // If the user pressed cancel or emptied the field of letters, we'll abort.
+	    if( filename == null || !save_pattern.test(filename)) {
+		return false;
+	    }
+
+	    // Add a missing extension.
+	    if( !extension_pattern.test( filename )) {
+		filename=filename+".am";
+	    }
+	    //  Fill in the anchor to download to this file name.
+	    document.getElementById("downloader").download=filename;
+	    document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(JSON.stringify(localStorage));
+
+	    // Let the caller start the download.
+	    return true;
     }
 };
