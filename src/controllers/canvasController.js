@@ -1,6 +1,9 @@
+var r = 12;	// radius of the box corners for a reason
+var o = 30;	// offset from the box edges of a reason to the claims inside
+
 var amCanvas = {
-	gridX: 300,
-	gridY: 200,
+	gridX: 300,	// width of a "stock" reason (will change when we allow multi-claim reasons)
+	gridY: 200,	// height of a reason
 	centerX: (window.innerWidth / 2) - 150, // half of gridX
 	centerY: (window.innerHeight / 2) + 100, // half of gridY
 }
@@ -131,8 +134,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + r, y);
 				context.arcTo(x + w, y, x + w, y + r, r);
@@ -158,8 +159,6 @@ var canvasController = {
 				var x = ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + (w / 2) - (2 * o), y);
 				context.lineTo(x + (w / 2) + (2 * o), y);
@@ -180,8 +179,6 @@ var canvasController = {
 				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = amCanvas.gridY / 4 * 3;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x - o, y);
 				context.arcTo(x - w, y, x - w, y + r, r);
@@ -204,8 +201,6 @@ var canvasController = {
 				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = amCanvas.gridY / 4 * 3;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x - o, y);
 				context.arcTo(x - w, y, x - w, y + r, r);
@@ -226,8 +221,6 @@ var canvasController = {
 				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = (amCanvas.gridY / 4) * 3;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + r, y);
 				context.arcTo(x + w, y, x + w, y + r, r);
@@ -250,8 +243,6 @@ var canvasController = {
 				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = (amCanvas.gridY / 4) * 3;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + r, y);
 				context.arcTo(x + w, y, x + w, y + r, r);
@@ -272,8 +263,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + (w/6) + r, y + h);
 				context.arcTo(x + (w/6*5), y + h, x + (w/6*5), y + h +r, r);
@@ -296,8 +285,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + (w/6) + r, y + h);
 				context.arcTo(x + (w/6*5), y + h, x + (w/6*5), y + h +r, r);
@@ -318,8 +305,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + r + o, y + o);
 				context.arcTo(x + w - o, y + o, x + w - o, y + r / 2 + o, r / 2);
@@ -344,8 +329,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + r + o, y + o);
 				context.arcTo(x + w - o, y + o, x + w - o, y + r / 2 + o, r / 2);
@@ -365,8 +348,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x, y + h - o - r);
 				context.bezierCurveTo(x, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
@@ -384,8 +365,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x, y + h - o - r);
 				context.bezierCurveTo(x, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
@@ -405,8 +384,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + w, y + h - o - r);
 				context.bezierCurveTo(x + w, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
@@ -428,8 +405,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + w, y + h - o - r);
 				context.bezierCurveTo(x + w, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
@@ -449,8 +424,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + w - 2 * o - r, y);
 				context.bezierCurveTo(x + w - o, y, x + w, y + o, x + w, y + 2 * o + r);
@@ -468,8 +441,6 @@ var canvasController = {
 				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
-				var r = 12;
-				var o = 30;
 				context.beginPath();
 				context.moveTo(x + w - 2 * o - r, y);
 				context.bezierCurveTo(x + w - o, y, x + w, y + o, x + w, y + 2 * o + r);
@@ -503,8 +474,6 @@ var canvasController = {
 					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 					var w = amCanvas.gridX;
 					var h = amCanvas.gridY;
-					var r = 12;
-					var o = 30;
 					var type = nodeList.nodes[myId].type;
 					if (type !== "contention") {
 						var parentX = ((nodeList.nodes[nodeList.nodes[myId].parent].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
@@ -604,8 +573,6 @@ var canvasController = {
 					var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
 					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
 					var w = amCanvas.gridX;
-					var r = 12;
-					var o = 30;
 					context.beginPath();
 					context.moveTo(x + (w / 2) - (2 * o), y);
 					context.lineTo(x + (w / 2) + (2 * o), y);
