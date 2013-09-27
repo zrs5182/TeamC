@@ -1,38 +1,27 @@
+// Implements the Buchheim layout algorithm, adapted from
+// http://billmill.org/pymag-trees/
+//
+// Notable in this implementation is that there is no
+// assumption that each node of the tree is of equal width
+
+// This is a representation of our argument tree containing
+// all of the attributes required to do the Buchheim
+// layout algorithm.
 var nodeList = {
-	nodes: [],
-	addNode: function(node){
-		this.nodes.push(node);
-	},
-	resetList: function(){
-		for(item in this.nodes){
-			var node = nodeList.nodes[item];
-			node.ancestor=node.id;
-			node.x=0;
-			node.mod=0;
-			node.shift=0;
-			node.change=0;
-			node.thread=null;
-			node.leftBrother = null;
-			node.leftMostSibling = null;
-			if(node.parent!=null && node.id!=nodeList.nodes[node.parent].children[0]){
-				node.leftMostSibling = nodeList.nodes[node.parent].children[0];
-				}
-			if(node.parent!=null){
-				node.number = nodeList.nodes[node.parent].children.indexOf(node.id)+1;
-				if(node.number>1){
-					node.leftBrother = nodeList.nodes[node.parent].children[node.number-2];
-				}
-			}
-		}
-	},
-	newNode: function(newId, newType, newParent){
+	nodes: [],					// List of the nodes in this tree
+	// Push a new node (with default attributes) onto the list
+	newNode: function(newId, newType, newParent, newClaims){
 		newParent = ( typeof newParent == 'undefined') ? null : newParent;
-		this.addNode({
+		this.nodes.push({
 			id: newId,
 			type: newType,
 			parent: newParent,
 			ancestor: newId,
-			text: "",
+			claims: newClaims,
+			width: function() {
+				return this.claims*amCanvas.claimX + o;
+			},
+			text: "",	// eventually this should be an array of texts (for each claim)
 			x: 0,
 			y: 0,
 			tree: 0,
@@ -50,8 +39,32 @@ var nodeList = {
 		}else if(newType==="refute"||newType==="rebut"){
 			this.nodes[newParent].children.push(newId);
 		}
+	},
+	// Reset all of the attributes of each node (called just before laying out)
+	resetList: function(){
+		for( var i=0, len=this.nodes.length; i < len; i++ ) {
+			var node = nodeList.nodes[i];
+			node.ancestor=node.id;	// Set our anscestor node to us
+			node.x=0;
+			node.mod=0;
+			node.shift=0;
+			node.change=0;
+			node.thread=null;		// these 'threads' are special links in the tree
+			node.leftBrother = null;
+			node.leftMostSibling = null;
+			if(node.parent!=null && node.id!=nodeList.nodes[node.parent].children[0]){
+				node.leftMostSibling = nodeList.nodes[node.parent].children[0];
+				}
+			if(node.parent!=null){
+				node.number = nodeList.nodes[node.parent].children.indexOf(node.id)+1;
+				if(node.number>1){
+					node.leftBrother = nodeList.nodes[node.parent].children[node.number-2];
+				}
+			}
+		}
 	}
 }
+
 var amTree = {
 	buchheim: function(root){
 		nodeList.resetList();
@@ -73,7 +86,10 @@ var amTree = {
 		var v = nodeList.nodes[node];
 		if(v.children[0]==null){
 			if(v.leftBrother){
-				v.x = nodeList.nodes[v.leftBrother].x+1;
+				// Our x needs to leave space for our left brother
+				v.x = nodeList.nodes[v.leftBrother].x + 
+				    nodeList.nodes[v.leftBrother].width() +
+					amCanvas.padX;
 			}else{
 				v.x=0;
 			}
@@ -86,24 +102,24 @@ var amTree = {
 			this.executeShifts(v);
 			var leftMostChild = nodeList.nodes[v.children[0]];
 			var rightMostChild = nodeList.nodes[v.children[v.children.length-1]];
-			var midpoint = (leftMostChild.x + rightMostChild.x)/2;
+			var midpoint = (leftMostChild.x + rightMostChild.x + rightMostChild.width())/2;
 			var w = v.leftBrother;
 			if(w!=null){
-				v.x=nodeList.nodes[w].x+1;
-				v.mod=v.x-midpoint;
+				v.x=nodeList.nodes[w].x + nodeList.nodes[w].width() + amCanvas.padX;
+				v.mod=v.x-midpoint + v.width()/2;
 			}else{
-				v.x=midpoint;
+				v.x=midpoint - v.width()/2;
 			}
 		}
 	},
-	secondWalk: function(node, m, depth){
+	secondWalk: function(node, m, y){
 		m = ( typeof m == 'undefined') ? 0 : m;
-		depth = ( typeof depth == 'undefined') ? 0 : depth;
+		y = ( typeof y == 'undefined') ? 0 : y;
 		var v = nodeList.nodes[node];
 		v.x = v.x + m;
-		v.y = depth;
+		v.y = y;
 		for(var w in v.children){
-			this.secondWalk(v.children[w], m+v.mod, depth+1);
+			this.secondWalk(v.children[w], m+v.mod, y+amCanvas.gridY+amCanvas.padY );
 		}
 	},
 	apportion: function(node, defaultAncestor){
@@ -125,7 +141,7 @@ var amTree = {
 				vol = nodeList.nodes[this.left(vol)];
 				vor = nodeList.nodes[this.right(vor)];
 				vor.ancestor = v.id;
-				shift = (vil.x+sil)-(vir.x+sir)+1;
+				shift = (vil.x+sil)-(vir.x+sir)+vir.width() + amCanvas.padX;
 				if(shift>0){
 					this.moveSubtree(this.ancestor(vil,v,defaultAncestor),v,shift);
 					sir = sir + shift;

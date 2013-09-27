@@ -2,10 +2,13 @@ var r = 12;	// radius of the box corners for a reason
 var o = 30;	// offset from the box edges of a reason to the claims inside
 
 var amCanvas = {
+	claimX : 240 + o,	// how much each claim adds to width of a reason
+	mainX : 240 + o + o,	// width of main contention (has only one claim)
 	gridX: 300,	// width of a "stock" reason (will change when we allow multi-claim reasons)
 	gridY: 200,	// height of a reason
-	centerX: (window.innerWidth / 2) - 150, // half of gridX
-	centerY: (window.innerHeight / 2) + 100, // half of gridY
+	padX: 150, // empty horiz space between adjacent reasons
+	padY: 100, // empty vertical space between rows of the map
+	centerX: (window.innerWidth / 2), // window center
 }
 var canvasController = {
 	newCanvas : function() {
@@ -13,7 +16,7 @@ var canvasController = {
 		localStorage.clear();
 		layer.removeChildren();
 		stage.removeChildren();
-		stage.setOffsetX(-amCanvas.centerX);
+		stage.setOffsetX( amCanvas.mainX/2 - amCanvas.centerX );
 		stage.setPosition(0);
 		stage.setScale(1);
 		stage.add(layer);
@@ -43,9 +46,9 @@ var canvasController = {
 	    }
 	},
 	centerMap: function(){
-		stage.setPosition(0,0);
+		stage.setPosition(0,0);		// Next line might be a FIXME?
 		stage.setPosition(-(((window.innerWidth-100)/2))*(stage.getScale().x-1),0)
-		stage.setOffset(-amCanvas.centerX,0);
+		stage.setOffset( nodeList.nodes[0].x + nodeList.nodes[0].width()/2 - amCanvas.centerX, 0 );
 		stage.draw();
 	},
 	makeTextArea : function(myId) {
@@ -53,8 +56,8 @@ var canvasController = {
 		var gridX = amCanvas.gridX;
 		var gridY = amCanvas.gridY;
 		var scale = stage.getScale().x;
-		var realX = Math.round(((claim.x - nodeList.nodes[0].x) * (amCanvas.gridX * 1.5) + 37) * scale) + stage.getAbsoluteTransform().getTranslation().x;
-		var realY = Math.round(((claim.y * amCanvas.gridY * 1.5) + 37) * scale) + stage.getAbsoluteTransform().getTranslation().y;
+		var realX = (claim.x + 37) * scale + stage.getAbsoluteTransform().getTranslation().x;
+		var realY = (claim.y + 37) * scale + stage.getAbsoluteTransform().getTranslation().y;
 		document.getElementById('myTextArea').style.left = realX + "px";
 		document.getElementById('myTextArea').style.top = realY + "px";
 		document.getElementById('myTextArea').style.zIndex = 2;
@@ -74,7 +77,7 @@ var canvasController = {
 	fixText: function(){
 		for(node in nodeList.nodes){
 			if(stage.get(".complexText")[node]){
-				stage.get(".complexText")[node].setX(((nodeList.nodes[node].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3)) + 30)
+				stage.get(".complexText")[node].setX(nodeList.nodes[node].x + 30)
 			}
 		}
 	},
@@ -82,7 +85,7 @@ var canvasController = {
 		parent = ( typeof parent == 'undefined') ? null : parent;
 		var myId = nextClaimNumber;
 		nextClaimNumber = myId + 1;
-		nodeList.newNode(myId, type, parent);
+		nodeList.newNode(myId, type, parent, 1);
 		amTree.buchheim(0);
 		canvasController.drawClaim(myId);
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
@@ -130,8 +133,8 @@ var canvasController = {
 			name : "claim",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -156,8 +159,8 @@ var canvasController = {
 			strokeWidth : 2,
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				context.beginPath();
 				context.moveTo(x + (w / 2) - (2 * o), y);
@@ -175,8 +178,8 @@ var canvasController = {
 			name : "claimAddLeft",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = amCanvas.gridY / 4 * 3;
 				context.beginPath();
@@ -197,8 +200,8 @@ var canvasController = {
 			strokeWidth : 5,
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var x = nodeList.nodes[myId];
+				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = amCanvas.gridY / 4 * 3;
 				context.beginPath();
@@ -217,8 +220,8 @@ var canvasController = {
 			name : "claimAddRight",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = amCanvas.gridX + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var x = nodeList.nodes[myId].x;		// This might be a FIXME.
+				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = (amCanvas.gridY / 4) * 3;
 				context.beginPath();
@@ -239,8 +242,8 @@ var canvasController = {
 			strokeWidth : 5,
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = amCanvas.gridX + (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + (amCanvas.gridY / 8);
+				var x = amCanvas.gridX + nodeList.nodes[myId].x;	// Might be a FIXME
+				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
 				var w = amCanvas.gridX / 4;
 				var h = (amCanvas.gridY / 4) * 3;
 				context.beginPath();
@@ -259,8 +262,8 @@ var canvasController = {
 			name : "claimAddBottom",
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -281,8 +284,8 @@ var canvasController = {
 			strokeWidth : 5,
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -301,8 +304,8 @@ var canvasController = {
 			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -325,8 +328,8 @@ var canvasController = {
 			name : 'claimTextArea',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -344,8 +347,8 @@ var canvasController = {
 			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -361,8 +364,8 @@ var canvasController = {
 			name : 'supportButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -380,8 +383,8 @@ var canvasController = {
 			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -401,8 +404,8 @@ var canvasController = {
 			name : 'refuteButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -420,8 +423,8 @@ var canvasController = {
 			//id : myId,
 			drawFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -437,8 +440,8 @@ var canvasController = {
 			name : 'deleteButton',
 			drawHitFunc : function(canvas) {
 				var context = canvas.getContext();
-				var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-				var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+				var x = nodeList.nodes[myId].x;
+				var y = nodeList.nodes[myId].y;
 				var w = amCanvas.gridX;
 				var h = amCanvas.gridY;
 				context.beginPath();
@@ -454,8 +457,8 @@ var canvasController = {
 		var complexText = new Kinetic.Text({
 			//id : myId,
 			name : "complexText",
-			x : ((nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3)) + 30,
-			y : (nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3)) + 30,
+			x : nodeList.nodes[myId].x + 30,
+			y : nodeList.nodes[myId].y + 30,
 			text : nodeList.nodes[myId].text,
 			fontSize : 18,
 			fontFamily : 'Calibri',
@@ -470,14 +473,14 @@ var canvasController = {
 				//id : myId,
 				drawFunc : function(canvas) {
 					var context = canvas.getContext();
-					var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+					var x = nodeList.nodes[myId].x;
+					var y = nodeList.nodes[myId].y;
 					var w = amCanvas.gridX;
 					var h = amCanvas.gridY;
 					var type = nodeList.nodes[myId].type;
 					if (type !== "contention") {
-						var parentX = ((nodeList.nodes[nodeList.nodes[myId].parent].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3));
-						var parentY = nodeList.nodes[nodeList.nodes[myId].parent].y * ((amCanvas.gridY / 2) * 3);
+						var parentX = nodeList.nodes[nodeList.nodes[myId].parent].x;
+						var parentY = nodeList.nodes[nodeList.nodes[myId].parent].y;
 						var parentW = amCanvas.gridX;
 						var parentH = amCanvas.gridY;
 						context.beginPath();
@@ -570,8 +573,8 @@ var canvasController = {
 				name : 'connector',
 				drawHitFunc : function(canvas) {
 					var context = canvas.getContext();
-					var x = (nodeList.nodes[myId].x - nodeList.nodes[0].x) * ((amCanvas.gridX / 2) * 3);
-					var y = nodeList.nodes[myId].y * ((amCanvas.gridY / 2) * 3);
+					var x = nodeList.nodes[myId].x;
+					var y = nodeList.nodes[myId].y;
 					var w = amCanvas.gridX;
 					context.beginPath();
 					context.moveTo(x + (w / 2) - (2 * o), y);
