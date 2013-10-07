@@ -1,3 +1,5 @@
+// vim: set tabstop=4 expandtab : //
+
 var container = document.getElementById("container");
 //document.getElementById("menuArea").left = window.innerWidth - 50;
 
@@ -14,7 +16,7 @@ var stage = new Kinetic.Stage({
 	draggable : true
 });
 var layer = new Kinetic.Layer();
-var nextClaimNumber = 0;
+var nextReasonNumber = 0;
 
 canvasController.newCanvas();
 
@@ -33,21 +35,24 @@ layer.on('click', function(event) {
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 		var myId = node.getParent().getId();
-		var myType = nodeList.nodes[myId].type;
+        var reason = nodeList.nodes[myId];      // FIXME: Should eventually be a claim.
+        var claim = reason.claims[0];            // But for now assume just first claim.
+		var myType = reason.type;
+
 		if (myName === "complexText" || myName === "claimTextArea") {
 			var div = document.getElementById('myTextArea');
 			div.innerHTML = canvasController.makeTextArea(myId);
 			document.getElementsByName('working')[0].focus();
 		} else if (myName === "supportButton") {
-			canvasController.addClaim("support", myId);
+			canvasController.addReason("support", claim);
 		} else if (myName === "refuteButton") {
 			if (myType === "refute") {
-				canvasController.addClaim("rebut", myId);
+				canvasController.addReason("rebut", claim);
 			} else {
-				canvasController.addClaim("refute", myId);
+				canvasController.addReason("refute", claim);
 			}
 		} else if (myName === "deleteButton") {
-			canvasController.removeClaim(myId);
+			canvasController.removeReason(myId);
 		} else if (myName === "claim" || myName === "connector") {
 			for (var element in layer.children) {
 				for (var child in layer.children[element].children){
@@ -104,7 +109,7 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(0);
+			amTree.buchheim(nodeList.nodes[0]);
 		}else if(myName === "claimAddRight"){
 			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
 			var children = oldParent.children;
@@ -126,7 +131,7 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(0);
+			amTree.buchheim(nodeList.nodes[0]);
 		}else if(myName === "claimAddBottom"){
 			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
 			var children = oldParent.children;
@@ -152,7 +157,7 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(0);
+			amTree.buchheim(nodeList.nodes[0]);
 		}
 	}
 });
