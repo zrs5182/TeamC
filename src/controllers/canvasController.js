@@ -124,21 +124,19 @@ var canvasController = {
             var pchildren = reason.father.children;
             pchildren.splice(pchildren.indexOf(reason), 1);
 
-            // Remove us from the master list of Reasons and change the
-            // id number of every reason "after" us.
-			nodeList.nodes.splice(nodeList.nodes.indexOf(reason), 1);
+			nodeList.nodes.splice(id, 1);
 			nextReasonNumber--;
-			for(var i=id, leni=nodeList.length; i<leni; i++ ) {
+			for(var i=id, leni=nodeList.nodes.length; i<leni; i++ ) {
 					nodeList.nodes[i].id = i;
 			}
 
-            // Remove all drawn objects from the KineticJS layer?
+            // Remove all drawn objects from the KineticJS layer
 			layer.removeChildren();
 
             // Layout the tree to show the new structure
 			amTree.buchheim(nodeList.nodes[0]);
 
-            // Redraw each claim
+            // Redraw each claim (which adds them back to KineticJS layer)
 			for(var i=0, leni=nodeList.nodes.length; i<leni; i++ ) {
 				canvasController.drawReason(i);
 			}
@@ -546,87 +544,54 @@ var canvasController = {
                     var parentW = reason.father.width;
                     var parentH = reason.father.height;
 
-                    // Ribbons draw one way when we are to the left of our parent.
-                    context.beginPath();
-                    if (type === "support" && x <= parentX ) {
-                        var firstX = x + (w / 2) + (2 * o);
-                        var firstY = y + 1;
-                        var secondX = parentX + (parentW / 2);
-                        var secondY = parentY + parentH;
-                        var thirdX = parentX - 2;
-                        var thirdY = parentY + parentH - r - o - 5;
-                        var fourthX = x + (w / 2) - (2 * o);
-                        var fourthY = y + 1;
-                        var changeX12 = secondX - firstX;
-                        var changeX34 = thirdX - fourthX;
-                        var changeY12 = firstY - secondY;
-                        var changeY34 = fourthY - thirdY;
-                        var bufferLeft = -20;
-                        var bufferRight = +20;
-                        context.moveTo(firstX, firstY);
-                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
-                        context.arcTo(parentX, parentY + parentH, thirdX, thirdY, r);
-                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
-                        context.lineTo(firstX, firstY);
-                    } else if (type === "support") {
-                        // They draw another when we are to the right of our parent
-                        var firstX = x + (w / 2) - (2 * o);
-                        var firstY = y + 1;
-                        var secondX = parentX + r;
-                        var secondY = parentY + parentH;
-                        var thirdX = parentX + (parentW / 2);
-                        var thirdY = parentY + parentH;
-                        var fourthX = x + (w / 2) + (2 * o);
-                        var fourthY = y + 1;
-                        var bufferLeft = 20;
-                        var bufferRight = -20;
-                        context.moveTo(firstX, firstY);
-                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferLeft, secondX + bufferRight, firstY + bufferLeft, secondX, secondY);
-                        context.lineTo(thirdX, thirdY);
-                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferRight, fourthX + bufferLeft, thirdY + bufferRight, fourthX, fourthY);
-                        context.lineTo(firstX, firstY);
-                    } else if ((type === "refute" || type === "rebut") && x >= parentX ) {
-                        // Objects draw one way when to the right
-                        var firstX = x + (w / 2) - (2 * o);
-                        var firstY = y + 1;
-                        var secondX = parentX + (parentW / 2);
-                        var secondY = parentY + parentH;
-                        var thirdX = parentX + parentW + 2;
-                        var thirdY = parentY + parentH - r - o - 5;
-                        var fourthX = x + (w / 2) + (2 * o);
-                        var fourthY = y + 1;
-                        var changeX12 = secondX - firstX;
-                        var changeX34 = thirdX - fourthX;
-                        var changeY12 = firstY - secondY;
-                        var changeY34 = fourthY - thirdY;
-                        var bufferLeft = -20;
-                        var bufferRight = +20;
-                        context.moveTo(firstX, firstY);
-                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
-                        context.arcTo(parentX + parentW, parentY + parentH, thirdX, thirdY, r);
-                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
-                        context.lineTo(firstX, firstY);
+                    // Ribbons draw one way to the left and differently to the right,
+                    // because the "outside" edge of the ribbon is higher than the
+                    // "inside" edge.
+
+                    // Start values will be from the child Reason and End values on the parent
+                    var startLeftX = x + w*1/3;     // Start 1/3 width over
+                    var startRightX = x + w*2/3;    // Start 2/3 width over
+                    var startY = y;                 // Start at top edge of box
+
+                    var endLeftY, endRightY;
+                    endLeftY = parentY + parentH + o;       // End at the reason's edge
+                    endRightY = parentY + parentH + o;      // End at the reason's edge
+
+                    // End values depend on whether this is a support or refut/rebut
+                    if(type === "support" ) {
+                        endLeftX = parentX;                 // End at left edge
+                        endRightX = parentX + parentW/2;    // End at middle
                     } else {
-                        // And they draw another way when objections are to the left.
-                        var firstX = x + (w / 2) + (2 * o);
-                        var firstY = y + 1;
-                        var secondX = parentX + parentW - r;
-                        var secondY = parentY + parentH;
-                        var thirdX = parentX + (parentW / 2);
-                        var thirdY = parentY + parentH;
-                        var fourthX = x + (w / 2) - (2 * o);
-                        var fourthY = y + 1;
-                        var bufferLeft = -20;
-                        var bufferRight = 20;
-                        context.moveTo(firstX, firstY);
-                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferRight, secondX + bufferRight, firstY + bufferRight, secondX, secondY);
-                        context.lineTo(thirdX, thirdY);
-                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferLeft, fourthX + bufferLeft, thirdY + bufferLeft, fourthX, fourthY);
-                        context.lineTo(firstX, firstY);
+                        endLeftX = parentX + parentW/2;     // End at middle
+                        endRightX = parentX + parentW;      // End at right edge
                     }
+                    var yDist = parentY + parentH + o - startY;
+
+                    // Is parent more left-oriented or right-oriented to child?
+                    var leftCtrlY1, leftCtrlY2, rightCtrlY1, rightCtrlY2;
+                    var oriented = (endLeftX - startLeftX) + (endRightX - startRightX);
+                    if( oriented >=0 ) {    // left edge is 'outside' edge
+                        leftCtrlY1 = startY + yDist*2/3;
+                        leftCtrlY2 = startY + yDist*1/2;
+                        rightCtrlY1 = startY + yDist*1/2;
+                        rightCtrlY2 = startY + yDist*1/2;
+                    } else {
+                        leftCtrlY1 = startY + yDist*1/2;
+                        leftCtrlY2 = startY + yDist*1/2;
+                        rightCtrlY1 = startY + yDist*2/3;
+                        rightCtrlY2 = startY + yDist*1/2;
+                    }
+
+                    // Draw the ribbon
+                    context.beginPath()
+                    context.moveTo(startLeftX, startY);
+                    context.bezierCurveTo(startLeftX,leftCtrlY1,endLeftX,leftCtrlY2,endLeftX,endLeftY);
+                    context.lineTo(endRightX,endRightY);
+                    context.bezierCurveTo(endRightX,rightCtrlY2,startRightX,rightCtrlY1,startRightX, startY );
                     context.closePath();
-                    this.setFillLinearGradientStartPoint([parentX, parentY + parentH]);
-                    this.setFillLinearGradientEndPoint([parentX, y]);
+
+                    this.setFillLinearGradientStartPoint([endLeftX, endLeftY]);
+                    this.setFillLinearGradientEndPoint([endLeftX, startY] );
                     if (nodeList.nodes[myId].type === "support") {
                         this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
                     } else if (nodeList.nodes[myId].type === "refute") {
@@ -635,6 +600,96 @@ var canvasController = {
                         this.setFill('orange');
                     }
                     canvas.fillStroke(this);
+
+                    // Ribbons draw one way when we are to the left of our parent.
+//                    context.beginPath();
+//                    if (type === "support" && x <= parentX ) {
+//                        var firstX = x + (w / 2) + (2 * o);
+//                        var firstY = y + 1;
+//                        var secondX = parentX + (parentW / 2);
+//                        var secondY = parentY + parentH;
+//                        var thirdX = parentX - 2;
+//                        var thirdY = parentY + parentH - r - o - 5;
+//                        var fourthX = x + (w / 2) - (2 * o);
+//                        var fourthY = y + 1;
+//                        var changeX12 = secondX - firstX;
+//                        var changeX34 = thirdX - fourthX;
+//                        var changeY12 = firstY - secondY;
+//                        var changeY34 = fourthY - thirdY;
+//                        var bufferLeft = -20;
+//                        var bufferRight = +20;
+//                        context.moveTo(firstX, firstY);
+//                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
+//                        context.arcTo(parentX, parentY + parentH, thirdX, thirdY, r);
+//                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
+//                        context.lineTo(firstX, firstY);
+//                    } else if (type === "support") {
+//                        // They draw another when we are to the right of our parent
+//                        var firstX = x + (w / 2) - (2 * o);
+//                        var firstY = y + 1;
+//                        var secondX = parentX + r;
+//                        var secondY = parentY + parentH;
+//                        var thirdX = parentX + (parentW / 2);
+//                        var thirdY = parentY + parentH;
+//                        var fourthX = x + (w / 2) + (2 * o);
+//                        var fourthY = y + 1;
+//                        var bufferLeft = 20;
+//                        var bufferRight = -20;
+//                        context.moveTo(firstX, firstY);
+//                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferLeft, secondX + bufferRight, firstY + bufferLeft, secondX, secondY);
+//                        context.lineTo(thirdX, thirdY);
+//                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferRight, fourthX + bufferLeft, thirdY + bufferRight, fourthX, fourthY);
+//                        context.lineTo(firstX, firstY);
+//                    } else if ((type === "refute" || type === "rebut") && x >= parentX ) {
+//                        // Objects draw one way when to the right
+//                        var firstX = x + (w / 2) - (2 * o);
+//                        var firstY = y + 1;
+//                        var secondX = parentX + (parentW / 2);
+//                        var secondY = parentY + parentH;
+//                        var thirdX = parentX + parentW + 2;
+//                        var thirdY = parentY + parentH - r - o - 5;
+//                        var fourthX = x + (w / 2) + (2 * o);
+//                        var fourthY = y + 1;
+//                        var changeX12 = secondX - firstX;
+//                        var changeX34 = thirdX - fourthX;
+//                        var changeY12 = firstY - secondY;
+//                        var changeY34 = fourthY - thirdY;
+//                        var bufferLeft = -20;
+//                        var bufferRight = +20;
+//                        context.moveTo(firstX, firstY);
+//                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
+//                        context.arcTo(parentX + parentW, parentY + parentH, thirdX, thirdY, r);
+//                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
+//                        context.lineTo(firstX, firstY);
+//                    } else {
+//                        // And they draw another way when objections are to the left.
+//                        var firstX = x + (w / 2) + (2 * o);
+//                        var firstY = y + 1;
+//                        var secondX = parentX + parentW - r;
+//                        var secondY = parentY + parentH;
+//                        var thirdX = parentX + (parentW / 2);
+//                        var thirdY = parentY + parentH;
+//                        var fourthX = x + (w / 2) - (2 * o);
+//                        var fourthY = y + 1;
+//                        var bufferLeft = -20;
+//                        var bufferRight = 20;
+//                        context.moveTo(firstX, firstY);
+//                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferRight, secondX + bufferRight, firstY + bufferRight, secondX, secondY);
+//                        context.lineTo(thirdX, thirdY);
+//                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferLeft, fourthX + bufferLeft, thirdY + bufferLeft, fourthX, fourthY);
+//                        context.lineTo(firstX, firstY);
+//                    }
+//                    context.closePath();
+//                    this.setFillLinearGradientStartPoint([parentX, parentY + parentH]);
+//                    this.setFillLinearGradientEndPoint([parentX, y]);
+//                    if (nodeList.nodes[myId].type === "support") {
+//                        this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
+//                    } else if (nodeList.nodes[myId].type === "refute") {
+//                        this.setFillLinearGradientColorStops([1 / 5, 'red', 4 / 5, '#E60000']);
+//                    } else {
+//                        this.setFill('orange');
+//                    }
+//                    canvas.fillStroke(this);
 				},
 				name : 'connector',
 				drawHitFunc : function(canvas) {    // Draws clickable area just above our Reason

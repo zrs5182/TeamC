@@ -1,10 +1,10 @@
 // vim: set tabstop=4 expandtab : //
 
-var container = document.getElementById("container");
+// var container = document.getElementById("container");
 //document.getElementById("menuArea").left = window.innerWidth - 50;
 
 var stage = new Kinetic.Stage({
-	container : 'container',
+	container : "container",
 	width : screen.width,
 	height : screen.height,
 	getWidth : function() {
@@ -15,21 +15,24 @@ var stage = new Kinetic.Stage({
 	},
 	draggable : true
 });
+
 var layer = new Kinetic.Layer();
-var nextReasonNumber = 0;
 
 canvasController.newCanvas();
 
 var moving = 0;
 var dragging = 0;
 var selected = null;
+
 stage.on('dragstart', function() {
         layer.setListening(0);
       });
+
 stage.on('dragend', function() {
         layer.setListening(1);
         layer.draw();
       });
+
 layer.on('click', function(event) {
 	if(moving===0){
 		var node = event.targetNode;
@@ -167,11 +170,17 @@ window.onload = function() {
 		document.addEventListener('DOMMouseScroll', zoom, false);
 	document.onmousewheel = zoom; //for IE/OPERA etc
 }
+
 var mousePos = {x:0,y:0};
 window.addEventListener('mousemove', function(event) {
+    // Update the mouse position if we can (i.e. when not in a textbox)
+    if( typeof( stage.getPointerPosition()) === 'undefined' ) {
+        return;
+    }
 	mousePos.x = (stage.getPointerPosition().x-stage.getPosition().x)/stage.getScale().x;
 	mousePos.y = (stage.getPointerPosition().y-stage.getPosition().y)/stage.getScale().y;
   }, false);
+
 window.addEventListener('drag', function() {
 	if (document.getElementsByName("working")[0]) {
 		document.getElementsByName("working")[0].blur();
@@ -223,6 +232,7 @@ function zoom(event) {
 	// layer.draw();
 	// }
 }
+
 function canvasResize() {
 	var container = document.getElementById('container');
 	var newWidth = window.innerWidth;
