@@ -58,6 +58,10 @@ var canvasController = {
 		stage.setPosition(-(((window.innerWidth-100)/2))*(stage.getScale().x-1),0)
 		stage.setOffset( nodeList.nodes[0].x + nodeList.nodes[0].width()/2 - amCanvas.centerX, 0 );
 		stage.draw();
+
+        // Update the export image button
+        imageBtn = document.getElementById("toImage");
+        imageBtn.href = layer.getCanvas().toDataURL();
 	},
     // Create an editable text area, so we can change the content of a claim.
     // When this function is re-written it'll get a claim (not a reason like right now).
@@ -89,6 +93,12 @@ var canvasController = {
         // Write the new text into clickable text box
 		var thisText = stage.get('.complexText')[myId];
 		thisText.setText(nodeList.nodes[myId].text());
+
+        layer.draw();
+
+        // Update the export image button
+        imageBtn = document.getElementById("toImage");
+        imageBtn.href = layer.getCanvas().toDataURL();
 	},
     // Don't really know what this does yet.
 	fixText: function(){
@@ -735,5 +745,9 @@ var canvasController = {
 		}
 		layer.add(group);
 		layer.draw();
+
+        // Update the export image button
+        imageBtn = document.getElementById("toImage");
+        imageBtn.href = layer.getCanvas().toDataURL();
 	}
 };

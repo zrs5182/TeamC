@@ -31,6 +31,10 @@ stage.on('dragstart', function() {
 stage.on('dragend', function() {
         layer.setListening(1);
         layer.draw();
+
+        // Update the export image button
+        imageBtn = document.getElementById("toImage");
+        imageBtn.href = layer.getCanvas().toDataURL();
       });
 
 layer.on('click', function(event) {
@@ -220,6 +224,11 @@ function zoom(event) {
 		document.getElementsByName("working")[0].blur();
 	}	
 	stage.draw();
+
+    // Update the export image button
+    imageBtn = document.getElementById("toImage");
+    imageBtn.href = layer.getCanvas().toDataURL();
+
 	// window.onresize = function(){
 	// alert("Resized");
 	// console.log("Resizing");
