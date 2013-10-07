@@ -55,7 +55,7 @@ layer.on('click', function(event) {
 				canvasController.addReason("refute", claim);
 			}
 		} else if (myName === "deleteButton") {
-			canvasController.removeReason(myId);
+			canvasController.removeReasonAndDraw(myId);
 		} else if (myName === "claim" || myName === "connector") {
 			for (var element in layer.children) {
 				for (var child in layer.children[element].children){

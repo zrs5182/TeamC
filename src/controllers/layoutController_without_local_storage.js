@@ -212,10 +212,21 @@ var nodeList = {
 }
 
 var amTree = {
-	buchheim: function(root){
+	buchheim: function(root, anchor){
+        // If we had an "anchor" claim, we'll make sure that one is held
+        // steady after the layout is complete.
+        var oldAnchorX, oldOffsetX;
+        if( typeof( anchor ) !== 'undefined' ) {
+            oldAnchorX = anchor.x();
+            oldOffsetX = stage.getOffsetX();
+        }
 		nodeList.resetList();
 		this.firstWalk(root);
 		this.secondWalk(root);
+        // Reset the offset so the anchor doesn't move
+        if( typeof( anchor ) !== 'undefined' ) {
+            stage.setOffsetX( oldOffsetX + anchor.x() - oldAnchorX );
+        }
 		canvasController.fixText();
 		layer.draw();
 		// localStorage.setItem("nodeList",JSON.stringify(nodeList.nodes));

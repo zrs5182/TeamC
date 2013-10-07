@@ -103,38 +103,47 @@ var canvasController = {
 		var myId = nextReasonNumber;
 		nextReasonNumber++;
 		nodeList.newNode(myId, type, father);
-		amTree.buchheim(nodeList.nodes[0]);
+		amTree.buchheim(nodeList.nodes[0], father);
 		canvasController.drawReason(myId);
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
 		document.getElementsByName('working')[0].focus();
 	},
-    // Remove a Reason and its Claims and the children of all the Claims recursively.
-	removeReason : function(id){
+    removeReason : function(id) {
+        // Recursively remove a Reason and its children from argument map
+        var reason = nodeList.nodes[id];
+        var children = reason.children();
+        for(var i = children.length-1; i >= 0; i--){
+            canvasController.removeReason(children[i].id);
+        }
+
+        // Now remove us from the father Claim's children list
+        var pchildren = reason.father.children;
+        pchildren.splice(pchildren.indexOf(reason), 1);
+
+        nodeList.nodes.splice(id, 1);
+        nextReasonNumber--;
+        for(var i=id, leni=nodeList.nodes.length; i<leni; i++ ) {
+            nodeList.nodes[i].id = i;
+        }
+    },
+    // Remove a Reason and its Claims and the children of all the Claims recursively,
+    // and draws the new argument map.
+	removeReasonAndDraw : function(id){
 		if(id===0){
 			canvasController.newCanvas();
 		}else{
             // Recurse through the (adopted) child Reasons of this one and remove them
 			var reason = nodeList.nodes[id];
-            var children = reason.children();
-			for(var i = children.length-1; i >= 0; i--){
-				canvasController.removeReason(children[i].id);
-			}
+            var father = reason.father;
 
-            // Now remove us from the father Claim's children list
-            var pchildren = reason.father.children;
-            pchildren.splice(pchildren.indexOf(reason), 1);
-
-			nodeList.nodes.splice(id, 1);
-			nextReasonNumber--;
-			for(var i=id, leni=nodeList.nodes.length; i<leni; i++ ) {
-					nodeList.nodes[i].id = i;
-			}
+            // Remove this Reason and child Reasons from argument map
+            canvasController.removeReason(id);
 
             // Remove all drawn objects from the KineticJS layer
 			layer.removeChildren();
 
-            // Layout the tree to show the new structure
-			amTree.buchheim(nodeList.nodes[0]);
+            // Layout the tree to show the new structure anchoring on father Reason
+			amTree.buchheim(nodeList.nodes[0], father);
 
             // Redraw each claim (which adds them back to KineticJS layer)
 			for(var i=0, leni=nodeList.nodes.length; i<leni; i++ ) {
