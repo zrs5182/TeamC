@@ -70,8 +70,8 @@ var canvasController = {
         var claim = reason.claims[0];
 
 		var scale = stage.getScale().x;
-		var realX = (claim.x() + 7) * scale + stage.getAbsoluteTransform().getTranslation().x;
-		var realY = (claim.y() + 7) * scale + stage.getAbsoluteTransform().getTranslation().y;
+		var realX = claim.x()*scale + stage.getAbsoluteTransform().getTranslation().x;
+		var realY = claim.y()*scale + stage.getAbsoluteTransform().getTranslation().y;
 		document.getElementById('myTextArea').style.left = realX + "px";
 		document.getElementById('myTextArea').style.top = realY + "px";
 		document.getElementById('myTextArea').style.zIndex = 2;
