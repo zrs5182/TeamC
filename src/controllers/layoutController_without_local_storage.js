@@ -56,7 +56,7 @@ function Claim( id, reason, width, height, text ) {
 function Reason( id, type, father ) {
     father = ( typeof father === 'undefined' ) ? null : father;
 
-    this.id = id;		    // The index in nodeList of this Reason (effectively a unique identifier)
+    this.id = id;		    // The index in reasonList of this Reason (effectively a unique identifier)
     this.type = type;		// One of: contention, support, refute, rebut
     this.father = father;	// The father Claim of this Reason
     this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
@@ -223,22 +223,39 @@ var claimList = {
 // This is a representation of our argument tree containing
 // all of the attributes required to do the Buchheim
 // layout algorithm.
-var nodeList = {
-	nodes: [],					// List of the nodes in this tree
+var reasonList = {
+	reasons: [],					// List of the nodes in this tree
+    nextReasonNumber : 0,
+    init: function() {
+        this.reasons = [];
+        this.nextReasonNumber = 0;
+    },
 	// Push a new node (with default attributes) onto the list
     // Argument are a unique identifier, the type of reason to add,
     // and the Claim that is our direct parent.
-	newNode: function(id, type, father){
+    newReason: function( type, father ) {
 		father = ( typeof father === 'undefined') ? null : father;
+        this.reasons[this.nextReasonNumber] = new Reason( this.nextReasonNumber, type, father );
+        return this.reasons[this.nextReasonNumber++];
+    },
 
-        // Create a new reason to go into the tree
-        var node = new Reason( id, type, father );
-        this.nodes[id] = node;
-	},
+    deleteReason: function( reason ) {
+        var id = reason.id;
+
+        // Remove the claim and decrease the next claim number
+        this.reasons.splice( id, 1 );
+        this.nextReasonNumber--;
+
+        // Update the id field of all the affected claims
+        for(var i=id, leni=this.nextReasonNumber; i<leni; i++ ) {
+            this.reasons[i].id = i;
+        }
+    },
+
 	// Reset all of the attributes of each node (called just before laying out)
 	resetList: function(){
-		for( var i=0, leni=this.nodes.length; i < leni; i++ ) {
-			nodeList.nodes[i].reset();
+		for( var i=0, leni=this.reasons.length; i < leni; i++ ) {
+			reasonList.reasons[i].reset();
 		}
 	}
 }
@@ -252,7 +269,7 @@ var amTree = {
             oldAnchorX = anchor.x();
             oldOffsetX = stage.getOffsetX();
         }
-		nodeList.resetList();
+		reasonList.resetList();
 		this.firstWalk(root);
 		this.secondWalk(root);
         // Reset the offset so the anchor doesn't move
@@ -261,15 +278,15 @@ var amTree = {
         }
 		canvasController.fixText();
 		layer.draw();
-		// localStorage.setItem("nodeList",JSON.stringify(nodeList.nodes));
+		// localStorage.setItem("reasonList",JSON.stringify(reasonList.reasons));
 	},
 	firstWalk: function(v){
         //console.log( 'firstWalk: begins for v.id=' + v.id );
 		//console.log(node);
-		/*for(var child in nodeList.nodes){
-			console.log(nodeList.nodes[child].id);
-			if(nodeList.nodes[child].id==node){
-				var v = nodeList.nodes[child];
+		/*for(var child in reasonList.reasons){
+			console.log(reasonList.reasons[child].id);
+			if(reasonList.reasons[child].id==node){
+				var v = reasonList.reasons[child];
 				break;
 			}
 		}*/

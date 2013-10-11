@@ -42,7 +42,7 @@ layer.on('click', function(event) {
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 		var myId = node.getParent().getId();
-        var reason = nodeList.nodes[myId];      // FIXME: Should eventually be a claim.
+        var reason = reasonList.reasons[myId];      // FIXME: Should eventually be a claim.
         var claim = reason.claims[0];            // But for now assume just first claim.
 		var myType = reason.type;
 
@@ -79,7 +79,7 @@ layer.on('click', function(event) {
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 		var myId = node.attrs.id;
-		var myType = nodeList.nodes[myId].type;
+		var myType = reasonList.reasons[myId].type;
 		if ((myName === "claim" || myName === "connector")&& myId===selected) {
 			for (var element in layer.children) {
 				for (var child in layer.children[element].children){
@@ -96,14 +96,14 @@ layer.on('click', function(event) {
 			document.getElementById("container").style.backgroundColor='white';
 			layer.draw();
 		}else if (myName === "claimAddLeft"){
-			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
+			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
 			var children = oldParent.children;
 			children.splice(children.indexOf(selected),1);
-			var newParent = nodeList.nodes[nodeList.nodes[myId].parent];
+			var newParent = reasonList.reasons[reasonList.reasons[myId].parent];
 			children = newParent.children;
 			children.splice(children.indexOf(myId),0,selected);
 			newParent.children = children;
-			var claim = nodeList.nodes[selected];
+			var claim = reasonList.reasons[selected];
 			claim.parent = newParent.id;
 			for (element in layer.children) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
@@ -116,16 +116,16 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(nodeList.nodes[0]);
+			amTree.buchheim(reasonList.reasons[0]);
 		}else if(myName === "claimAddRight"){
-			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
+			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
 			var children = oldParent.children;
 			children.splice(children.indexOf(selected),1);
-			var newParent = nodeList.nodes[nodeList.nodes[myId].parent];
+			var newParent = reasonList.reasons[reasonList.reasons[myId].parent];
 			children = newParent.children;
 			children.splice(children.indexOf(myId)+1,0,selected);
 			newParent.children = children;
-			var claim = nodeList.nodes[selected];
+			var claim = reasonList.reasons[selected];
 			claim.parent = newParent.id;
 			for (element in layer.children) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
@@ -138,20 +138,20 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(nodeList.nodes[0]);
+			amTree.buchheim(reasonList.reasons[0]);
 		}else if(myName === "claimAddBottom"){
-			var oldParent = nodeList.nodes[nodeList.nodes[selected].parent];
+			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
 			var children = oldParent.children;
 			children.splice(children.indexOf(selected),1);
-			var newParent = nodeList.nodes[myId];
+			var newParent = reasonList.reasons[myId];
 			children = newParent.children;
-			if(nodeList.nodes[selected].type==="support"){
+			if(reasonList.reasons[selected].type==="support"){
 				children.unshift(selected);
 			}else{
 				children.push(selected);
 			}
 			newParent.children = children;
-			var claim = nodeList.nodes[selected];
+			var claim = reasonList.reasons[selected];
 			claim.parent = myId;
 			for (element in layer.children) {
 				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
@@ -164,7 +164,7 @@ layer.on('click', function(event) {
 			moving=0;
 			selected=null;
 			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(nodeList.nodes[0]);
+			amTree.buchheim(reasonList.reasons[0]);
 		}
 	}
 });

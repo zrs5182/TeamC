@@ -18,7 +18,7 @@ var amCanvas = {
 var canvasController = {
     // Initialize the initial canvas and insert main contention
 	newCanvas : function() {
-		nodeList.nodes=[];
+		reasonList.init();
 		claimList.init();
 		localStorage.clear();
 		layer.removeChildren();
@@ -27,7 +27,6 @@ var canvasController = {
 		stage.setPosition(0);
 		stage.setScale(1);
 		stage.add(layer);
-		nextReasonNumber=0;
 		canvasController.addReason("contention");
 	},
     // To be rewritten.  Should load an argument map from storage.
@@ -57,7 +56,7 @@ var canvasController = {
 	centerMap: function(){
 		stage.setPosition(0,0);		// Next line might be a FIXME?
 		stage.setPosition(-(((window.innerWidth-100)/2))*(stage.getScale().x-1),0)
-		stage.setOffset( nodeList.nodes[0].x + nodeList.nodes[0].width()/2 - amCanvas.centerX, 0 );
+		stage.setOffset( reasonList.reasons[0].x + reasonList.reasons[0].width()/2 - amCanvas.centerX, 0 );
 		stage.draw();
 
         // Update the export image button
@@ -67,7 +66,7 @@ var canvasController = {
     // Create an editable text area, so we can change the content of a claim.
     // When this function is re-written it'll get a claim (not a reason like right now).
 	makeTextArea : function(myId) {
-		var reason = nodeList.nodes[myId];
+		var reason = reasonList.reasons[myId];
         var claim = reason.claims[0];
 
 		var scale = stage.getScale().x;
@@ -86,14 +85,14 @@ var canvasController = {
     // disappear.  This function will need a rewrite for individual claims.
 	removeTextArea : function(myId) {
         // Save the text in our argument map
-		var reason = nodeList.nodes[myId];
+		var reason = reasonList.reasons[myId];
 		reason.setText( canvasController.extractText());
         // Make the editable text area disappear
 		document.getElementById('myTextArea').innerHTML = '';
 		document.getElementById('myTextArea').style.zIndex = 0;
         // Write the new text into clickable text box
 		var thisText = stage.get('.complexText')[myId];
-		thisText.setText(nodeList.nodes[myId].text());
+		thisText.setText(reasonList.reasons[myId].text());
 
         layer.draw();
 
@@ -103,25 +102,24 @@ var canvasController = {
 	},
     // Don't really know what this does yet.
 	fixText: function(){
-		for(node in nodeList.nodes){
+		for(node in reasonList.reasons){
 			if(stage.get(".complexText")[node]){
-				stage.get(".complexText")[node].setX(nodeList.nodes[node].x + 30)
+				stage.get(".complexText")[node].setX(reasonList.reasons[node].x + 30)
 			}
 		}
 	},
     // Adds a new reason to the argument map as a child of one of the existing claims.
 	addReason : function(type, father) {
-		var myId = nextReasonNumber;
-		nextReasonNumber++;
-		nodeList.newNode(myId, type, father);
-		amTree.buchheim(nodeList.nodes[0], father);
+		var reason = reasonList.newReason(type, father);
+        var myId = reason.id;
+		amTree.buchheim(reasonList.reasons[0], father);
 		canvasController.drawReason(myId);
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
 		document.getElementsByName('working')[0].focus();
 	},
     removeReason : function(id) {
         // Recursively remove a Reason and its children from argument map
-        var reason = nodeList.nodes[id];
+        var reason = reasonList.reasons[id];
         var children = reason.children();
         var claims = reason.claims;
 
@@ -138,12 +136,8 @@ var canvasController = {
             claimList.deleteClaim( claims[i] );
         }
 
-        // And remove us from the nodeList
-        nodeList.nodes.splice(id, 1);
-        nextReasonNumber--;
-        for(var i=id, leni=nodeList.nodes.length; i<leni; i++ ) {
-            nodeList.nodes[i].id = i;
-        }
+        // And remove us from the reasonList
+        reasonList.deleteReason( reason );
     },
     // Remove a Reason and its Claims and the children of all the Claims recursively,
     // and draws the new argument map.
@@ -152,7 +146,7 @@ var canvasController = {
 			canvasController.newCanvas();
 		}else{
             // Recurse through the (adopted) child Reasons of this one and remove them
-			var reason = nodeList.nodes[id];
+			var reason = reasonList.reasons[id];
             var father = reason.father;
 
             // Remove this Reason and child Reasons from argument map
@@ -162,16 +156,16 @@ var canvasController = {
 			layer.removeChildren();
 
             // Layout the tree to show the new structure anchoring on father Reason
-			amTree.buchheim(nodeList.nodes[0], father);
+			amTree.buchheim(reasonList.reasons[0], father);
 
             // Redraw each claim (which adds them back to KineticJS layer)
-			for(var i=0, leni=nodeList.nodes.length; i<leni; i++ ) {
+			for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
 				canvasController.drawReason(i);
 			}
 		}
 	},
 	drawReason : function(myId) {
-        var reason = nodeList.nodes[myId];
+        var reason = reasonList.reasons[myId];
         var claimTextArea = [];
         var complexText = [];
         var supportButton = [];
@@ -198,11 +192,11 @@ var canvasController = {
 				context.arcTo(x, y, x + r, y, r);
 				context.closePath();
 
-				if (nodeList.nodes[myId].type === "support") {
+				if (reasonList.reasons[myId].type === "support") {
 					this.setFill('#6CC54F');
-				} else if (nodeList.nodes[myId].type === "refute") {
+				} else if (reasonList.reasons[myId].type === "refute") {
 					this.setFill('#E60000');
-				} else if (nodeList.nodes[myId].type === "rebut") {
+				} else if (reasonList.reasons[myId].type === "rebut") {
 					this.setFill('orange');
 				} else {
 					this.setFill('blue');
@@ -258,7 +252,7 @@ var canvasController = {
                     context.closePath();
 
                     this.setFill('white');
-                    if (nodeList.nodes[myId].type !== "contention") { // FIXME: why is this here?
+                    if (reasonList.reasons[myId].type !== "contention") { // FIXME: why is this here?
                         this.setFill('white');
                         this.setStroke('black');
                         this.setStrokeWidth(2);
@@ -338,7 +332,7 @@ var canvasController = {
                     var h = claim.height;
 
                     context.beginPath();
-                    context.moveTo(x, y + h - r/2);
+                    context.moveTo(x - r/2, y + h - r/2);
                     context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
                     context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
                     context.closePath();
@@ -385,7 +379,7 @@ var canvasController = {
                     var h = claim.height;
 
                     context.beginPath();
-                    context.moveTo(x + w, y + h - r/2);
+                    context.moveTo(x + w + r/2, y + h - r/2);
                     context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
                     context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
                     context.closePath();
@@ -402,8 +396,8 @@ var canvasController = {
 //			name : "claimAddLeft",
 //			drawFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = nodeList.nodes[myId].x;
-//				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
+//				var x = reasonList.reasons[myId].x;
+//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
 //				var w = amCanvas.gridX / 4;
 //				var h = amCanvas.gridY / 4 * 3;
 //				context.beginPath();
@@ -424,8 +418,8 @@ var canvasController = {
 //			strokeWidth : 5,
 //			drawHitFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = nodeList.nodes[myId];
-//				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
+//				var x = reasonList.reasons[myId];
+//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
 //				var w = amCanvas.gridX / 4;
 //				var h = amCanvas.gridY / 4 * 3;
 //				context.beginPath();
@@ -444,8 +438,8 @@ var canvasController = {
 //			name : "claimAddRight",
 //			drawFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = nodeList.nodes[myId].x;		// This might be a FIXME.
-//				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
+//				var x = reasonList.reasons[myId].x;		// This might be a FIXME.
+//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
 //				var w = amCanvas.gridX / 4;
 //				var h = (amCanvas.gridY / 4) * 3;
 //				context.beginPath();
@@ -466,8 +460,8 @@ var canvasController = {
 //			strokeWidth : 5,
 //			drawHitFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = amCanvas.gridX + nodeList.nodes[myId].x;	// Might be a FIXME
-//				var y = nodeList.nodes[myId].y + (amCanvas.gridY / 8);
+//				var x = amCanvas.gridX + reasonList.reasons[myId].x;	// Might be a FIXME
+//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
 //				var w = amCanvas.gridX / 4;
 //				var h = (amCanvas.gridY / 4) * 3;
 //				context.beginPath();
@@ -486,8 +480,8 @@ var canvasController = {
 //			name : "claimAddBottom",
 //			drawFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = nodeList.nodes[myId].x;
-//				var y = nodeList.nodes[myId].y;
+//				var x = reasonList.reasons[myId].x;
+//				var y = reasonList.reasons[myId].y;
 //				var w = amCanvas.gridX;
 //				var h = amCanvas.gridY;
 //				context.beginPath();
@@ -508,8 +502,8 @@ var canvasController = {
 //			strokeWidth : 5,
 //			drawHitFunc : function(canvas) {
 //				var context = canvas.getContext();
-//				var x = nodeList.nodes[myId].x;
-//				var y = nodeList.nodes[myId].y;
+//				var x = reasonList.reasons[myId].x;
+//				var y = reasonList.reasons[myId].y;
 //				var w = amCanvas.gridX;
 //				var h = amCanvas.gridY;
 //				context.beginPath();
@@ -639,9 +633,9 @@ var canvasController = {
 
                     this.setFillLinearGradientStartPoint([endLeftX, endLeftY]);
                     this.setFillLinearGradientEndPoint([endLeftX, startY] );
-                    if (nodeList.nodes[myId].type === "support") {
+                    if (reasonList.reasons[myId].type === "support") {
                         this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
-                    } else if (nodeList.nodes[myId].type === "refute") {
+                    } else if (reasonList.reasons[myId].type === "refute") {
                         this.setFillLinearGradientColorStops([1 / 5, 'red', 4 / 5, '#E60000']);
                     } else {
                         this.setFill('orange');
@@ -729,9 +723,9 @@ var canvasController = {
 //                    context.closePath();
 //                    this.setFillLinearGradientStartPoint([parentX, parentY + parentH]);
 //                    this.setFillLinearGradientEndPoint([parentX, y]);
-//                    if (nodeList.nodes[myId].type === "support") {
+//                    if (reasonList.reasons[myId].type === "support") {
 //                        this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
-//                    } else if (nodeList.nodes[myId].type === "refute") {
+//                    } else if (reasonList.reasons[myId].type === "refute") {
 //                        this.setFillLinearGradientColorStops([1 / 5, 'red', 4 / 5, '#E60000']);
 //                    } else {
 //                        this.setFill('orange');
