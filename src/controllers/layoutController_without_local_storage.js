@@ -20,7 +20,8 @@
 //    Note, since parent is a Javascript keyword, parents will be fathers in this code.
 
 // Prototype function for a Claim object
-function Claim( reason, width, height, text ) {
+function Claim( id, reason, width, height, text ) {
+    this.id = id;           // Our unique ID in the claimList
     this.reason = reason;	// the Reason that contains this Claim
     this.width = width;		// width in pixels
     this.height = height;	// height in pixels
@@ -58,7 +59,7 @@ function Reason( id, type, father ) {
     this.id = id;		    // The index in nodeList of this Reason (effectively a unique identifier)
     this.type = type;		// One of: contention, support, refute, rebut
     this.father = father;	// The father Claim of this Reason
-    this.claims = [ new Claim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
+    this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
 
     // Add this reason to the children of its parent either on left or right
     if( type==="support" ){
@@ -185,6 +186,37 @@ function Reason( id, type, father ) {
 
     // Call our reset function to finish initializing everything
     this.reset();
+}
+
+// This is a master list of all claims in our argument map.
+// Basically we use this to keep the association between
+// individual claim objects and their integer unique ID numbers.
+var claimList = {
+    claims: [],                 // List of all claims
+    nextClaimNumber: 0,         // Unique ID of next claim to create
+
+    newClaim: function( reason, width, height, text ) {
+        this.claims[this.nextClaimNumber] = new Claim( this.nextClaimNumber, reason, width, height, text );
+        return this.claims[this.nextClaimNumber++];
+    },
+
+    deleteClaim: function( claim ) {
+        var id = claim.id;
+
+        // Remove the claim and decrease the next claim number
+        this.claims.splice( id, 1 );
+        this.nextClaimNumber--;
+
+        // Update the id field of all the affected claims
+        for(var i=id, leni=this.nextClaimNumber; i<leni; i++ ) {
+            this.claims[i].id = i;
+        }
+    },
+
+    init: function() {
+        this.claims = [];
+        this.nextClaimNumber = 0;
+    }
 }
 
 

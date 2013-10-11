@@ -19,6 +19,7 @@ var canvasController = {
     // Initialize the initial canvas and insert main contention
 	newCanvas : function() {
 		nodeList.nodes=[];
+		claimList.init();
 		localStorage.clear();
 		layer.removeChildren();
 		stage.removeChildren();
@@ -122,6 +123,8 @@ var canvasController = {
         // Recursively remove a Reason and its children from argument map
         var reason = nodeList.nodes[id];
         var children = reason.children();
+        var claims = reason.claims;
+
         for(var i = children.length-1; i >= 0; i--){
             canvasController.removeReason(children[i].id);
         }
@@ -130,6 +133,12 @@ var canvasController = {
         var pchildren = reason.father.children;
         pchildren.splice(pchildren.indexOf(reason), 1);
 
+        // Remove our claims from the claimList
+        for(var i = claims.length-1; i >= 0; i-- ) {
+            claimList.deleteClaim( claims[i] );
+        }
+
+        // And remove us from the nodeList
         nodeList.nodes.splice(id, 1);
         nextReasonNumber--;
         for(var i=id, leni=nodeList.nodes.length; i<leni; i++ ) {
@@ -163,13 +172,17 @@ var canvasController = {
 	},
 	drawReason : function(myId) {
         var reason = nodeList.nodes[myId];
+        var claimTextArea = [];
+        var complexText = [];
+        var supportButton = [];
+        var refuteButton = [];
 
         // This is the background shape and color of a Reason.  It has a clickable
         // region at the top center for reparenting, and will have Claims layered
         // on top of it (including their support and object buttons).
-		var claimShape = new Kinetic.Shape({
+		var reasonShape = new Kinetic.Shape({
 			id : myId,
-			name : "claim",
+			name : "reason",
 			drawFunc : function(canvas) {   // Draws the background area and fills it
 				var context = canvas.getContext();
 				var x = reason.x;
@@ -217,6 +230,171 @@ var canvasController = {
 			},
 			opacity : 1
 		});
+
+        // This is a graphical area containing the text of a claim.  It is clickable,
+        // and will present an editable textbox when clicked.  There will be one text
+        // area for each claim in the reason.
+        for( var i = 0, leni = reason.claims.length; i < leni; i++ ) {
+            claim = reason.claims[i];
+
+            claimTextArea[i] = new Kinetic.Shape({
+                // Here we do something unusual.  We define a function (containing another
+                // function declaration) and immediately invoke it.  This is so that the
+                // the drawFunc function that gets created is bound to the value of claim
+                // that existed when the variable was defined and not to some later value.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x + r/2, y);
+                    context.arcTo(x + w, y, x + w, y + r/2, r/2);
+                    context.arcTo(x + w, y + h, x + w - r/2, y + h, r/2);
+                    context.arcTo(x, y + h, x, y + h - r/2, r/2);
+                    context.arcTo(x, y, x + r/2, y, r/2);
+                    context.closePath();
+
+                    this.setFill('white');
+                    if (nodeList.nodes[myId].type !== "contention") { // FIXME: why is this here?
+                        this.setFill('white');
+                        this.setStroke('black');
+                        this.setStrokeWidth(2);
+                    }
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'claimTextArea',
+                // Another case of defining a function and immediately invoking.
+                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x, y);
+                    context.lineTo(x + w, y );
+                    context.lineTo(x + w, y + h );
+                    context.lineTo(x, y + h );
+                    context.lineTo(x, y );
+                    context.closePath();
+                    canvas.fillStroke(this);
+                }; }(claim),
+                opacity : 1
+            });
+
+            // Draws the text on top of our claimTextArea.
+            complexText[i] = new Kinetic.Text({
+                //id : myId,
+                name : "complexText",
+                x : claim.x(),
+                y : claim.y(),
+                width : claim.width,
+                text : claim.text,
+
+                fontSize : 18,
+                fontFamily : 'Calibri',
+                fill : '#555',
+                padding : 20,
+                align : 'left',
+                opacity : 1
+            });
+
+            // Draws a green support button on the left bottom corner of a Claim.
+            // Also creates a custom hit region of the same shape.
+            supportButton[i] = new Kinetic.Shape({
+                //id : myId,
+                // Another case of defining a function and immediately invoking.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x - r/2, y + h - r/2);
+                    context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    this.setFill('green');
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'supportButton',
+                // Another case of defining a function and immediately invoking.
+                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x, y + h - r/2);
+                    context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    canvas.fillStroke(this);
+                }; }(claim),
+                opacity : 1
+            });
+
+            // Draws a red/orange refute/rebut button on the right bottom corner of a Claim.
+            // Also creates a custom hit region of the same shape.
+            refuteButton[i] = new Kinetic.Shape({
+                //id : myId,
+                // Another case of defining a function and immediately invoking.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x + w + r/2, y + h - r/2);
+                    context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    if (claim.reason.type !== "refute") {
+                        this.setFill('red');    // for objection
+                    } else {
+                        this.setFill('orange'); // for rebuttal
+                    }
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'refuteButton',
+                // Another case of defining a function and immediately invoking.
+                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x + w, y + h - r/2);
+                    context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    canvas.fillStroke(this);
+                }; }(claim),
+                opacity : 1
+            });
+        }
 
 // -- Draws a region to add something to the left, right, or bottom of a Reason
 //		var claimAddLeft = new Kinetic.Shape({
@@ -346,145 +524,6 @@ var canvasController = {
 //			opacity : 0
 //		});
 
-        // This is a graphical area containing the text of a claim.  It is clickable,
-        // and will present an editable textbox when clicked.  FIXME: needs to be
-        // updated for multi-claim reasons.
-		var claimTextArea = new Kinetic.Shape({
-			//id : myId,
-			drawFunc : function(canvas) {   // Draw the text area and fill it with text
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x + r + o, y + o);
-				context.arcTo(x + w - o, y + o, x + w - o, y + r / 2 + o, r / 2);
-				context.arcTo(x + w - o, y + h - o, x + w - r / 2 - o, y + h - o, r / 2);
-				context.arcTo(x + o, y + h - o, x + o, y + h - r / 2 - o, r / 2);
-				context.arcTo(x + o, y + o, x + r / 2 + o, y + o, r / 2);
-				context.closePath();
-
-				this.setFill('white');
-				if (nodeList.nodes[myId].type === "contention") { // FIXME: why is this here?
-					this.setFill('white');
-					this.setStroke('black');
-					this.setStrokeWidth(2);
-				}
-				canvas.fillStroke(this);
-			},
-			stroke : 'black',
-			strokeWidth : 2,
-			name : 'claimTextArea',
-			drawHitFunc : function(canvas) {    // Draws the clickable region for this text area
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x + r + o, y + o);
-				context.arcTo(x + w - o, y + o, x + w - o, y + r / 2 + o, r / 2);
-				context.arcTo(x + w - o, y + h - o, x + w - r / 2 - o, y + h - o, r / 2);
-				context.arcTo(x + o, y + h - o, x + o, y + h - r / 2 - o, r / 2);
-				context.arcTo(x + o, y + o, x + r / 2 + o, y + o, r / 2);
-				context.closePath();
-				canvas.fillStroke(this);
-			},
-			opacity : 1
-		});
-
-        // Draws a green support button on the left bottom corner of a Reason.
-        // Also creates a custom hit region of the same shape.
-        // FIXME: should draw under each Claim
-		var supportButton = new Kinetic.Shape({
-			//id : myId,
-			drawFunc : function(canvas) {   // Draw background of support button
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x, y + h - o - r);
-				context.bezierCurveTo(x, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
-				context.arcTo(x, y + h, x, y + h - o - r, r);
-				context.closePath();
-
-				this.setFill('green');
-				canvas.fillStroke(this);
-			},
-			stroke : 'black',
-			strokeWidth : 2,
-			name : 'supportButton',
-			drawHitFunc : function(canvas) {    // Draw hit region of support button
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x, y + h - o - r);
-				context.bezierCurveTo(x, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
-				context.arcTo(x, y + h, x, y + h - o - r, r);
-				context.closePath();
-
-				canvas.fillStroke(this);
-			},
-			opacity : 1
-		});
-
-        // Draws a green support button on the right bottom corner of a Reason.
-        // Also creates a custom hit region of the same shape.
-        // FIXME: should draw under each Claim
-		var refuteButton = new Kinetic.Shape({
-			//id : myId,
-			drawFunc : function(canvas) {   // Draw background of refute button
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x + w, y + h - o - r);
-				context.bezierCurveTo(x + w, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
-				context.arcTo(x + w, y + h, x + w, y + h - o - r, r);
-				context.closePath();
-
-				if (nodeList.nodes[myId].type !== "refute") {
-					this.setFill('red');    // for objection
-				} else {
-					this.setFill('orange'); // for rebuttal
-				}
-				canvas.fillStroke(this);
-			},
-			stroke : 'black',
-			strokeWidth : 2,
-			name : 'refuteButton',
-			drawHitFunc : function(canvas) {    // Draw hit region of refute button
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x + w, y + h - o - r);
-				context.bezierCurveTo(x + w, y + h, x + w / 2, y + h - o - r, x + w / 2, y + h);
-				context.arcTo(x + w, y + h, x + w, y + h - o - r, r);
-				context.closePath();
-
-				canvas.fillStroke(this);
-			},
-			opacity : 1
-
-		});
-
         // Draws a yellow utility/delete button on the right top corner of a Reason.
         // Also creates a custom hit region of the same shape.
 		var deleteButton = new Kinetic.Shape({
@@ -527,24 +566,6 @@ var canvasController = {
 
 		});
 
-        // Draws the text on top of our claimTextArea.  FIXME: needs to be updated
-        // for multiclaim reasons.
-		var complexText = new Kinetic.Text({
-			//id : myId,
-			name : "complexText",
-			x : reason.x + o,
-			y : reason.y + o,
-			width : reason.width() - 2*o,
-			text : reason.text(),
-
-			fontSize : 18,
-			fontFamily : 'Calibri',
-			fill : '#555',
-			padding : 20,
-			align : 'left',
-			opacity : 1
-		});
-
         // If we aren't a contention then we need to draw a
         // support/refute/rebut ribbon from us to our parent Claim.
         var type = reason.type;
@@ -572,17 +593,23 @@ var canvasController = {
                     var startRightX = x + w*2/3;    // Start 2/3 width over
                     var startY = y;                 // Start at top edge of box
 
-                    var endLeftY, endRightY;
-                    endLeftY = parentY + parentH + o;       // End at the reason's edge
-                    endRightY = parentY + parentH + o;      // End at the reason's edge
+                    var endLeftY, endRightY, cornerX, cornerY;
 
                     // End values depend on whether this is a support or refut/rebut
                     if(type === "support" ) {
-                        endLeftX = parentX;                 // End at left edge
+                        endLeftX = parentX - r/2;           // End at left edge
                         endRightX = parentX + parentW/2;    // End at middle
+                        endLeftY = parentY + parentH + o - r;   // End just above the reason's edge
+                        endRightY = parentY + parentH + o;      // End at the reason's edge
+                        cornerX = endLeftX;
+                        cornerY = endRightY;
                     } else {
                         endLeftX = parentX + parentW/2;     // End at middle
-                        endRightX = parentX + parentW;      // End at right edge
+                        endRightX = parentX + parentW + r/2;// End at right edge
+                        endLeftY = parentY + parentH + o;   // End at the reason's edge
+                        endRightY = parentY + parentH + o - r;    // End just above the reason's edge
+                        cornerX = endRightX;
+                        cornerY = endLeftY;
                     }
                     var yDist = parentY + parentH + o - startY;
 
@@ -605,6 +632,7 @@ var canvasController = {
                     context.beginPath()
                     context.moveTo(startLeftX, startY);
                     context.bezierCurveTo(startLeftX,leftCtrlY1,endLeftX,leftCtrlY2,endLeftX,endLeftY);
+                    context.arcTo(cornerX,cornerY,endRightX,endRightY,r);
                     context.lineTo(endRightX,endRightY);
                     context.bezierCurveTo(endRightX,rightCtrlY2,startRightX,rightCtrlY1,startRightX, startY );
                     context.closePath();
@@ -731,18 +759,23 @@ var canvasController = {
 		}
 
 		var group = new Kinetic.Group({id:myId});
-		group.add(claimShape);
-		group.add(claimTextArea);
-		group.add(supportButton);
-		group.add(refuteButton);
-		group.add(deleteButton);
-		group.add(complexText);
-		//group.add(claimAddLeft);
-		//group.add(claimAddRight);
-		//group.add(claimAddBottom);
+		group.add(reasonShape);
+
 		if (reason.type !== "contention") {
 			group.add(connector);
 		}
+
+        for( var i=0, leni=claimTextArea.length; i < leni; i++ ) {
+            group.add(claimTextArea[i]);
+            group.add(complexText[i]);
+            group.add(supportButton[i]);
+            group.add(refuteButton[i]);
+        }
+
+		group.add(deleteButton);
+		//group.add(claimAddLeft);
+		//group.add(claimAddRight);
+		//group.add(claimAddBottom);
 		layer.add(group);
 		layer.draw();
 
