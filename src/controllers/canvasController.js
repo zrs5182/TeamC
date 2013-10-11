@@ -109,6 +109,46 @@ var canvasController = {
             claim.complexText && claim.complexText.setX( claim.x() );
         }
 	},
+    // Adds a new claim box to the left or right edge of a reason
+    addClaimToReason : function( id, leftRight ) {
+        var reason = reasonList.reasons[id];
+        var claim = claimList.newClaim( reason, amCanvas.claimX, amCanvas.claimY, "" );
+        var anchor;
+        var oldAnchorX, oldOffsetX;
+
+        if( !leftRight ) {  // add to left
+            // Because claim x-values are dynamic, when we add to the left, we have
+            // to fix the offset by hand to make the tree "hold still" right.
+            // Painfully clunky, but I couldn't think of a better approach.
+            oldAnchorX = reason.claims[0].x();
+            oldOffsetX = stage.getOffsetX();
+
+            reason.claims.unshift( claim );
+        } else {            // add to right
+            reason.claims.push( claim );
+            anchor = reason.claims[0];
+        }
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Layout the tree because things will move
+        amTree.buchheim(reasonList.reasons[0], anchor );
+
+        // Manual correction of the offset when adding to the left.
+        if( typeof( oldAnchorX ) !== 'undefined' ) {
+            stage.setOffsetX( oldOffsetX + reason.claims[1].x() - oldAnchorX );
+        }
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+
+        // Activate the editable text area for immediate editing
+		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
+		document.getElementsByName('working')[0].focus();
+    },
     // Adds a new reason to the argument map as a child of one of the existing claims.
 	addReason : function(type, father) {
 		var reason = reasonList.newReason(type, father);
@@ -570,6 +610,8 @@ var canvasController = {
 
         // If we aren't a contention then we need to draw a
         // support/refute/rebut ribbon from us to our parent Claim.
+        //
+        // We also create hit-buttons for adding claims on left or right edge
         var type = reason.type;
         if (type !== "contention") {
 			var connector = new Kinetic.Shape({
@@ -758,6 +800,55 @@ var canvasController = {
 				},
 				opacity : 1
 			});
+
+            // A hit region for expanding a reason on the right edge with another claim.
+            var addClaimLeft = new Kinetic.Shape({
+                name : 'addClaimLeft',
+                stroke : 'black',
+                strokeWidth : 2,
+                drawHitFunc : function(canvas) {
+                    var context = canvas.getContext();
+                    var x = reason.x;
+                    var y = reason.y;
+                    var w = reason.width();
+                    var h = reason.height();
+
+                    context.beginPath();
+                    context.moveTo(x, y + h*1/3 );
+                    context.lineTo(x + o, y + h*1/3 );
+                    context.lineTo(x + o, y + h*2/3 );
+                    context.lineTo(x, y + h*2/3 );
+                    context.closePath();
+
+                    canvas.fillStroke(this);
+                },
+                opacity : 1
+            });
+
+            // A hit region for expanding a reason on the right edge with another claim.
+            var addClaimRight = new Kinetic.Shape({
+                name : 'addClaimRight',
+                stroke : 'black',
+                strokeWidth : 2,
+                drawHitFunc : function(canvas) {
+                    var context = canvas.getContext();
+                    var x = reason.x;
+                    var y = reason.y;
+                    var w = reason.width();
+                    var h = reason.height();
+
+                    context.beginPath();
+                    context.moveTo(x + w - o, y + h*1/3 );
+                    context.lineTo(x + w, y + h*1/3 );
+                    context.lineTo(x + w, y + h*2/3 );
+                    context.lineTo(x + w - o, y + h*2/3 );
+                    context.closePath();
+
+                    canvas.fillStroke(this);
+                },
+                opacity : 1
+            });
+
 		}
 
 		var group = new Kinetic.Group({id:myId});
@@ -765,6 +856,8 @@ var canvasController = {
 
 		if (reason.type !== "contention") {
 			group.add(connector);
+            group.add(addClaimLeft);
+            group.add(addClaimRight);
 		}
 
         for( var i=0, leni=claimTextArea.length; i < leni; i++ ) {

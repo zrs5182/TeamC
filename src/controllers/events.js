@@ -62,7 +62,11 @@ layer.on('click', function(event) {
 			}
 		} else if (myName === "deleteButton") {
 			canvasController.removeReasonAndDraw(myId);
-		} else if (myName === "claim" || myName === "connector") {
+		} else if (myName === "addClaimLeft" ) {
+            canvasController.addClaimToReason( myId, 0 );
+		} else if (myName === "addClaimRight" ) {
+            canvasController.addClaimToReason( myId, 1 );
+        }else if (myName === "claim" || myName === "connector") {
 			for (var element in layer.children) {
 				for (var child in layer.children[element].children){
 					if ((layer.children[element].children[child].attrs.id != myId && layer.children[element].children[child].attrs.name!="claimAddLeft" && layer.children[element].children[child].attrs.name!="claimAddRight" && layer.children[element].children[child].attrs.name!="claimAddBottom") || layer.children[element].children[child].attrs.name === "connector") {
