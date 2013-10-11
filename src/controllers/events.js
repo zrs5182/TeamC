@@ -41,22 +41,24 @@ layer.on('click', function(event) {
 	if(moving===0){
 		var node = event.targetNode;
 		var myName = node.attrs.name;
-		var myId = node.getParent().getId();
-        var reason = reasonList.reasons[myId];      // FIXME: Should eventually be a claim.
-        var claim = reason.claims[0];            // But for now assume just first claim.
+
+		var myId = node.getParent().getId();        // Unique ID of the reason this click goes to
+        var reason = reasonList.reasons[myId];      // (which is recorded in the group).
+
+        var myId2 = node.getId();                   // Unique ID of the claim this click goes to if applicable
 		var myType = reason.type;
 
 		if (myName === "complexText" || myName === "claimTextArea") {
 			var div = document.getElementById('myTextArea');
-			div.innerHTML = canvasController.makeTextArea(myId);
+			div.innerHTML = canvasController.makeTextArea(myId2);
 			document.getElementsByName('working')[0].focus();
 		} else if (myName === "supportButton") {
-			canvasController.addReason("support", claim);
+			canvasController.addReason("support", claimList.claims[myId2]);
 		} else if (myName === "refuteButton") {
 			if (myType === "refute") {
-				canvasController.addReason("rebut", claim);
+				canvasController.addReason("rebut", claimList.claims[myId2]);
 			} else {
-				canvasController.addReason("refute", claim);
+				canvasController.addReason("refute", claimList.claims[myId2]);
 			}
 		} else if (myName === "deleteButton") {
 			canvasController.removeReasonAndDraw(myId);

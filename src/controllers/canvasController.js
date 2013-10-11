@@ -64,10 +64,8 @@ var canvasController = {
         imageBtn.href = layer.getCanvas().toDataURL();
 	},
     // Create an editable text area, so we can change the content of a claim.
-    // When this function is re-written it'll get a claim (not a reason like right now).
 	makeTextArea : function(myId) {
-		var reason = reasonList.reasons[myId];
-        var claim = reason.claims[0];
+        var claim = claimList.claims[myId];
 
 		var scale = stage.getScale().x;
 		var realX = claim.x()*scale + stage.getAbsoluteTransform().getTranslation().x;
@@ -75,46 +73,53 @@ var canvasController = {
 		document.getElementById('myTextArea').style.left = realX + "px";
 		document.getElementById('myTextArea').style.top = realY + "px";
 		document.getElementById('myTextArea').style.zIndex = 2;
-		return "<textarea style='font-size: " + (16 * scale) + "px; width: " + ((claim.width) * scale) + "px; height: " + (claim.height * scale) + "px;' name='working' id=" + reason.id + " onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claim.text + "</textarea>"
+		return "<textarea style='font-size: " + (16 * scale) + "px; width: " + ((claim.width) * scale) + "px; height: " + (claim.height * scale) + "px;' name='working' id=" + myId + " onfocus='this.select();' onblur='canvasController.removeTextArea(" + myId + ")'>" + claim.text + "</textarea>"
 	},
     // Get the text out of our editable text area (so it can be set back to a claim)
 	extractText : function() {
 		return document.getElementsByName('working')[0].value;
 	},
     // Set the edited text back to our claim and make the editable text area
-    // disappear.  This function will need a rewrite for individual claims.
+    // disappear.  The argument is the unique identifier of the claim.
 	removeTextArea : function(myId) {
         // Save the text in our argument map
-		var reason = reasonList.reasons[myId];
-		reason.setText( canvasController.extractText());
+		var claim = claimList.claims[myId];
+		claim.text = canvasController.extractText();
+        // Write the text into complexText box
+        claim.complexText.setText( claim.text );
+
         // Make the editable text area disappear
 		document.getElementById('myTextArea').innerHTML = '';
 		document.getElementById('myTextArea').style.zIndex = 0;
-        // Write the new text into clickable text box
-		var thisText = stage.get('.complexText')[myId];
-		thisText.setText(reasonList.reasons[myId].text());
 
+        // Redraw the layer or the text won't appear in the new imageBtn URL
         layer.draw();
 
-        // Update the export image button
+        // Update the export image button to show the new text
         imageBtn = document.getElementById("toImage");
         imageBtn.href = layer.getCanvas().toDataURL();
 	},
-    // Don't really know what this does yet.
+    // Walks through all of the claims and sets the complexText area to the claim coordinates.
+    // Really, this is a bit weird because probably changing the x coordinate of the Reason
+    // should update the x coordinate of the Claims and by extension the complexText objects.
 	fixText: function(){
-		for(node in reasonList.reasons){
-			if(stage.get(".complexText")[node]){
-				stage.get(".complexText")[node].setX(reasonList.reasons[node].x + 30)
-			}
-		}
+        for( var i=0, leni=claimList.claims.length; i < leni; i++ ) {
+            var claim = claimList.claims[i];
+            // If a complexText area is defined, set the coordinate
+            claim.complexText && claim.complexText.setX( claim.x() );
+        }
 	},
     // Adds a new reason to the argument map as a child of one of the existing claims.
 	addReason : function(type, father) {
 		var reason = reasonList.newReason(type, father);
-        var myId = reason.id;
+        var claim = reason.claims[0];
+
+        // Layout the tree again and draw this reason
 		amTree.buchheim(reasonList.reasons[0], father);
-		canvasController.drawReason(myId);
-		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(myId);
+		canvasController.drawReason(reason.id);
+
+        // Activate the editable text area for immediate editing
+		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
 		document.getElementsByName('working')[0].focus();
 	},
     removeReason : function(id) {
@@ -232,6 +237,7 @@ var canvasController = {
             claim = reason.claims[i];
 
             claimTextArea[i] = new Kinetic.Shape({
+                id : claim.id,
                 // Here we do something unusual.  We define a function (containing another
                 // function declaration) and immediately invoke it.  This is so that the
                 // the drawFunc function that gets created is bound to the value of claim
@@ -284,7 +290,7 @@ var canvasController = {
 
             // Draws the text on top of our claimTextArea.
             complexText[i] = new Kinetic.Text({
-                //id : myId,
+                id : claim.id,
                 name : "complexText",
                 x : claim.x(),
                 y : claim.y(),
@@ -298,11 +304,13 @@ var canvasController = {
                 align : 'left',
                 opacity : 1
             });
+            // Remember this in our claim object so we can update it later.
+            claim.complexText = complexText[i];
 
             // Draws a green support button on the left bottom corner of a Claim.
             // Also creates a custom hit region of the same shape.
             supportButton[i] = new Kinetic.Shape({
-                //id : myId,
+                id : claim.id,
                 // Another case of defining a function and immediately invoking.
                 drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
                     var context = canvas.getContext();
@@ -345,7 +353,7 @@ var canvasController = {
             // Draws a red/orange refute/rebut button on the right bottom corner of a Claim.
             // Also creates a custom hit region of the same shape.
             refuteButton[i] = new Kinetic.Shape({
-                //id : myId,
+                id : claim.id,
                 // Another case of defining a function and immediately invoking.
                 drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
                     var context = canvas.getContext();
