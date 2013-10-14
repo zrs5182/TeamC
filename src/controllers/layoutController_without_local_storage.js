@@ -20,14 +20,16 @@
 //    Note, since parent is a Javascript keyword, parents will be fathers in this code.
 
 // Prototype function for a Claim object
-function Claim( id, reason, width, height, text ) {
+function Claim( id, reason, width, height, text, children ) {
     this.id = id;           // Our unique ID in the claimList
     this.reason = reason;	// the Reason that contains this Claim
     this.width = width;		// width in pixels
     this.height = height;	// height in pixels
     this.text = text;		// the text of this Claim
-    this.children = [];		// the children of this Claim (these are
-                            // supporting or objecting Reasons, not Claims)
+
+    if( typeof(children) === 'undefined' ) {
+        this.children = [];	// the children of this Claim (these are
+    }                       // supporting or objecting Reasons, not Claims)
 
     this.x = function() {   // returns the x-coordinate of this claim box
         var x = reason.x;   // start from left x-coordinate of containing reason
@@ -73,19 +75,25 @@ function Claim( id, reason, width, height, text ) {
 
 
 // Prototype function for a Reason object
-function Reason( id, type, father ) {
+function Reason( id, type, father, claims ) {
     father = ( typeof father === 'undefined' ) ? null : father;
 
     this.id = id;		    // The index in reasonList of this Reason (effectively a unique identifier)
     this.type = type;		// One of: contention, support, refute, rebut
     this.father = father;	// The father Claim of this Reason
-    this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
+
+    if( typeof(claims) === 'undefined' ) {
+        this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
+    }
 
     // Add this reason to the children of its parent either on left or right
+    // (only if father is an actual claim --- when reading data in from file
+    // father will initially be just a numeric id and this will have to be
+    // done by hand).
     if( type==="support" ){
-        father.children.unshift( this );    // support goes on the left
+        father.children && father.children.unshift( this );    // support goes on the left
     } else if( type==="refute" || type==="rebut" ) {
-        father.children.push( this );       // opposes go on the right
+        father.children && father.children.push( this );       // opposes go on the right
     } else if( type==="contention" ) {
         // nothing to do here (no parents)
     } else {
@@ -192,8 +200,9 @@ function Reason( id, type, father ) {
         this.number = null;
         this.mod = 0;
 
-        // If we aren't the first child of our parent, then there is a left-most child and a left-sibling
-        if( this.fatherR() !== null ) {
+        // If we aren't the first child of our parent, then there is a left-most child and a left-sibling.
+        // (We won't call this if fatherR() doesn't have children, like when setting up from data.)
+        if( this.fatherR() !== null && this.fatherR().children ) {
             var siblings = this.fatherR().children();
 
             // If the left-most child is not us, then set it as our left-most sibling
@@ -213,8 +222,128 @@ function Reason( id, type, father ) {
     }
 
     // Call our reset function to finish initializing everything
-    this.reset();
+    // this.reset();
 }
+
+// The basic structure required to undo an operation is the list
+// of claims and reasons that existed before.
+function Undo( reasons, claims ) {
+    this.reasons = ( typeof(reasons) !== 'undefined' ? reasons : [] );
+    this.claims =  ( typeof(claims) !== 'undefined' ? claims : [] );
+
+    // Applies an undo, re-creating the state of the argument map as it existed previously.
+    this.doit = function() {
+        // These arrays will hold the Reasons and Claims as we re-construct the argument map
+        var reasons = [];
+        var claims = [];
+
+        // Build back the reason list, just from data at first (then we'll hook
+        // up all the object references).
+        for( var i=0, leni=this.reasons.length; i<leni; i++ ) {
+            var reason = this.reasons[i];
+
+            reasons[i] = new Reason( reason.id, reason.type, reason.father, reason.claims );
+        }
+
+        // Build back the claim list, just from data at first (then we'll hook
+        // up all the object references).
+        for( var i=0, leni=this.claims.length; i<leni; i++ ) {
+            var claim = this.claims[i];
+
+            claims[i] = new Claim( claim.id, claim.reason, claim.width, claim.height,
+                   claim.text, claim.children );
+        }
+
+        // Hook up the father and all the claims in each reason, replacing the index
+        // values with references to the actual object.
+        for( var i=0, leni=reasons.length; i<leni; i++ ) {
+            var reason = reasons[i];
+
+            if( reason.father !== null ) {
+                reason.father = reasons[ reason.father ];
+            }
+
+            for( var j=0, lenj=reason.claims.length; j<lenj; j++ ) {
+                reason.claims[j] = claims[ reason.claims[j] ];
+            }
+        }
+
+        // Hook up the reason and all the children in each claim, replacing the index
+        // values with references to the actual object.
+        for( var i=0, leni=claims.length; i<leni; i++ ) {
+            var claim = claims[i];
+
+            claim.reason = reasons[ claim.reason ];
+
+            for( var j=0, lenj=claim.children.length; j<lenj; j++ ) {
+                claim.children[j] = reasons[ claim.children[j] ];
+            }
+        }
+
+        // Now hook these into the actual claimList and reasonList
+        claimList.claims = claims;
+        claimList.nextClaimNumber = claims.length;
+
+        reasonList.reasons = reasons;
+        reasonList.nextReasonNumber = reasons.length;
+    };
+}
+
+var undoList = {
+    undos: [],              // List of all Undo objects we're tracking
+    undoIndex: 0,           // Where we are in the Undo list (for undo/redo)
+
+    init: function() {
+        this.undos = [];
+        this.undoIndex = 0;
+        this.creatUndo();   // create initial undo state
+    },
+
+    // Creates a new Undo object at the current index in the list, possibly truncating
+    // some possible "redos" if we have exercised the undo feature already.  We'll call
+    // this function after each argument map changing action.
+    createUndo: function() {
+        // These arrays will be "just the data" and not actual Reasons and Claims
+        var reasons = [];
+        var claims = [];
+
+        // If we're mid-list then delete the tail of Undos before inserting new one
+        if( this.undoIndex < this.undos.length ) {
+            this.undos.splice( this.undoIndex, this.undos.length-this.undoIndex );
+        }
+
+        // Get array of all reason data
+        for( var i=0,leni=reasonList.nextReasonNumber; i<leni; i++ ) {
+            reasons[i] = reasonList.reasons[i].data();
+        }
+
+        // Get array of all claim data
+        for( var i=0,leni=claimList.nextClaimNumber; i<leni; i++ ) {
+            claims[i] = claimList.claims[i].data();
+        }
+
+        this.undos[this.undoIndex++] = new Undo( reasons, claims );
+
+        // FIXME: possibly truncate the oldest member of the array for size?
+    },
+
+    applyUndo: function() {
+        // Return if there is nothing to undo
+        if( this.undoIndex <= 1 ) return;
+
+        this.undoIndex--;
+        this.undos[ this.undoIndex-1 ].doit();
+    },
+
+    applyRedo: function() {
+        // Return if there is nothing to redo
+        if( this.undoIndex >= this.undos.length ) return;
+
+        this.undoIndex++;
+        this.undos[ this.undoIndex-1 ].doit();
+    },
+}
+
 
 // This is a master list of all claims in our argument map.
 // Basically we use this to keep the association between
@@ -254,10 +383,12 @@ var claimList = {
 var reasonList = {
 	reasons: [],					// List of the nodes in this tree
     nextReasonNumber : 0,
+
     init: function() {
         this.reasons = [];
         this.nextReasonNumber = 0;
     },
+
 	// Push a new node (with default attributes) onto the list
     // Argument are a unique identifier, the type of reason to add,
     // and the Claim that is our direct parent.
@@ -389,7 +520,7 @@ var amTree = {
 				vol = this.left(vol);
 				vor = this.right(vor);
 				vor.ancestor = v;
-				shift = (vil.x+sil)-(vir.x+sir)+vir.width() + amCanvas.padX;
+				shift = (vil.x+sil)-(vir.x+sir)+vil.width() + amCanvas.padX;
 				if(shift>0){
 					this.moveSubtree(this.ancestor(vil,v,defaultAncestor),v,shift);
 					sir = sir + shift;
