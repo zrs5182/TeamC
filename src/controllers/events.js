@@ -24,9 +24,24 @@ var moving = 0;
 var dragging = 0;
 var selected = null;
 
+var dragPos = { x:0, y:0 };
 stage.on('dragstart', function() {
+    // Remember the starting position of this drag.  Short drags are really clicks.
+    dragPos.x = stage.getPosition().x;
+    dragPos.y = stage.getPosition().y;
+    // layer.setListening(0);
+});
+
+stage.on('dragmove', function() {
+    // If we've dragged far enough, then disable click events.  This really is a
+    // drag and not just a nudge that came with a click by accident.
+    var x = stage.getPosition().x;
+    var y = stage.getPosition().y;
+    if( Math.abs( dragPos.x - x ) > 3 || Math.abs( dragPos.y - y ) > 3 ) { 
         layer.setListening(0);
-      });
+    }
+});
+
 
 stage.on('dragend', function() {
         layer.setListening(1);
