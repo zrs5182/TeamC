@@ -49,6 +49,26 @@ function Claim( id, reason, width, height, text ) {
     this.y = function() {   // return the y-coordinate of this claim box
         return reason.y + amCanvas.border;
     }
+
+    // Returns the "essential data" of this Claim object, suitable for saving
+    // in an undo/redo structure or converting to JSON and recording to storage.
+    this.data = function() {
+        var mydata = {
+            id : this.id,
+            reason : this.reason.id,
+            width : this.width,
+            height : this.height,
+            text : this.text,
+            children : []
+        }
+
+        // Fill the children[] array with each child's unique id
+        for( var i=0, leni=this.children.length; i < leni; i++ ) {
+            mydata.children[i] = this.children[i].id;
+        }
+
+        return mydata;
+    }
 }
 
 
@@ -71,16 +91,6 @@ function Reason( id, type, father ) {
     } else {
         // Should never get here
         console.log( "Reason() bad type: " +  type );
-    }
-
-    // FIXME: This needs to go when multiclaim support is finished
-    this.text = function() {
-        return this.claims[0].text;
-    }
-
-    // FIXME: This needs to go when multiclaim support is finished
-    this.setText = function( text ) {
-        this.claims[0].text = text;
     }
 
     // -- The rest of these items are needed for laying out the claim with Buchheim algorithm --
@@ -148,6 +158,24 @@ function Reason( id, type, father ) {
         // Add upper and lower border
         h += 2*amCanvas.border;
         return h;
+    }
+
+    // Returns the "essential data" of this Reason object, suitable for saving
+    // in an undo/redo structure or converting to JSON and recording to storage.
+    this.data = function() {
+        var mydata = {
+            id : this.id,
+            type : this.type,
+            father : ( this.father === null ? this.father : this.father.id ),
+            claims : []
+        }
+
+        // Fill the claims[] array with each claim's unique id
+        for( var i=0, leni=this.claims.length; i < leni; i++ ) {
+            mydata.claims[i] = this.claims[i].id;
+        }
+
+        return mydata;
     }
 
     // Resets/initializes all of the values needed to run the Buchheim layout algorithm
