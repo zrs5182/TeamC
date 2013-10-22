@@ -29,15 +29,19 @@ function Claim( id, reason, width, height, text, children ) {
 
     if( typeof(children) === 'undefined' ) {
         this.children = [];	// the children of this Claim (these are
-    }                       // supporting or objecting Reasons, not Claims)
+    } else {                // supporting or objecting Reasons, not Claims)
+        this.children = children;
+    }
+}
 
-    this.x = function() {   // returns the x-coordinate of this claim box
-        var x = reason.x;   // start from left x-coordinate of containing reason
+Claim.prototype = {
+    x : function() {   // returns the x-coordinate of this claim box
+        var x = this.reason.x;   // start from left x-coordinate of containing reason
         x += amCanvas.border;    // skip left window border
 
         // add space for any claims that are to our left until we get to us
-        for( var i=0, leni=reason.claims.length; i < leni; i++ ) {
-            var claim = reason.claims[i];
+        for( var i=0, leni=this.reason.claims.length; i < leni; i++ ) {
+            var claim = this.reason.claims[i];
 
             if( claim === this ) { return x; }
 
@@ -46,15 +50,15 @@ function Claim( id, reason, width, height, text, children ) {
 
         // shouldn't get here
         console.log( "Problem in Claim.x" );
-    };
+    },
 
-    this.y = function() {   // return the y-coordinate of this claim box
-        return reason.y + amCanvas.border;
-    }
+    y : function() {   // return the y-coordinate of this claim box
+        return this.reason.y + amCanvas.border;
+    },
 
     // Returns the "essential data" of this Claim object, suitable for saving
     // in an undo/redo structure or converting to JSON and recording to storage.
-    this.data = function() {
+    data : function() {
         var mydata = {
             id : this.id,
             reason : this.reason.id,
@@ -84,6 +88,8 @@ function Reason( id, type, father, claims ) {
 
     if( typeof(claims) === 'undefined' ) {
         this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
+    } else {
+        this.claims = claims;
     }
 
     // Add this reason to the children of its parent either on left or right
@@ -101,17 +107,20 @@ function Reason( id, type, father, claims ) {
         console.log( "Reason() bad type: " +  type );
     }
 
-    // -- The rest of these items are needed for laying out the claim with Buchheim algorithm --
+    // Call our reset function to finish initializing everything
+    // this.reset();
+}
 
-    this.fatherR = function() {	// Helper function returns the Reason containing our parent Claim
+Reason.prototype = {
+    fatherR : function() {	// Helper function returns the Reason containing our parent Claim
         if( this.father !== null ) {
             return this.father.reason;
         } else {
             return null;
         }
-    };
+    },
 
-    this.children = function() {	// Helper function -- returns the children (Reasons) of our Claims
+    children : function() {	// Helper function -- returns the children (Reasons) of our Claims
         var c = [];     // collected children
         for( var i=0, leni=this.claims.length; i < leni; i++ ) {
             var claim = this.claims[i];
@@ -120,21 +129,21 @@ function Reason( id, type, father, claims ) {
             }
         }
         return c;
-    }
+    },
 
     // Returns the left-most child of all the claims in this reason
-    this.firstchild = function() {
+    firstchild : function() {
         return this.children()[0];
-    }
+    },
 
     // Returns the right-most child of all the claims in this reason
-    this.lastchild = function() {
+    lastchild : function() {
         var children = this.children();
         return children[ children.length - 1 ];
-    }
+    },
 
     // Check to see if given reason is a child of one of our claims
-    this.isChild = function( reason ) {
+    isChild : function( reason ) {
         for( var i = 0, leni = this.claims.length; i < leni; i++ ) {
             claim = this.claims[i];
             for( var j = 0, lenj = claim.children.length; j < lenj; j++ ) {
@@ -142,9 +151,9 @@ function Reason( id, type, father, claims ) {
             }
         }
         return false;
-    }
+    },
 
-    this.width = function() {	// The total width of this Reason
+    width : function() {	// The total width of this Reason
         // Add up the width of all the contained claims and padding and borders
         var w = 0;
         for( var i=0, leni=this.claims.length; i < leni; i++ ) {
@@ -155,9 +164,9 @@ function Reason( id, type, father, claims ) {
         // Add the border space at the left and right edges of the reason
         w += 2*amCanvas.border;
         return w;
-    };
+    },
 
-    this.height = function() { // The total height of this Reason
+    height : function() { // The total height of this Reason
         // Find height of tallest claim
         var h = 0;
         for( var i=0, leni=this.claims.length; i < leni; i++ ) {
@@ -166,11 +175,11 @@ function Reason( id, type, father, claims ) {
         // Add upper and lower border
         h += 2*amCanvas.border;
         return h;
-    }
+    },
 
     // Returns the "essential data" of this Reason object, suitable for saving
     // in an undo/redo structure or converting to JSON and recording to storage.
-    this.data = function() {
+    data : function() {
         var mydata = {
             id : this.id,
             type : this.type,
@@ -184,10 +193,10 @@ function Reason( id, type, father, claims ) {
         }
 
         return mydata;
-    }
+    },
 
     // Resets/initializes all of the values needed to run the Buchheim layout algorithm
-    this.reset = function () {
+    reset : function () {
         this.x = 0;
         this.y = 0;
         this.tree = 0;
@@ -220,9 +229,6 @@ function Reason( id, type, father, claims ) {
             }
         }
     }
-
-    // Call our reset function to finish initializing everything
-    // this.reset();
 }
 
 // The basic structure required to undo an operation is the list
@@ -231,8 +237,11 @@ function Undo( reasons, claims ) {
     this.reasons = ( typeof(reasons) !== 'undefined' ? reasons : [] );
     this.claims =  ( typeof(claims) !== 'undefined' ? claims : [] );
 
+}
+
+Undo.prototype = {
     // Applies an undo, re-creating the state of the argument map as it existed previously.
-    this.doit = function() {
+    doit : function() {
         // These arrays will hold the Reasons and Claims as we re-construct the argument map
         var reasons = [];
         var claims = [];
@@ -268,8 +277,8 @@ function Undo( reasons, claims ) {
             }
         }
 
-        // Hook up the reason and all the children in each claim, replacing the index
-        // values with references to the actual object.
+        // Hook up the (containing) reason and all the children in each claim, replacing the
+        // index values with references to the actual object.
         for( var i=0, leni=claims.length; i<leni; i++ ) {
             var claim = claims[i];
 
@@ -286,7 +295,7 @@ function Undo( reasons, claims ) {
 
         reasonList.reasons = reasons;
         reasonList.nextReasonNumber = reasons.length;
-    };
+    }
 }
 
 var undoList = {
