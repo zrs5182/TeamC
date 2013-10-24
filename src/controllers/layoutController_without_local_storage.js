@@ -251,7 +251,7 @@ Undo.prototype = {
         for( var i=0, leni=this.reasons.length; i<leni; i++ ) {
             var reason = this.reasons[i];
 
-            reasons[i] = new Reason( reason.id, reason.type, reason.father, reason.claims );
+            reasons[i] = new Reason( reason.id, reason.type, reason.father, reason.claims.slice(0) );
         }
 
         // Build back the claim list, just from data at first (then we'll hook
@@ -260,7 +260,7 @@ Undo.prototype = {
             var claim = this.claims[i];
 
             claims[i] = new Claim( claim.id, claim.reason, claim.width, claim.height,
-                   claim.text, claim.children );
+                   claim.text, claim.children.slice(0) );
         }
 
         // Hook up the father and all the claims in each reason, replacing the index
@@ -269,7 +269,7 @@ Undo.prototype = {
             var reason = reasons[i];
 
             if( reason.father !== null ) {
-                reason.father = reasons[ reason.father ];
+                reason.father = claims[ reason.father ];
             }
 
             for( var j=0, lenj=reason.claims.length; j<lenj; j++ ) {
@@ -305,7 +305,7 @@ var undoList = {
     init: function() {
         this.undos = [];
         this.undoIndex = 0;
-        this.creatUndo();   // create initial undo state
+        this.createUndo();   // create initial undo state
     },
 
     // Creates a new Undo object at the current index in the list, possibly truncating

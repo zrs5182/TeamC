@@ -63,6 +63,31 @@ var canvasController = {
         imageBtn = document.getElementById("toImage");
         imageBtn.href = layer.getCanvas().toDataURL();
 	},
+
+    undo: function() {
+        // Get position of the root of the tree to anchor
+        var x = reasonList.reasons[0].x;
+        var y = reasonList.reasons[0].y;
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Apply the undo
+        undoList.applyUndo();
+
+        // Set the position of the root of the tree
+        reasonList.reasons[0].x = x;
+        reasonList.reasons[0].y = y;
+
+        // Layout the tree anchoring at the root claim
+        amTree.buchheim(reasonList.reasons[0], reasonList.reasons[0].claims[0] );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+    },
+
     // Create an editable text area, so we can change the content of a claim.
 	makeTextArea : function(myId) {
         var claim = claimList.claims[myId];
@@ -84,9 +109,18 @@ var canvasController = {
 	removeTextArea : function(myId) {
         // Save the text in our argument map
 		var claim = claimList.claims[myId];
-		claim.text = canvasController.extractText();
-        // Write the text into complexText box
-        claim.complexText.setText( claim.text );
+        var oldtext = claim.text;
+        var newtext = canvasController.extractText();
+
+        // Update the old text if changed
+        if( oldtext !== newtext ) {
+            claim.text = newtext;
+            // Write the text into complexText box
+            claim.complexText.setText( claim.text );
+
+            // Create a new undo object
+            undoList.createUndo();
+        }
 
         // Make the editable text area disappear
 		document.getElementById('myTextArea').innerHTML = '';
@@ -145,6 +179,9 @@ var canvasController = {
             canvasController.drawReason(i);
         }
 
+        // Create a new Undo item for the current tree state.
+        undoList.createUndo();
+
         // Activate the editable text area for immediate editing
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
 		document.getElementsByName('working')[0].focus();
@@ -157,6 +194,9 @@ var canvasController = {
         // Layout the tree again and draw this reason
 		amTree.buchheim(reasonList.reasons[0], father);
 		canvasController.drawReason(reason.id);
+
+        // Create a new Undo item for the current tree state.
+        undoList.createUndo();
 
         // Activate the editable text area for immediate editing
 		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
@@ -207,6 +247,9 @@ var canvasController = {
 			for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
 				canvasController.drawReason(i);
 			}
+
+            // Create a new Undo item for the current tree state.
+            undoList.createUndo();
 		}
 	},
 	drawReason : function(myId) {
