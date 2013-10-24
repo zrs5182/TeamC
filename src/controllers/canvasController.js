@@ -88,6 +88,30 @@ var canvasController = {
         }
     },
 
+    redo: function() {
+        // Get position of the root of the tree to anchor
+        var x = reasonList.reasons[0].x;
+        var y = reasonList.reasons[0].y;
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Apply the undo
+        undoList.applyRedo();
+
+        // Set the position of the root of the tree
+        reasonList.reasons[0].x = x;
+        reasonList.reasons[0].y = y;
+
+        // Layout the tree anchoring at the root claim
+        amTree.buchheim(reasonList.reasons[0], reasonList.reasons[0].claims[0] );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+    },
+
     // Create an editable text area, so we can change the content of a claim.
 	makeTextArea : function(myId) {
         var claim = claimList.claims[myId];
