@@ -302,10 +302,17 @@ var undoList = {
     undos: [],              // List of all Undo objects we're tracking
     undoIndex: 0,           // Where we are in the Undo list (for undo/redo)
 
-    init: function() {
+    init: function( initialState ) {
         this.undos = [];
-        this.undoIndex = 0;
-        this.createUndo();   // create initial undo state
+
+        if( typeof initialState === 'undefined' ) {
+            this.undoIndex = 0;
+            this.createUndo();   // create initial undo state
+        } else {
+            this.undoIndex = 1;
+            this.undos[0] = initialState;   // load the initial state from data
+                                            // (like reading a file for example)
+        }
     },
 
     // Creates a new Undo object at the current index in the list, possibly truncating
