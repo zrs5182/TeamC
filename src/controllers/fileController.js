@@ -9,13 +9,32 @@ var fileController = {
         return dataString;
 	},
 	loadMap: function(dataString){
+        // Get position of the root of the tree to anchor
+        var x = reasonList.reasons[0].x;
+        var y = reasonList.reasons[0].y;
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
         // This will read a stringified state (technically, an undo
         // object) and read it into the inital position of the undoList.
         // Then we'll "doit" to recreate the argument map.
-		var initialState = JSON.parse(dataString);
-        undoList.init( initialState );
+		var init = JSON.parse(dataString);
+        var undo = new Undo( init.reasons, init.claims );
+        undoList.init( undo );
         undoList.undos[0].doit();
-		return true;
+        //
+        // Set the position of the root of the tree
+        reasonList.reasons[0].x = x;
+        reasonList.reasons[0].y = y;
+
+        // Layout the tree anchoring at the root claim
+        amTree.buchheim(reasonList.reasons[0], reasonList.reasons[0].claims[0] );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
 	},
 	save: function(){
 	    var save_pattern=/(\S)/i;
@@ -37,5 +56,24 @@ var fileController = {
 
 	    // Let the caller start the download.
 	    return true;
+    },
+    load: function( files ) {
+        // Sanity checks on the file
+        if( !files ) return;
+        var file = files[0];
+        if( !file || !file.size ) return;
+
+        var blob = file.slice(0, file.size);
+
+        var reader = new FileReader();
+
+        // This handler will get our data as a string and call loadMap()
+        reader.onloadend = function(evt) {
+            if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+                fileController.loadMap( evt.target.result );
+            }
+        };
+
+        reader.readAsBinaryString( blob );
     }
 };

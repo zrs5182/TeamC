@@ -81,9 +81,7 @@
 							<li class="spaced">							
 									<a id="downloader" title="Save..."><img src="save.png" alt="save" onClick="return fileController.save()" /> </a>
 							</li>
-							<li class="spaced">
-								<a href="#" title="Load..."><img src="folder.png" alt="load" onclick="canvasController.displayLoad()" /></a>
-							</li>
+                            <li class="spaced"><label for="loadfile" title="Load..."><img src="folder.png" alt="load" /></label><input name="loadfile" type="file" id="loadfile" style="display:none" onclick="this.value=null;" onchange="return fileController.load( this.files )" /></li>
 							<li class="spaced">
 								<a href="#" title="Undo" onclick="canvasController.undo()"><img src="undo.png" alt="undo" /></a>
 							</li>
