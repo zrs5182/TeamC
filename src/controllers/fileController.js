@@ -39,7 +39,7 @@ var fileController = {
 	save: function(){
 	    var save_pattern=/(\S)/i;
 	    var extension_pattern = /.am$/;
-	    var filename=prompt("Save As...","argument_map");
+	    var filename=prompt("Save As...","argument_map.am");
 
 	    // If the user pressed cancel or emptied the field of letters, we'll abort.
 	    if( filename == null || !save_pattern.test(filename)) {
