@@ -171,20 +171,12 @@ var canvasController = {
     addClaimToReason : function( id, leftRight ) {
         var reason = reasonList.reasons[id];
         var claim = claimList.newClaim( reason, amCanvas.claimX, amCanvas.claimY, "" );
-        var anchor;
-        var oldAnchorX, oldOffsetX;
+        var anchor = reason.father;
 
         if( !leftRight ) {  // add to left
-            // Because claim x-values are dynamic, when we add to the left, we have
-            // to fix the offset by hand to make the tree "hold still" right.
-            // Painfully clunky, but I couldn't think of a better approach.
-            oldAnchorX = reason.claims[0].x();
-            oldOffsetX = stage.getOffsetX();
-
             reason.claims.unshift( claim );
         } else {            // add to right
             reason.claims.push( claim );
-            anchor = reason.father;
         }
 
         // Remove all drawn objects from the KineticJS layer
