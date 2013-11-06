@@ -184,7 +184,7 @@ var canvasController = {
             reason.claims.unshift( claim );
         } else {            // add to right
             reason.claims.push( claim );
-            anchor = reason.claims[0];
+            anchor = reason.father;
         }
 
         // Remove all drawn objects from the KineticJS layer
@@ -192,11 +192,6 @@ var canvasController = {
 
         // Layout the tree because things will move
         amTree.buchheim(reasonList.reasons[0], anchor );
-
-        // Manual correction of the offset when adding to the left.
-        if( typeof( oldAnchorX ) !== 'undefined' ) {
-            stage.setOffsetX( oldOffsetX + reason.claims[1].x() - oldAnchorX );
-        }
 
         // Redraw each claim (which adds them back to KineticJS layer)
         for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
