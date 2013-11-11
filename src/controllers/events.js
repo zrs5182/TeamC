@@ -273,6 +273,34 @@ function canvasResize() {
 	//layer.draw()
 }
 
+//Captures key presses and handles them if needed or returns to browser for handling
+document.onkeydown = function(e) {
+	e = e || window.event;
+    //If the control key is pressed on the keyboard event, check to see if 'z' or 'y' are pressed for undo or redo, respectively.
+    if( e.ctrlKey )
+    {
+    	//If the 'z' key is also pressed, undo the last action.
+    	if( e.keyCode == 90 || e.which == 90 )
+    	{
+    		canvasController.undo()
+    	}
+    	//If the 'y' key is also pressed, redo the last action
+    	else if( e.keyCode == 89 || e.which == 89 )
+    	{
+    		canvasController.redo()
+    	}
+    	else
+    	{
+    		return;
+    	}
+    }
+    else
+    {
+    	return;
+    }
+    e.preventDefault();
+   }
+    	
 
 window.addEventListener('resize', canvasResize(), false);
 
