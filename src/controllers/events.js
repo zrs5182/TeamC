@@ -75,6 +75,9 @@ layer.on('click', function(event) {
 			} else {
 				canvasController.addReason("refute", claimList.claims[myId2]);
 			}
+		} else if (myName === "claimDeleteButton") {
+            claimId = node.attrs.id;
+			canvasController.removeClaimAndDraw(claimId);
 		} else if (myName === "deleteButton") {
 			canvasController.removeReasonAndDraw(myId);
 		} else if (myName === "addClaimLeft" ) {

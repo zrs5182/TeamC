@@ -116,6 +116,8 @@ var canvasController = {
 	makeTextArea : function(myId) {
         var claim = claimList.claims[myId];
 
+        // FIXME: suppress Ctrl-Z undo and Ctrl-Y redo until editing is done
+
 		var scale = stage.getScale().x;
 		var realX = claim.x()*scale + stage.getAbsoluteTransform().getTranslation().x;
 		var realY = claim.y()*scale + stage.getAbsoluteTransform().getTranslation().y;
@@ -156,6 +158,8 @@ var canvasController = {
         // Update the export image button to show the new text
         imageBtn = document.getElementById("toImage");
         imageBtn.href = layer.getCanvas().toDataURL();
+
+        // FIXME: restore Ctrl-Z undo and Ctrl-Y redo now that editing is done
 	},
     // Walks through all of the claims and sets the complexText area to the claim coordinates.
     // Really, this is a bit weird because probably changing the x coordinate of the Reason
@@ -235,9 +239,64 @@ var canvasController = {
         // And remove us from the reasonList
         reasonList.deleteReason( reason );
     },
+    // Remove a Claim and the children recursively,
+    // and draws the new argument map.
+	removeClaimAndDraw : function(id){
+        var claim = claimList.claims[id];
+        var children = claim.children;
+        var reason = claim.reason;
+        var siblings = reason.claims;
+
+        // Turn off all listeners
+        for(var i = 0; i < claimList.nextClaimNumber ; i++ ) {
+            claimList.claims[i].deleteButton.off( 'mouseenter mouseleave' );
+            claimList.claims[i].textArea.off( 'mouseenter mouseleave' );
+            claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
+        }
+
+        // If we delete the main contention, just make a new canvas instead.
+		if( reason.id===0 ){
+			canvasController.newCanvas();
+		}else if( siblings.length===1 ) {
+            // If we are the only Claim in the Reason, just remove the Reason
+            canvasController.removeReasonAndDraw( reason.id );
+        } else {
+            // Recurse through the child Reasons of this claim and remove them
+            for(var i = children.length-1; i >= 0; i--){
+                canvasController.removeReason(children[i].id);
+            }
+
+            // Remove this Claim from our enclosing Reason
+            siblings.splice(siblings.indexOf(claim), 1);
+
+            // Remove this Claim from the claimList
+            claimList.deleteClaim( claim );
+
+            // Remove all drawn objects from the KineticJS layer
+			layer.removeChildren();
+
+            // Layout the tree to show the new structure anchoring on left most Claim
+			amTree.buchheim(reasonList.reasons[0], reason.father );
+
+            // Redraw each claim (which adds them back to KineticJS layer)
+			for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+				canvasController.drawReason(i);
+			}
+
+            // Create a new Undo item for the current tree state.
+            undoList.createUndo();
+		}
+	},
     // Remove a Reason and its Claims and the children of all the Claims recursively,
     // and draws the new argument map.
 	removeReasonAndDraw : function(id){
+        // Turn off all listeners
+        for(var i = 0; i < claimList.nextClaimNumber ; i++ ) {
+            claimList.claims[i].deleteButton.off( 'mouseenter mouseleave' );
+            claimList.claims[i].textArea.off( 'mouseenter mouseleave' );
+            claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
+        }
+
 		if(id===0){
 			canvasController.newCanvas();
 		}else{
@@ -251,7 +310,7 @@ var canvasController = {
             // Remove all drawn objects from the KineticJS layer
 			layer.removeChildren();
 
-            // Layout the tree to show the new structure anchoring on father Reason
+            // Layout the tree to show the new structure anchoring on father Claim
 			amTree.buchheim(reasonList.reasons[0], father);
 
             // Redraw each claim (which adds them back to KineticJS layer)
@@ -267,6 +326,7 @@ var canvasController = {
         var reason = reasonList.reasons[myId];
         var claimTextArea = [];
         var complexText = [];
+        var claimDeleteButton = [];
         var supportButton = [];
         var refuteButton = [];
 
@@ -324,7 +384,7 @@ var canvasController = {
 			opacity : 1
 		});
 
-        // This is a graphical area containing the text of a claim.  It is clickable,
+        // This is a graphical area lying behind the text of a claim.  It is clickable,
         // and will present an editable textbox when clicked.  There will be one text
         // area for each claim in the reason.
         for( var i = 0, leni = reason.claims.length; i < leni; i++ ) {
@@ -352,8 +412,10 @@ var canvasController = {
                     context.closePath();
 
                     this.setFill('white');
-                    if (reasonList.reasons[myId].type !== "contention") { // FIXME: why is this here?
-                        this.setFill('white');
+                    
+                    // All claims are outlined in black, except the main contention (which
+                    // doesn't need it because of it's dark blue frame).
+                    if (reasonList.reasons[myId].type !== "contention") {
                         this.setStroke('black');
                         this.setStrokeWidth(2);
                     }
@@ -398,8 +460,104 @@ var canvasController = {
                 align : 'left',
                 opacity : 1
             });
+
+            // Draws the [x] button in the corner of a claim to delete it.
+            claimDeleteButton[i] = new Kinetic.Shape({
+                id : claim.id,
+                name : "claimDeleteButton",
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the delete button
+                    var context = canvas.getContext();
+                    var x = claim.x() + 12;
+                    var y = claim.y() + 12;
+                    var r = 10;
+
+                    context.beginPath();
+                    context.moveTo(x-r,y);
+                    context.arcTo(x-r,y-r, x,y-r, r );
+                    context.arcTo(x+r,y-r, x+r,y, r );
+                    context.arcTo(x+r,y+r, x,y+r, r );
+                    context.arcTo(x-r,y+r, x-r,y, r );
+                    context.closePath();
+
+                    this.setFill( 'red' );
+                    canvas.fill(this);
+
+                    this.setStroke( 'white' );
+
+                    context.moveTo( x-r/2, y-r/2 );
+                    context.lineTo( x+r/2, y+r/2 );
+
+                    context.moveTo( x+r/2, y-r/2 );
+                    context.lineTo( x-r/2, y+r/2 );
+
+                    canvas.stroke(this);
+                    
+                }; }(claim),
+                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                    var context = canvas.getContext();
+                    var x = claim.x() + 12;
+                    var y = claim.y() + 12;
+                    var r = 10;
+
+                    context.beginPath();
+                    context.moveTo(x-r,y);
+                    context.arcTo(x-r,y-r, x,y-r, r );
+                    context.arcTo(x+r,y-r, x+r,y, r );
+                    context.arcTo(x+r,y+r, x,y+r, r );
+                    context.arcTo(x-r,y+r, x-r,y, r );
+                    context.closePath();
+
+                    canvas.fillStroke( this );
+                }; }(claim),
+                opacity : 0
+            });
+            // The claimDeleteButton only appears when your mouse enters a claim (either
+            // the background area or the text or the delete button itself).  It disappears
+            // when you leave the area.
+            claimDeleteButton[i].on( 'mouseenter',
+                function( button ) { return function(canvas) {    // Show delete button on entering claim
+                    button.setAttr("opacity", 1);
+                    button.draw();
+                }; }(claimDeleteButton[i]) );
+            claimDeleteButton[i].on( 'mouseleave',
+                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                    if( ! textarea ) {
+                        alert( button.id );
+                    }
+                    button.setAttr("opacity", 0);
+                    textarea.draw();
+                    complextext.draw();
+                    button.draw();
+                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
+            complexText[i].on( 'mouseenter',
+                function( button ) { return function(canvas) {    // Show delete button on entering claim
+                    button.setAttr("opacity", 0.2);
+                    button.draw();
+                }; }(claimDeleteButton[i]) );
+            complexText[i].on( 'mouseleave',
+                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                    button.setAttr("opacity", 0);
+                    textarea.draw();
+                    complextext.draw();
+                    button.draw();
+                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
+            claimTextArea[i].on( 'mouseenter',
+                function( button ) { return function(canvas) {    // Show delete button on entering claim
+                    button.setAttr("opacity", 0.2);
+                    button.draw();
+                }; }(claimDeleteButton[i]) );
+            claimTextArea[i].on( 'mouseleave',
+                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                    button.setAttr("opacity", 0);
+                    textarea.draw();
+                    complextext.draw();
+                    button.draw();
+                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
+
             // Remember this in our claim object so we can update it later.
             claim.complexText = complexText[i];
+            claim.deleteButton = claimDeleteButton[i];
+            claim.textArea = claimTextArea[i];
 
             // Draws a green support button on the left bottom corner of a Claim.
             // Also creates a custom hit region of the same shape.
@@ -917,6 +1075,7 @@ var canvasController = {
         for( var i=0, leni=claimTextArea.length; i < leni; i++ ) {
             group.add(claimTextArea[i]);
             group.add(complexText[i]);
+            group.add(claimDeleteButton[i]);
             group.add(supportButton[i]);
             group.add(refuteButton[i]);
         }
