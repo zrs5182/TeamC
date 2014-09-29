@@ -90,6 +90,10 @@ function Reason( id, type, father, claims ) {
         this.claims = [ claimList.newClaim( this, amCanvas.claimX, amCanvas.claimY, "" ) ];	// initially contain a single blank claim
     } else {
         this.claims = claims;
+
+        for( var i = claims.length-1; i >=0; i-- ) {
+            claims[i].reason = this;
+        }
     }
 
     // Add this reason to the children of its parent either on left or right
@@ -408,9 +412,9 @@ var reasonList = {
 	// Push a new node (with default attributes) onto the list
     // Argument are a unique identifier, the type of reason to add,
     // and the Claim that is our direct parent.
-    newReason: function( type, father ) {
+    newReason: function( type, father, claims ) {
 		father = ( typeof father === 'undefined') ? null : father;
-        this.reasons[this.nextReasonNumber] = new Reason( this.nextReasonNumber, type, father );
+        this.reasons[this.nextReasonNumber] = new Reason( this.nextReasonNumber, type, father, claims );
         return this.reasons[this.nextReasonNumber++];
     },
 

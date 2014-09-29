@@ -16,6 +16,7 @@ var amCanvas = {
     centerX: (window.innerWidth / 2), // window center
 }
 var canvasController = {
+    moveClaimOrigin : undefined,
     // Initialize the initial canvas and insert main contention
 	newCanvas : function() {
 		reasonList.init();
@@ -69,6 +70,7 @@ var canvasController = {
         var x = reasonList.reasons[0].x;
         var y = reasonList.reasons[0].y;
 
+        canvasController.turnOffAllListeners();
         // Remove all drawn objects from the KineticJS layer
         layer.removeChildren();
 
@@ -93,6 +95,7 @@ var canvasController = {
         var x = reasonList.reasons[0].x;
         var y = reasonList.reasons[0].y;
 
+        canvasController.turnOffAllListeners();
         // Remove all drawn objects from the KineticJS layer
         layer.removeChildren();
 
@@ -183,6 +186,7 @@ var canvasController = {
             reason.claims.push( claim );
         }
 
+        canvasController.turnOffAllListeners();
         // Remove all drawn objects from the KineticJS layer
         layer.removeChildren();
 
@@ -202,20 +206,22 @@ var canvasController = {
 		document.getElementsByName('working')[0].focus();
     },
     // Adds a new reason to the argument map as a child of one of the existing claims.
-	addReason : function(type, father) {
-		var reason = reasonList.newReason(type, father);
+	addReason : function(type, father, claims) {
+		var reason = reasonList.newReason(type, father, claims);
         var claim = reason.claims[0];
 
-        // Layout the tree again and draw this reason
-		amTree.buchheim(reasonList.reasons[0], father);
-		canvasController.drawReason(reason.id);
+        if( typeof( claims ) === "undefined" ) {
+            // Layout the tree again and draw this reason
+            amTree.buchheim(reasonList.reasons[0], father);
+            canvasController.drawReason(reason.id);
 
-        // Create a new Undo item for the current tree state.
-        undoList.createUndo();
+            // Create a new Undo item for the current tree state.
+            undoList.createUndo();
 
-        // Activate the editable text area for immediate editing
-		document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
-		document.getElementsByName('working')[0].focus();
+            // Activate the editable text area for immediate editing
+            document.getElementById("myTextArea").innerHTML = canvasController.makeTextArea(claim.id);
+            document.getElementsByName('working')[0].focus();
+        }
 	},
     removeReason : function(id) {
         // Recursively remove a Reason and its children from argument map
@@ -239,6 +245,254 @@ var canvasController = {
         // And remove us from the reasonList
         reasonList.deleteReason( reason );
     },
+    unmarkDisallowedTargets : function( reason ) {
+        var claims = reason.claims;
+        var children = reason.children();
+
+        reason.disallowedTarget = undefined;
+
+        for( var i = claims.length-1; i >= 0; i-- ) {
+            reason.claims[i].disallowedTarget = undefined;
+        }
+
+        for( var i = children.length-1; i >= 0; i-- ) {
+            canvasController.unmarkDisallowedTargets( children[i] );
+        }
+    },
+    markDisallowedMoveReasonTargets : function( reason ) {
+        var claims = reason.claims;
+
+        reason.disallowedTarget = 1;
+        reason.reasonShape.setAttr("opacity", 0.1);
+        reason.deleteButton.setAttr("opacity", 0.1);
+
+        for( var i = claims.length-1; i >= 0; i-- ) {
+            claim = claims[i];
+
+            claim.disallowedTarget = 1;
+            claim.textArea.setAttr("opacity", 0.1);
+            claim.complexText.setAttr("opacity", 0.1);
+
+            canvasController.markDisallowedMoveButtonTargets( claim );
+        }
+
+    },
+    markDisallowedMoveButtonTargets : function( claim ) {
+        var children = claim.children;
+
+        claim.supportButton.disallowedTarget = 1;
+        claim.supportButton.setAttr("opacity", 0.1);
+
+        claim.refuteButton.disallowedTarget = 1;
+        claim.refuteButton.setAttr("opacity", 0.1);
+
+        for(var i = children.length-1; i >= 0; i--){
+            canvasController.markDisallowedMoveReasonTargets(children[i]);
+        }
+    },
+    markDisallowedRibbonTargets : function( reason ) {
+        var children = reason.children();
+
+        if( reason.ribbon ) {
+            reason.ribbon.setAttr( "opacity", 0.5 );
+        }
+
+        for( var i = children.length-1; i >= 0; i-- ) {
+            child = children[i];
+
+            if( child ) {
+                canvasController.markDisallowedRibbonTargets( child );
+            }
+        }
+    },
+    // Start moving a Claim
+    startMovingClaim : function(id){
+        var claim = claimList.claims[id];
+
+        canvasController.moveClaimOrigin = claim;
+
+        claim.deleteButton.setAttr("opacity", 0);
+        claim.moveButton.setAttr("opacity", 1);
+
+        canvasController.turnOffAllListeners();
+
+        // Indicate the claim to move by highlighting the border
+        claim.complexText.setStroke( "blue" );
+
+        // Mark buttons and children of this claim as disallowed targets for this move
+        canvasController.markDisallowedMoveButtonTargets( claim );
+
+        // Mark the main contention as a disallowed target too
+        var reason = reasonList.reasons[0];
+        claim = claimList.claims[0];
+        reason.disallowedTarget = 1;
+        claim.disallowedTarget = 1;
+        reason.reasonShape.setAttr("opacity", 0.1);
+        reason.deleteButton.setAttr("opacity", 0.1);
+        claim.textArea.setAttr( "opacity", 0.1);
+        claim.complexText.setAttr( "opacity", 0.1);
+
+        // All ribbons are disallowed -- recursively marked from the main contention
+        canvasController.markDisallowedRibbonTargets( reason );
+
+        layer.draw();
+    },
+    // Finish moving a Claim by deleting it from its current location
+    // and inserting it at the destination location.
+    moveClaimToDestinationAndDraw : function(reason, position) {
+        var origin = canvasController.moveClaimOrigin;
+        var siblings = origin.reason.claims;
+
+        // We might be moving back to the same Reason
+        if( origin.reason===reason ) {
+            if( position===siblings.indexOf(origin) || position===siblings.indexOf(origin)+1 ) {
+                canvasController.moveClaimAbort();
+                return;
+            } else if( position>siblings.indexOf(origin) ) {
+                position--;
+            }
+        }
+
+        // Remove this Claim from our enclosing Reason
+        siblings.splice(siblings.indexOf(origin), 1);
+
+        // Splice it into the destination Reason
+        reason.claims.splice(position, 0, origin );
+
+        // If this was the last claim, then remove the whole Reason
+        if( siblings.length === 0 ) {
+            canvasController.removeReason( origin.reason.id );
+        }
+
+        origin.reason = reason;
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Layout the tree because things will move
+        amTree.buchheim(reasonList.reasons[0], reason.father );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+
+        // Create a new Undo item for the current tree state.
+        undoList.createUndo();
+
+        canvasController.moveClaimOrigin = undefined;
+        canvasController.unmarkDisallowedTargets( reasonList.reasons[0] );
+    },
+    reassignRebutsAndRefutes : function( reason ) {
+        var children = reason.children();
+
+        if( reason.fatherR() ) {
+            if( reason.fatherR().type==="rebut" && reason.type==="rebut" ) {
+                reason.type = "refute";
+            } else if( reason.fatherR().type==="refute" && reason.type==="refute" ) {
+                reason.type = "rebut";
+            }
+        }
+
+        for( var i = children.length-1; i >= 0; i-- ) {
+            canvasController.reassignRebutsAndRefutes( children[i] );
+        }
+    },
+    moveClaimToNewRefutationAndDraw : function(claimId) {
+        var father = claimList.claims[claimId];
+        var origin = canvasController.moveClaimOrigin;
+        var reason = origin.reason;
+        var siblings = reason.claims;
+
+        // Remove this Claim from our enclosing Reason
+        siblings.splice(siblings.indexOf(origin), 1);
+
+        // If this was the last claim, then remove the whole Reason
+        if( siblings.length === 0 ) {
+            canvasController.removeReason( reason.id );
+        }
+
+        if( father.reason.type === "refute" ) {
+            canvasController.addReason("rebut", father, [ origin ] );
+        } else {
+            canvasController.addReason("refute", father, [ origin ] );
+        }
+
+        canvasController.reassignRebutsAndRefutes( origin.reason );
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Layout the tree because things will move
+        amTree.buchheim(reasonList.reasons[0], father );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+
+        // Create a new Undo item for the current tree state.
+        undoList.createUndo();
+
+        canvasController.moveClaimOrigin = undefined;
+        canvasController.unmarkDisallowedTargets( reasonList.reasons[0] );
+    },
+    moveClaimToNewSupportAndDraw : function(claimId) {
+        var father = claimList.claims[claimId];
+        var origin = canvasController.moveClaimOrigin;
+        var reason = origin.reason;
+        var siblings = reason.claims;
+
+        // Remove this Claim from our enclosing Reason
+        siblings.splice(siblings.indexOf(origin), 1);
+
+        // If this was the last claim, then remove the whole Reason
+        if( siblings.length === 0 ) {
+            canvasController.removeReason( reason.id );
+        }
+
+        canvasController.addReason("support", father, [ origin ] );
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Layout the tree because things will move
+        amTree.buchheim(reasonList.reasons[0], father );
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+
+        // Create a new Undo item for the current tree state.
+        undoList.createUndo();
+
+        canvasController.moveClaimOrigin = undefined;
+        canvasController.unmarkDisallowedTargets( reasonList.reasons[0] );
+    },
+    moveClaimAbort : function() {
+        canvasController.moveClaimOrigin = undefined;
+        canvasController.unmarkDisallowedTargets( reasonList.reasons[0] );
+
+        // Remove all drawn objects from the KineticJS layer
+        layer.removeChildren();
+
+        // Redraw each claim (which adds them back to KineticJS layer)
+        for(var i=0, leni=reasonList.reasons.length; i<leni; i++ ) {
+            canvasController.drawReason(i);
+        }
+    },
+    turnOffAllListeners : function() {
+        for(var i = 0; i < claimList.nextClaimNumber ; i++ ) {
+            // We only turn them off if they exist....
+            if( claimList.claims[i].deleteButton ) {
+                claimList.claims[i].deleteButton.off( 'mouseenter mouseleave' );
+                claimList.claims[i].moveButton.off( 'mouseenter mouseleave' );
+                claimList.claims[i].textArea.off( 'mouseenter mouseleave' );
+                claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
+            }
+        }
+    },
     // Remove a Claim and the children recursively,
     // and draws the new argument map.
 	removeClaimAndDraw : function(id){
@@ -247,12 +501,7 @@ var canvasController = {
         var reason = claim.reason;
         var siblings = reason.claims;
 
-        // Turn off all listeners
-        for(var i = 0; i < claimList.nextClaimNumber ; i++ ) {
-            claimList.claims[i].deleteButton.off( 'mouseenter mouseleave' );
-            claimList.claims[i].textArea.off( 'mouseenter mouseleave' );
-            claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
-        }
+        canvasController.turnOffAllListeners();
 
         // If we delete the main contention, just make a new canvas instead.
 		if( reason.id===0 ){
@@ -290,12 +539,7 @@ var canvasController = {
     // Remove a Reason and its Claims and the children of all the Claims recursively,
     // and draws the new argument map.
 	removeReasonAndDraw : function(id){
-        // Turn off all listeners
-        for(var i = 0; i < claimList.nextClaimNumber ; i++ ) {
-            claimList.claims[i].deleteButton.off( 'mouseenter mouseleave' );
-            claimList.claims[i].textArea.off( 'mouseenter mouseleave' );
-            claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
-        }
+        canvasController.turnOffAllListeners();
 
 		if(id===0){
 			canvasController.newCanvas();
@@ -327,6 +571,7 @@ var canvasController = {
         var claimTextArea = [];
         var complexText = [];
         var claimDeleteButton = [];
+        var claimMoveButton = [];
         var supportButton = [];
         var refuteButton = [];
 
@@ -364,424 +609,13 @@ var canvasController = {
 			},
 			stroke : 'black',
 			strokeWidth : 2,
-			drawHitFunc : function(canvas) {    // Draws hit region for the Reason
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-
-                // Clickable region in the top center of the reason.
-                // Hit this for reparenting.
-				context.beginPath();
-				context.moveTo(x + (w / 2) - (2 * o), y);
-				context.lineTo(x + (w / 2) + (2 * o), y);
-				context.lineTo(x + (w / 2) + (2 * o), y + o);
-				context.lineTo(x + (w / 2) - (2 * o), y + o);
-				context.lineTo(x + (w / 2) - (2 * o), y);
-				context.closePath();
-				canvas.fillStroke(this);
-			},
 			opacity : 1
 		});
-
-        // This is a graphical area lying behind the text of a claim.  It is clickable,
-        // and will present an editable textbox when clicked.  There will be one text
-        // area for each claim in the reason.
-        for( var i = 0, leni = reason.claims.length; i < leni; i++ ) {
-            claim = reason.claims[i];
-
-            claimTextArea[i] = new Kinetic.Shape({
-                id : claim.id,
-                // Here we do something unusual.  We define a function (containing another
-                // function declaration) and immediately invoke it.  This is so that the
-                // the drawFunc function that gets created is bound to the value of claim
-                // that existed when the variable was defined and not to some later value.
-                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x + r/2, y);
-                    context.arcTo(x + w, y, x + w, y + r/2, r/2);
-                    context.arcTo(x + w, y + h, x + w - r/2, y + h, r/2);
-                    context.arcTo(x, y + h, x, y + h - r/2, r/2);
-                    context.arcTo(x, y, x + r/2, y, r/2);
-                    context.closePath();
-
-                    this.setFill('white');
-                    
-                    // All claims are outlined in black, except the main contention (which
-                    // doesn't need it because of it's dark blue frame).
-                    if (reasonList.reasons[myId].type !== "contention") {
-                        this.setStroke('black');
-                        this.setStrokeWidth(2);
-                    }
-                    canvas.fillStroke(this);
-                }; }(claim),
-                stroke : 'black',
-                strokeWidth : 2,
-                name : 'claimTextArea',
-                // Another case of defining a function and immediately invoking.
-                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x, y);
-                    context.lineTo(x + w, y );
-                    context.lineTo(x + w, y + h );
-                    context.lineTo(x, y + h );
-                    context.lineTo(x, y );
-                    context.closePath();
-                    canvas.fillStroke(this);
-                }; }(claim),
-                opacity : 1
-            });
-
-            // Draws the text on top of our claimTextArea.
-            complexText[i] = new Kinetic.Text({
-                id : claim.id,
-                name : "complexText",
-                x : claim.x(),
-                y : claim.y(),
-                width : claim.width,
-                text : claim.text,
-
-                fontSize : 18,
-                fontFamily : 'Calibri',
-                fill : '#555',
-                padding : 20,
-                align : 'left',
-                opacity : 1
-            });
-
-            // Draws the [x] button in the corner of a claim to delete it.
-            claimDeleteButton[i] = new Kinetic.Shape({
-                id : claim.id,
-                name : "claimDeleteButton",
-                drawFunc : function( claim ) { return function(canvas) {   // Draw the delete button
-                    var context = canvas.getContext();
-                    var x = claim.x() + 12;
-                    var y = claim.y() + 12;
-                    var r = 10;
-
-                    context.beginPath();
-                    context.moveTo(x-r,y);
-                    context.arcTo(x-r,y-r, x,y-r, r );
-                    context.arcTo(x+r,y-r, x+r,y, r );
-                    context.arcTo(x+r,y+r, x,y+r, r );
-                    context.arcTo(x-r,y+r, x-r,y, r );
-                    context.closePath();
-
-                    this.setFill( 'red' );
-                    canvas.fill(this);
-
-                    this.setStroke( 'white' );
-
-                    context.moveTo( x-r/2, y-r/2 );
-                    context.lineTo( x+r/2, y+r/2 );
-
-                    context.moveTo( x+r/2, y-r/2 );
-                    context.lineTo( x-r/2, y+r/2 );
-
-                    canvas.stroke(this);
-                    
-                }; }(claim),
-                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
-                    var context = canvas.getContext();
-                    var x = claim.x() + 12;
-                    var y = claim.y() + 12;
-                    var r = 10;
-
-                    context.beginPath();
-                    context.moveTo(x-r,y);
-                    context.arcTo(x-r,y-r, x,y-r, r );
-                    context.arcTo(x+r,y-r, x+r,y, r );
-                    context.arcTo(x+r,y+r, x,y+r, r );
-                    context.arcTo(x-r,y+r, x-r,y, r );
-                    context.closePath();
-
-                    canvas.fillStroke( this );
-                }; }(claim),
-                opacity : 0
-            });
-            // The claimDeleteButton only appears when your mouse enters a claim (either
-            // the background area or the text or the delete button itself).  It disappears
-            // when you leave the area.
-            claimDeleteButton[i].on( 'mouseenter',
-                function( button ) { return function(canvas) {    // Show delete button on entering claim
-                    button.setAttr("opacity", 1);
-                    button.draw();
-                }; }(claimDeleteButton[i]) );
-            claimDeleteButton[i].on( 'mouseleave',
-                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
-                    if( ! textarea ) {
-                        alert( button.id );
-                    }
-                    button.setAttr("opacity", 0);
-                    textarea.draw();
-                    complextext.draw();
-                    button.draw();
-                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
-            complexText[i].on( 'mouseenter',
-                function( button ) { return function(canvas) {    // Show delete button on entering claim
-                    button.setAttr("opacity", 0.2);
-                    button.draw();
-                }; }(claimDeleteButton[i]) );
-            complexText[i].on( 'mouseleave',
-                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
-                    button.setAttr("opacity", 0);
-                    textarea.draw();
-                    complextext.draw();
-                    button.draw();
-                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
-            claimTextArea[i].on( 'mouseenter',
-                function( button ) { return function(canvas) {    // Show delete button on entering claim
-                    button.setAttr("opacity", 0.2);
-                    button.draw();
-                }; }(claimDeleteButton[i]) );
-            claimTextArea[i].on( 'mouseleave',
-                function( button,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
-                    button.setAttr("opacity", 0);
-                    textarea.draw();
-                    complextext.draw();
-                    button.draw();
-                }; }(claimDeleteButton[i], claimTextArea[i], complexText[i]) );
-
-            // Remember this in our claim object so we can update it later.
-            claim.complexText = complexText[i];
-            claim.deleteButton = claimDeleteButton[i];
-            claim.textArea = claimTextArea[i];
-
-            // Draws a green support button on the left bottom corner of a Claim.
-            // Also creates a custom hit region of the same shape.
-            supportButton[i] = new Kinetic.Shape({
-                id : claim.id,
-                // Another case of defining a function and immediately invoking.
-                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x - r/2, y + h - r/2);
-                    context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
-                    context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
-                    context.closePath();
-
-                    this.setFill('green');
-                    canvas.fillStroke(this);
-                }; }(claim),
-                stroke : 'black',
-                strokeWidth : 2,
-                name : 'supportButton',
-                // Another case of defining a function and immediately invoking.
-                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x - r/2, y + h - r/2);
-                    context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
-                    context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
-                    context.closePath();
-
-                    canvas.fillStroke(this);
-                }; }(claim),
-                opacity : 1
-            });
-
-            // Draws a red/orange refute/rebut button on the right bottom corner of a Claim.
-            // Also creates a custom hit region of the same shape.
-            refuteButton[i] = new Kinetic.Shape({
-                id : claim.id,
-                // Another case of defining a function and immediately invoking.
-                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x + w + r/2, y + h - r/2);
-                    context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
-                    context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
-                    context.closePath();
-
-                    if (claim.reason.type !== "refute") {
-                        this.setFill('red');    // for objection
-                    } else {
-                        this.setFill('orange'); // for rebuttal
-                    }
-                    canvas.fillStroke(this);
-                }; }(claim),
-                stroke : 'black',
-                strokeWidth : 2,
-                name : 'refuteButton',
-                // Another case of defining a function and immediately invoking.
-                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
-                    var context = canvas.getContext();
-                    var x = claim.x();
-                    var y = claim.y();
-                    var w = claim.width;
-                    var h = claim.height;
-
-                    context.beginPath();
-                    context.moveTo(x + w + r/2, y + h - r/2);
-                    context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
-                    context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
-                    context.closePath();
-
-                    canvas.fillStroke(this);
-                }; }(claim),
-                opacity : 1
-            });
-        }
-
-// -- Draws a region to add something to the left, right, or bottom of a Reason
-//		var claimAddLeft = new Kinetic.Shape({
-//			//id : myId,
-//			name : "claimAddLeft",
-//			drawFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = reasonList.reasons[myId].x;
-//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
-//				var w = amCanvas.gridX / 4;
-//				var h = amCanvas.gridY / 4 * 3;
-//				context.beginPath();
-//				context.moveTo(x - o, y);
-//				context.arcTo(x - w, y, x - w, y + r, r);
-//				context.arcTo(x - w, y + h, x - w + r, y + h, r);
-//				context.arcTo(x, y + h, x, y + h - r, r);
-//				context.arcTo(x, y, x - o, y, r);
-//				context.closePath();
-//				context.moveTo(x - w / 2, y + h / 10 * 4);
-//				context.lineTo(x - w / 2, y + h / 10 * 6);
-//				context.moveTo(x - w / 3, y + h / 2);
-//				context.lineTo(x - w / 3 * 2, y + h / 2);
-//				this.setFill('yellow');
-//				canvas.fillStroke(this);
-//			},
-//			stroke : 'black',
-//			strokeWidth : 5,
-//			drawHitFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = reasonList.reasons[myId];
-//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
-//				var w = amCanvas.gridX / 4;
-//				var h = amCanvas.gridY / 4 * 3;
-//				context.beginPath();
-//				context.moveTo(x - o, y);
-//				context.arcTo(x - w, y, x - w, y + r, r);
-//				context.arcTo(x - w, y + h, x - w + r, y + h, r);
-//				context.arcTo(x, y + h, x, y + h - r, r);
-//				context.arcTo(x, y, x - o, y, r);
-//				context.closePath();
-//				canvas.fillStroke(this);
-//			},
-//			opacity : 0
-//		});
-//		var claimAddRight = new Kinetic.Shape({
-//			//id : myId,
-//			name : "claimAddRight",
-//			drawFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = reasonList.reasons[myId].x;		// This might be a FIXME.
-//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
-//				var w = amCanvas.gridX / 4;
-//				var h = (amCanvas.gridY / 4) * 3;
-//				context.beginPath();
-//				context.moveTo(x + r, y);
-//				context.arcTo(x + w, y, x + w, y + r, r);
-//				context.arcTo(x + w, y + h, x + w - r, y + h, r);
-//				context.arcTo(x, y + h, x, y + h - r, r);
-//				context.arcTo(x, y, x+r, y, r);
-//				context.closePath();
-//				context.moveTo(x + w / 2, y + h / 10 * 4);
-//				context.lineTo(x + w / 2, y + h / 10 * 6);
-//				context.moveTo(x + w / 3, y + h / 2);
-//				context.lineTo(x + w / 3 * 2, y + h / 2);
-//				this.setFill('yellow');
-//				canvas.fillStroke(this);
-//			},
-//			stroke : 'black',
-//			strokeWidth : 5,
-//			drawHitFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = amCanvas.gridX + reasonList.reasons[myId].x;	// Might be a FIXME
-//				var y = reasonList.reasons[myId].y + (amCanvas.gridY / 8);
-//				var w = amCanvas.gridX / 4;
-//				var h = (amCanvas.gridY / 4) * 3;
-//				context.beginPath();
-//				context.moveTo(x + r, y);
-//				context.arcTo(x + w, y, x + w, y + r, r);
-//				context.arcTo(x + w, y + h, x + w - r, y + h, r);
-//				context.arcTo(x, y + h, x, y + h - r, r);
-//				context.arcTo(x, y, x+r, y, r);
-//				context.closePath();
-//				canvas.fillStroke(this);
-//			},
-//			opacity : 0
-//		});
-//		var claimAddBottom = new Kinetic.Shape({
-//			//id : myId,
-//			name : "claimAddBottom",
-//			drawFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = reasonList.reasons[myId].x;
-//				var y = reasonList.reasons[myId].y;
-//				var w = amCanvas.gridX;
-//				var h = amCanvas.gridY;
-//				context.beginPath();
-//				context.moveTo(x + (w/6) + r, y + h);
-//				context.arcTo(x + (w/6*5), y + h, x + (w/6*5), y + h +r, r);
-//				context.arcTo(x + (w/6*5), y + (h/3*4), x + (w/6*5) - r, y + (h/3*4), r);
-//				context.arcTo(x + (w/6), y + (h/3*4), x + (w/6), y + (h/3*4) - r, r);
-//				context.arcTo(x + (w/6), y + h, x + (w/6) + r, y + h, r);
-//				context.closePath();
-//				context.moveTo(x + w/2, y + h/12*13);
-//				context.lineTo(x + w/2, y + h/12*15);
-//				context.moveTo(x + w/24*11, y + h/6*7);
-//				context.lineTo(x + w/24*13, y + h/6*7);
-//				this.setFill('yellow');
-//				canvas.fillStroke(this);
-//			},
-//			stroke : 'black',
-//			strokeWidth : 5,
-//			drawHitFunc : function(canvas) {
-//				var context = canvas.getContext();
-//				var x = reasonList.reasons[myId].x;
-//				var y = reasonList.reasons[myId].y;
-//				var w = amCanvas.gridX;
-//				var h = amCanvas.gridY;
-//				context.beginPath();
-//				context.moveTo(x + (w/6) + r, y + h);
-//				context.arcTo(x + (w/6*5), y + h, x + (w/6*5), y + h +r, r);
-//				context.arcTo(x + (w/6*5), y + (h/3*4), x + (w/6*5) - r, y + (h/3*4), r);
-//				context.arcTo(x + (w/6), y + (h/3*4), x + (w/6), y + (h/3*4) - r, r);
-//				context.arcTo(x + (w/6), y + h, x + (w/6) + r, y + h, r);
-//				context.closePath();
-//				canvas.fillStroke(this);
-//			},
-//			opacity : 0
-//		});
 
         // Draws a yellow utility/delete button on the right top corner of a Reason.
         // Also creates a custom hit region of the same shape.
 		var deleteButton = new Kinetic.Shape({
-			//id : myId,
+			id : myId,
 			drawFunc : function(canvas) {   // Draw background of utility button
 				var context = canvas.getContext();
 				var x = reason.x;
@@ -801,21 +635,6 @@ var canvasController = {
 			stroke : 'black',
 			strokeWidth : 2,
 			name : 'deleteButton',
-			drawHitFunc : function(canvas) {    // Draw hit region of utility button
-				var context = canvas.getContext();
-				var x = reason.x;
-				var y = reason.y;
-				var w = reason.width();
-				var h = reason.height();
-
-				context.beginPath();
-				context.moveTo(x + w - 2 * o - r, y);
-				context.bezierCurveTo(x + w - o, y, x + w, y + o, x + w, y + 2 * o + r);
-				context.arcTo(x + w, y, x + w - o - r, y, r);
-				context.closePath();
-
-				canvas.fillStroke(this);
-			},
 			opacity : 1
 
 		});
@@ -904,118 +723,15 @@ var canvasController = {
                     }
                     canvas.fillStroke(this);
 
-                    // Ribbons draw one way when we are to the left of our parent.
-//                    context.beginPath();
-//                    if (type === "support" && x <= parentX ) {
-//                        var firstX = x + (w / 2) + (2 * o);
-//                        var firstY = y + 1;
-//                        var secondX = parentX + (parentW / 2);
-//                        var secondY = parentY + parentH;
-//                        var thirdX = parentX - 2;
-//                        var thirdY = parentY + parentH - r - o - 5;
-//                        var fourthX = x + (w / 2) - (2 * o);
-//                        var fourthY = y + 1;
-//                        var changeX12 = secondX - firstX;
-//                        var changeX34 = thirdX - fourthX;
-//                        var changeY12 = firstY - secondY;
-//                        var changeY34 = fourthY - thirdY;
-//                        var bufferLeft = -20;
-//                        var bufferRight = +20;
-//                        context.moveTo(firstX, firstY);
-//                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
-//                        context.arcTo(parentX, parentY + parentH, thirdX, thirdY, r);
-//                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
-//                        context.lineTo(firstX, firstY);
-//                    } else if (type === "support") {
-//                        // They draw another when we are to the right of our parent
-//                        var firstX = x + (w / 2) - (2 * o);
-//                        var firstY = y + 1;
-//                        var secondX = parentX + r;
-//                        var secondY = parentY + parentH;
-//                        var thirdX = parentX + (parentW / 2);
-//                        var thirdY = parentY + parentH;
-//                        var fourthX = x + (w / 2) + (2 * o);
-//                        var fourthY = y + 1;
-//                        var bufferLeft = 20;
-//                        var bufferRight = -20;
-//                        context.moveTo(firstX, firstY);
-//                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferLeft, secondX + bufferRight, firstY + bufferLeft, secondX, secondY);
-//                        context.lineTo(thirdX, thirdY);
-//                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferRight, fourthX + bufferLeft, thirdY + bufferRight, fourthX, fourthY);
-//                        context.lineTo(firstX, firstY);
-//                    } else if ((type === "refute" || type === "rebut") && x >= parentX ) {
-//                        // Objects draw one way when to the right
-//                        var firstX = x + (w / 2) - (2 * o);
-//                        var firstY = y + 1;
-//                        var secondX = parentX + (parentW / 2);
-//                        var secondY = parentY + parentH;
-//                        var thirdX = parentX + parentW + 2;
-//                        var thirdY = parentY + parentH - r - o - 5;
-//                        var fourthX = x + (w / 2) + (2 * o);
-//                        var fourthY = y + 1;
-//                        var changeX12 = secondX - firstX;
-//                        var changeX34 = thirdX - fourthX;
-//                        var changeY12 = firstY - secondY;
-//                        var changeY34 = fourthY - thirdY;
-//                        var bufferLeft = -20;
-//                        var bufferRight = +20;
-//                        context.moveTo(firstX, firstY);
-//                        context.bezierCurveTo(firstX + ((secondX - firstX) / 2) / changeX12, secondY + ((firstY - secondY) / 2) / changeY12 + bufferRight, secondX - ((secondX - firstX) / 2) / changeX12, firstY - ((firstY - secondY) / 2) / changeY12 + bufferLeft, secondX, secondY);
-//                        context.arcTo(parentX + parentW, parentY + parentH, thirdX, thirdY, r);
-//                        context.bezierCurveTo(thirdX - ((thirdX - fourthX) / 2) / changeX34, fourthY - ((fourthY - thirdY) / 2) / changeY34 + bufferLeft, fourthX + ((thirdX - fourthX) / 2) / changeX34, thirdY + ((fourthY - thirdY) / 2) / changeY34 + bufferRight, fourthX, fourthY);
-//                        context.lineTo(firstX, firstY);
-//                    } else {
-//                        // And they draw another way when objections are to the left.
-//                        var firstX = x + (w / 2) + (2 * o);
-//                        var firstY = y + 1;
-//                        var secondX = parentX + parentW - r;
-//                        var secondY = parentY + parentH;
-//                        var thirdX = parentX + (parentW / 2);
-//                        var thirdY = parentY + parentH;
-//                        var fourthX = x + (w / 2) - (2 * o);
-//                        var fourthY = y + 1;
-//                        var bufferLeft = -20;
-//                        var bufferRight = 20;
-//                        context.moveTo(firstX, firstY);
-//                        context.bezierCurveTo(firstX + bufferRight, secondY + bufferRight, secondX + bufferRight, firstY + bufferRight, secondX, secondY);
-//                        context.lineTo(thirdX, thirdY);
-//                        context.bezierCurveTo(thirdX + 2 * bufferLeft, fourthY + bufferLeft, fourthX + bufferLeft, thirdY + bufferLeft, fourthX, fourthY);
-//                        context.lineTo(firstX, firstY);
-//                    }
-//                    context.closePath();
-//                    this.setFillLinearGradientStartPoint([parentX, parentY + parentH]);
-//                    this.setFillLinearGradientEndPoint([parentX, y]);
-//                    if (reasonList.reasons[myId].type === "support") {
-//                        this.setFillLinearGradientColorStops([1 / 5, 'green', 4 / 5, '#6CC54F']);
-//                    } else if (reasonList.reasons[myId].type === "refute") {
-//                        this.setFillLinearGradientColorStops([1 / 5, 'red', 4 / 5, '#E60000']);
-//                    } else {
-//                        this.setFill('orange');
-//                    }
-//                    canvas.fillStroke(this);
 				},
 				name : 'connector',
-				drawHitFunc : function(canvas) {    // Draws clickable area just above our Reason
-					var context = canvas.getContext();
-                    var x = reason.x;
-                    var y = reason.y;
-                    var w = reason.width();
-
-					context.beginPath();
-					context.moveTo(x + (w / 2) - (2 * o), y);
-					context.lineTo(x + (w / 2) + (2 * o), y);
-					context.lineTo(x + (w / 2) + (2 * o), y - o);
-					context.lineTo(x + (w / 2) - (2 * o), y - o);
-					context.lineTo(x + (w / 2) - (2 * o), y);
-					context.closePath();
-					canvas.fillStroke(this);
-				},
 				opacity : 1
 			});
 
             // A hit region for expanding a reason on the right edge with another claim.
             var addClaimLeft = new Kinetic.Shape({
                 name : 'addClaimLeft',
+                id : myId,
                 stroke : 'black',
                 strokeWidth : 2,
                 drawHitFunc : function(canvas) {
@@ -1040,6 +756,7 @@ var canvasController = {
             // A hit region for expanding a reason on the right edge with another claim.
             var addClaimRight = new Kinetic.Shape({
                 name : 'addClaimRight',
+                id : myId,
                 stroke : 'black',
                 strokeWidth : 2,
                 drawHitFunc : function(canvas) {
@@ -1061,7 +778,329 @@ var canvasController = {
                 opacity : 1
             });
 
+            reason.ribbon = connector;
 		}
+
+        reason.reasonShape = reasonShape;
+        reason.deleteButton = deleteButton;
+
+        // This is a graphical area lying behind the text of a claim.  It is clickable,
+        // and will present an editable textbox when clicked.  There will be one text
+        // area for each claim in the reason.
+        for( var i = 0, leni = reason.claims.length; i < leni; i++ ) {
+            claim = reason.claims[i];
+
+            claimTextArea[i] = new Kinetic.Shape({
+                id : claim.id,
+                // Here we do something unusual.  We define a function (containing another
+                // function declaration) and immediately invoke it.  This is so that the
+                // the drawFunc function that gets created is bound to the value of claim
+                // that existed when the variable was defined and not to some later value.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x + r/2, y);
+                    context.arcTo(x + w, y, x + w, y + r/2, r/2);
+                    context.arcTo(x + w, y + h, x + w - r/2, y + h, r/2);
+                    context.arcTo(x, y + h, x, y + h - r/2, r/2);
+                    context.arcTo(x, y, x + r/2, y, r/2);
+                    context.closePath();
+
+                    this.setFill('white');
+                    
+                    // All claims are outlined in black, except the main contention (which
+                    // doesn't need it because of it's dark blue frame).
+                    if (reasonList.reasons[myId].type !== "contention") {
+                        this.setStroke('black');
+                        this.setStrokeWidth(2);
+                    } else {
+                        this.setStroke("white");
+                    }
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'claimTextArea',
+                // Another case of defining a function and immediately invoking.
+                drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x, y);
+                    context.lineTo(x + w, y );
+                    context.lineTo(x + w, y + h );
+                    context.lineTo(x, y + h );
+                    context.lineTo(x, y );
+                    context.closePath();
+                    canvas.fillStroke(this);
+                }; }(claim),
+                opacity : 1
+            });
+
+            // Draws the text on top of our claimTextArea.
+            complexText[i] = new Kinetic.Text({
+                id : claim.id,
+                name : "complexText",
+                x : claim.x(),
+                y : claim.y(),
+                width : claim.width,
+                text : claim.text,
+
+                fontSize : 18,
+                fontFamily : 'Calibri',
+                fill : '#555',
+                padding : 20,
+                align : 'left',
+                opacity : 1
+            });
+
+            // Except on the main contention we want delete and move buttons on each claim
+            if( reason.type !== 'contention' ) {
+                // Draws the <-> button in the corner of a claim to move it.
+                claimMoveButton[i] = new Kinetic.Shape({
+                    id : claim.id,
+                    name : "claimMoveButton",
+                    drawFunc : function( claim ) { return function(canvas) {   // Draw the delete button
+                        var context = canvas.getContext();
+                        var x = claim.x() + claim.width - 2;
+                        var y = claim.y() + 12;
+
+                        context.beginPath();
+                        context.moveTo(x,y);
+                        context.lineTo(x-10,y+10);
+                        context.lineTo(x-10,y+4);
+                        context.lineTo(x-20,y+4);
+                        context.lineTo(x-20,y+10);
+                        context.lineTo(x-30,y);
+                        context.lineTo(x-20,y-10);
+                        context.lineTo(x-20,y-4);
+                        context.lineTo(x-10,y-4);
+                        context.lineTo(x-10,y-10);
+                        context.closePath();
+
+                        this.setFill( 'blue' );
+                        canvas.fill(this);
+                    }; }(claim),
+                    drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                        var context = canvas.getContext();
+                        var x = claim.x() + claim.width - 2;
+                        var y = claim.y() + 12;
+
+                        context.beginPath();
+                        context.moveTo(x,y);
+                        context.lineTo(x-10,y+10);
+                        context.lineTo(x-20,y+10);
+                        context.lineTo(x-30,y);
+                        context.lineTo(x-20,y-10);
+                        context.lineTo(x-10,y-10);
+                        context.closePath();
+
+                        canvas.fill( this );
+                    }; }(claim),
+                    opacity : 0
+                });
+
+                // Draws the [x] button in the corner of a claim to delete it.
+                claimDeleteButton[i] = new Kinetic.Shape({
+                    id : claim.id,
+                    name : "claimDeleteButton",
+                    drawFunc : function( claim ) { return function(canvas) {   // Draw the delete button
+                        var context = canvas.getContext();
+                        var x = claim.x() + 12;
+                        var y = claim.y() + 12;
+                        var r = 10;
+
+                        context.beginPath();
+                        context.moveTo(x-r,y);
+                        context.arcTo(x-r,y-r, x,y-r, r );
+                        context.arcTo(x+r,y-r, x+r,y, r );
+                        context.arcTo(x+r,y+r, x,y+r, r );
+                        context.arcTo(x-r,y+r, x-r,y, r );
+                        context.closePath();
+
+                        this.setFill( 'red' );
+                        canvas.fill(this);
+
+                        this.setStroke( 'white' );
+
+                        context.moveTo( x-r/2, y-r/2 );
+                        context.lineTo( x+r/2, y+r/2 );
+
+                        context.moveTo( x+r/2, y-r/2 );
+                        context.lineTo( x-r/2, y+r/2 );
+
+                        canvas.stroke(this);
+
+                    }; }(claim),
+                    drawHitFunc : function( claim ) { return function(canvas) {    // Draws the clickable region for this text area
+                        var context = canvas.getContext();
+                        var x = claim.x() + 12;
+                        var y = claim.y() + 12;
+                        var r = 10;
+
+                        context.beginPath();
+                        context.moveTo(x-r,y);
+                        context.arcTo(x-r,y-r, x,y-r, r );
+                        context.arcTo(x+r,y-r, x+r,y, r );
+                        context.arcTo(x+r,y+r, x,y+r, r );
+                        context.arcTo(x-r,y+r, x-r,y, r );
+                        context.closePath();
+
+                        canvas.fillStroke( this );
+                    }; }(claim),
+                    opacity : 0
+                });
+                // The claimDeleteButton and claimMoveButton only appear when your mouse enters a claim (either
+                // the background area or the text or the delete button itself).  They disappear
+                // when you leave the area.
+                claimDeleteButton[i].on( 'mouseenter',
+                        function( deleteButton,moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.setAttr("opacity", 1);
+                            deleteButton.draw();
+                            moveButton.setAttr("opacity", 0.2);
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i],claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                claimDeleteButton[i].on( 'mouseleave',
+                        function( deleteButton, moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0);
+                            moveButton.setAttr("opacity", 0);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                claimMoveButton[i].on( 'mouseenter',
+                        function( deleteButton, moveButton ) { return function(canvas) {    // Show delete button on entering claim
+                            moveButton.setAttr("opacity", 1);
+                            deleteButton.setAttr("opacity", 0.2);
+                            moveButton.draw();
+                            deleteButton.draw();
+                        }; }(claimDeleteButton[i],claimMoveButton[i]) );
+                claimMoveButton[i].on( 'mouseleave',
+                        function( deleteButton,moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0);
+                            moveButton.setAttr("opacity", 0);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                complexText[i].on( 'mouseenter',
+                        function( deleteButton, moveButton, textarea, complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0.2);
+                            moveButton.setAttr("opacity", 0.2);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                complexText[i].on( 'mouseleave',
+                        function( deleteButton, moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0);
+                            moveButton.setAttr("opacity", 0);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                claimTextArea[i].on( 'mouseenter',
+                        function( deleteButton, moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0.2);
+                            moveButton.setAttr("opacity", 0.2);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+                claimTextArea[i].on( 'mouseleave',
+                        function( deleteButton,moveButton,textarea,complextext ) { return function(canvas) {    // Show delete button on entering claim
+                            deleteButton.setAttr("opacity", 0);
+                            moveButton.setAttr("opacity", 0);
+                            textarea.draw();
+                            complextext.draw();
+                            deleteButton.draw();
+                            moveButton.draw();
+                        }; }(claimDeleteButton[i], claimMoveButton[i], claimTextArea[i], complexText[i]) );
+            }
+
+            // Draws a green support button on the left bottom corner of a Claim.
+            // Also creates a custom hit region of the same shape.
+            supportButton[i] = new Kinetic.Shape({
+                id : claim.id,
+                // Another case of defining a function and immediately invoking.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x - r/2, y + h - r/2);
+                    context.bezierCurveTo(x - r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x - r/2, y + h + o, x - r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    this.setFill('green');
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'supportButton',
+                opacity : 1
+            });
+
+            // Draws a red/orange refute/rebut button on the right bottom corner of a Claim.
+            // Also creates a custom hit region of the same shape.
+            refuteButton[i] = new Kinetic.Shape({
+                id : claim.id,
+                // Another case of defining a function and immediately invoking.
+                drawFunc : function( claim ) { return function(canvas) {   // Draw the text area and fill it with white
+                    var context = canvas.getContext();
+                    var x = claim.x();
+                    var y = claim.y();
+                    var w = claim.width;
+                    var h = claim.height;
+
+                    context.beginPath();
+                    context.moveTo(x + w + r/2, y + h - r/2);
+                    context.bezierCurveTo(x + w + r/2, y + h + o, x + w/2, y + h - r/2, x + w/2, y + h + o);
+                    context.arcTo(x + w + r/2, y + h + o, x + w + r/2, y + h - r/2, r);
+                    context.closePath();
+
+                    if (claim.reason.type !== "refute") {
+                        this.setFill('red');    // for objection
+                    } else {
+                        this.setFill('orange'); // for rebuttal
+                    }
+                    canvas.fillStroke(this);
+                }; }(claim),
+                stroke : 'black',
+                strokeWidth : 2,
+                name : 'refuteButton',
+                opacity : 1
+            });
+
+            // Remember these in our claim object so we can update them later.
+            claim.textArea = claimTextArea[i];
+            claim.complexText = complexText[i];
+            claim.deleteButton = claimDeleteButton[i];
+            claim.moveButton = claimMoveButton[i];
+            claim.supportButton = supportButton[i];
+            claim.refuteButton = refuteButton[i];
+        }
+
 
 		var group = new Kinetic.Group({id:myId});
 		group.add(reasonShape);
@@ -1075,7 +1114,10 @@ var canvasController = {
         for( var i=0, leni=claimTextArea.length; i < leni; i++ ) {
             group.add(claimTextArea[i]);
             group.add(complexText[i]);
-            group.add(claimDeleteButton[i]);
+            if (reason.type !== "contention") {
+                group.add(claimDeleteButton[i]);
+                group.add(claimMoveButton[i]);
+            }
             group.add(supportButton[i]);
             group.add(refuteButton[i]);
         }

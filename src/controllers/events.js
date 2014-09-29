@@ -20,7 +20,7 @@ var layer = new Kinetic.Layer();
 
 canvasController.newCanvas();
 
-var moving = 0;
+var moveClaimStarted = 0;
 var dragging = 0;
 var selected = null;
 
@@ -39,6 +39,7 @@ stage.on('dragmove', function() {
     var y = stage.getPosition().y;
     if( Math.abs( dragPos.x - x ) > 3 || Math.abs( dragPos.y - y ) > 3 ) { 
         layer.setListening(0);
+        layer.drawHit();
     }
 });
 
@@ -53,7 +54,7 @@ stage.on('dragend', function() {
       });
 
 layer.on('click', function(event) {
-	if(moving===0){
+	if(moveClaimStarted===0){
 		var node = event.targetNode;
 		var myName = node.attrs.name;
 
@@ -78,120 +79,142 @@ layer.on('click', function(event) {
 		} else if (myName === "claimDeleteButton") {
             claimId = node.attrs.id;
 			canvasController.removeClaimAndDraw(claimId);
+		} else if (myName === "claimMoveButton") {
+            moveClaimStarted = 1;
+            claimId = node.attrs.id;
+			canvasController.startMovingClaim(claimId);
 		} else if (myName === "deleteButton") {
 			canvasController.removeReasonAndDraw(myId);
 		} else if (myName === "addClaimLeft" ) {
             canvasController.addClaimToReason( myId, 0 );
 		} else if (myName === "addClaimRight" ) {
             canvasController.addClaimToReason( myId, 1 );
-        }else if (myName === "claim" || myName === "connector") {
-			for (var element in layer.children) {
-				for (var child in layer.children[element].children){
-					if ((layer.children[element].children[child].attrs.id != myId && layer.children[element].children[child].attrs.name!="claimAddLeft" && layer.children[element].children[child].attrs.name!="claimAddRight" && layer.children[element].children[child].attrs.name!="claimAddBottom") || layer.children[element].children[child].attrs.name === "connector") {
-						layer.children[element].children[child].setAttr("opacity", 0.25);
-					}else{
-						layer.children[element].children[child].setAttr("opacity",1);
-					}
-				}
-			}
-			moving=1;
-			selected = myId;
-			document.getElementById("container").style.backgroundColor='lightgray';
-			layer.draw();
-		}
+        }
 	}else{
+        moveClaimStarted = 0;
+
+        // We're going to drop the claim in a new place
 		var node = event.targetNode;
 		var myName = node.attrs.name;
-		var myId = node.attrs.id;
-		var myType = reasonList.reasons[myId].type;
-		if ((myName === "claim" || myName === "connector")&& myId===selected) {
-			for (var element in layer.children) {
-				for (var child in layer.children[element].children){
-					if (layer.children[element].children[child].attrs.id != myId || layer.children[element].children[child].attrs.name === "connector") {
-						layer.children[element].children[child].setAttr("opacity", 1);
-					}
-					if (layer.children[element].children[child].attrs.name==="claimAddLeft" || layer.children[element].children[child].attrs.name==="claimAddRight" || layer.children[element].children[child].attrs.name==="claimAddBottom"){
-						layer.children[element].children[child].setAttr("opacity",0);
-					}
-				}
-			}
-			moving=0;
-			selected=null;
-			document.getElementById("container").style.backgroundColor='white';
-			layer.draw();
-		}else if (myName === "claimAddLeft"){
-			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
-			var children = oldParent.children;
-			children.splice(children.indexOf(selected),1);
-			var newParent = reasonList.reasons[reasonList.reasons[myId].parent];
-			children = newParent.children;
-			children.splice(children.indexOf(myId),0,selected);
-			newParent.children = children;
-			var claim = reasonList.reasons[selected];
-			claim.parent = newParent.id;
-			for (element in layer.children) {
-				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
-					layer.children[element].setAttr("opacity", 1);
-				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
-					layer.children[element].setAttr("opacity",0);
-				}
-			}
-			moving=0;
-			selected=null;
-			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(reasonList.reasons[0]);
-		}else if(myName === "claimAddRight"){
-			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
-			var children = oldParent.children;
-			children.splice(children.indexOf(selected),1);
-			var newParent = reasonList.reasons[reasonList.reasons[myId].parent];
-			children = newParent.children;
-			children.splice(children.indexOf(myId)+1,0,selected);
-			newParent.children = children;
-			var claim = reasonList.reasons[selected];
-			claim.parent = newParent.id;
-			for (element in layer.children) {
-				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
-					layer.children[element].setAttr("opacity", 1);
-				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
-					layer.children[element].setAttr("opacity",0);
-				}
-			}
-			moving=0;
-			selected=null;
-			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(reasonList.reasons[0]);
-		}else if(myName === "claimAddBottom"){
-			var oldParent = reasonList.reasons[reasonList.reasons[selected].parent];
-			var children = oldParent.children;
-			children.splice(children.indexOf(selected),1);
-			var newParent = reasonList.reasons[myId];
-			children = newParent.children;
-			if(reasonList.reasons[selected].type==="support"){
-				children.unshift(selected);
-			}else{
-				children.push(selected);
-			}
-			newParent.children = children;
-			var claim = reasonList.reasons[selected];
-			claim.parent = myId;
-			for (element in layer.children) {
-				if (layer.children[element].attrs.id != selected || layer.children[element].attrs.name === "connector") {
-					layer.children[element].setAttr("opacity", 1);
-				}
-				if (layer.children[element].attrs.name==="claimAddLeft" || layer.children[element].attrs.name==="claimAddRight" || layer.children[element].attrs.name==="claimAddBottom"){
-					layer.children[element].setAttr("opacity",0);
-				}
-			}
-			moving=0;
-			selected=null;
-			document.getElementById("container").style.backgroundColor='white';
-			amTree.buchheim(reasonList.reasons[0]);
-		}
-	}
+        var claimId, reasonId;
+        var claim, reason;
+
+        // Check first if this is a disallowed target, so we can
+        // abort the move.  All of these are parts of a Reason.
+        if( myName==="reason" || myName=="deleteButton" || myName==="addClaimLeft" || myName==="addClaimRight" ) {
+            reasonId = node.attrs.id;
+            reason = reasonList.reasons[ reasonId ];
+
+            if( reason.disallowedTarget ) {
+                canvasController.moveClaimAbort();
+                return;
+            }
+        }
+
+        // We do a similar check for all of the objects associated
+        // to a Claim.
+        if( myName==="claimTextArea" || myName=="complexText" || myName==="claimDeleteButton" || myName==="claimMoveButton" ) {
+            claimId = node.attrs.id;
+            claim = claimList.claims[ claimId ];
+
+            if( claim.disallowedTarget ) {
+                canvasController.moveClaimAbort();
+                return;
+            }
+        }
+
+        // And finally, we check the Support and Refute buttons
+        if( myName==="supportButton" || myName==="refuteButton" ) {
+            claimId = node.attrs.id;
+            claim = claimList.claims[ claimId ];
+
+            var button;
+            if( myName=="supportButton" ) {
+                button = claim.supportButton;
+            } else {
+                button = claim.refuteButton;
+            }
+
+            if( button.disallowedTarget ) {
+                canvasController.moveClaimAbort();
+                return;
+            }
+        }
+
+
+        // At this point, we should have a valid target, or we clicked
+        // on something not associated to a Claim or Reason (like a ribbon).
+        // We should complete the move and redraw the canvas.
+        if (myName === "reason" ) {
+            reasonId = node.attrs.id;
+            reason = reasonList.reasons[reasonId];
+
+            var ptr = stage.getPointerPosition();
+            var pos = stage.getPosition();
+            var offset = stage.getOffset();
+            var scale = stage.getScale();
+
+            // The mouse position relative to this Reason
+            var mouseX = (ptr.x - pos.x)/scale.x + offset.x - reason.x;
+
+            // The item number where we should insert our Claim
+            var itemOrigin = amCanvas.border - amCanvas.claimXPad/2.0;
+            var itemWidth = amCanvas.claimX + amCanvas.claimXPad;
+            var itemNumber = Math.round(( mouseX - itemOrigin)/itemWidth);
+
+            canvasController.moveClaimToDestinationAndDraw( reason, itemNumber );
+		} else if (myName === "addClaimLeft" ) {
+            reasonId = node.attrs.id;
+            reason = reasonList.reasons[reasonId];
+
+            canvasController.moveClaimToDestinationAndDraw( reason, 0 );
+		} else if (myName === "addClaimRight" || myName === "deleteButton" ) {
+            reasonId = node.attrs.id;
+            reason = reasonList.reasons[reasonId];
+
+            canvasController.moveClaimToDestinationAndDraw( reason, reason.claims.length );
+        } else if (myName === "complexText" || myName === "claimTextArea") {
+            var claimId = node.attrs.id;
+            var claim = claimList.claims[claimId];
+            var reason = claim.reason;
+            var itemNumber = reason.claims.indexOf( claim );
+
+            var ptr = stage.getPointerPosition();
+            var pos = stage.getPosition();
+            var offset = stage.getOffset();
+            var scale = stage.getScale();
+
+            // The mouse position relative to this Reason
+            var mouseX = (ptr.x - pos.x)/scale.x + offset.x - claim.x();
+
+            itemNumber = itemNumber + Math.round( mouseX / claim.width );
+
+            canvasController.moveClaimToDestinationAndDraw( reason, itemNumber );
+		} else if (myName === "claimDeleteButton") {
+            var claimId = node.attrs.id;
+            var claim = claimList.claims[claimId];
+            var reason = claim.reason;
+            var itemNumber = reason.claims.indexOf( claim );
+
+            canvasController.moveClaimToDestinationAndDraw( reason, itemNumber );
+		} else if (myName === "claimMoveButton") {
+            var claimId = node.attrs.id;
+            var claim = claimList.claims[claimId];
+            var reason = claim.reason;
+            var itemNumber = reason.claims.indexOf( claim ) + 1;
+
+            canvasController.moveClaimToDestinationAndDraw( reason, itemNumber );
+		} else if (myName === "supportButton") {
+            canvasController.moveClaimToNewSupportAndDraw( claimId );
+		} else if (myName === "refuteButton") {
+            canvasController.moveClaimToNewRefutationAndDraw( claimId );
+        } else {
+            // We clicked a ribbon or something else.
+            canvasController.moveClaimAbort();
+        }
+    }
 });
+
 
 window.onload = function() {
 	if (window.addEventListener) //adding the event listener for Mozilla
@@ -279,17 +302,46 @@ function canvasResize() {
 //Captures key presses and handles them if needed or returns to browser for handling
 document.onkeydown = function(e) {
 	e = e || window.event;
+
+    // Esc and Enter both finish an edit
+    if( e.keyCode == 27 || e.which == 27 || e.keyCode == 13 || e.which == 13 ) {
+        if (document.getElementsByName("working")[0]) {
+            document.getElementsByName("working")[0].blur();
+        }
+
+        if( moveClaimStarted ) {
+            moveClaimStarted = 0;
+            canvasController.moveClaimAbort();
+        }
+    }
+
     //If the control key is pressed on the keyboard event, check to see if 'z' or 'y' are pressed for undo or redo, respectively.
     if( e.ctrlKey )
     {
     	//If the 'z' key is also pressed, undo the last action.
     	if( e.keyCode == 90 || e.which == 90 )
     	{
+            // If we're eding something, stop that too.
+            if (document.getElementsByName("working")[0]) {
+                document.getElementsByName("working")[0].blur();
+            }
+
+            // Undo and redo cancel a pending move when they rebuild the tree
+            moveClaimStarted = 0;
+
     		canvasController.undo()
     	}
     	//If the 'y' key is also pressed, redo the last action
     	else if( e.keyCode == 89 || e.which == 89 )
     	{
+            // If we're eding something, stop that too.
+            if (document.getElementsByName("working")[0]) {
+                document.getElementsByName("working")[0].blur();
+            }
+
+            // Undo and redo cancel a pending move when they rebuild the tree
+            moveClaimStarted = 0;
+
     		canvasController.redo()
     	}
     	else
