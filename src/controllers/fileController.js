@@ -75,6 +75,6 @@ var fileController = {
             }
         };
 
-        reader.readAsBinaryString( blob );
+        reader.readAsText( blob );
     }
 };
