@@ -39,7 +39,8 @@ var fileController = {
 	save: function(){
 	    var save_pattern=/(\S)/i;
 	    var extension_pattern = /.am$/;
-	    var filename=prompt("Save As...","argument_map.am");
+        var oldfilename=document.getElementById("downloader").download || "argument_map.am";
+	    var filename=prompt("Save As...", oldfilename);
 
 	    // If the user pressed cancel or emptied the field of letters, we'll abort.
 	    if( filename == null || !save_pattern.test(filename)) {
@@ -52,7 +53,7 @@ var fileController = {
 	    }
 	    //  Fill in the anchor to download to this file name.
 	    document.getElementById("downloader").download=filename;
-	    document.getElementById("downloader").href = "data:application;charset=UTF-8," + encodeURIComponent(this.saveMap());
+	    document.getElementById("downloader").href = "data:application/binary;charset=UTF-8," + encodeURIComponent(this.saveMap());
 
 	    // Let the caller start the download.
 	    return true;
