@@ -492,6 +492,12 @@ var canvasController = {
                 claimList.claims[i].complexText.off( 'mouseenter mouseleave' );
             }
         }
+        for(var i = 0; i < reasonList.nextReasonNumber ; i++ ) {
+            if( reasonList.reasons[i].addClaimLeft ) {
+                reasonList.reasons[i].addClaimLeft.off( 'mouseenter mouseleave' );
+                reasonList.reasons[i].addClaimRight.off( 'mouseenter mouseleave' );
+            }
+        }
     },
     // Remove a Claim and the children recursively,
     // and draws the new argument map.
@@ -570,6 +576,8 @@ var canvasController = {
         var reason = reasonList.reasons[myId];
         var claimTextArea = [];
         var complexText = [];
+        var addClaimLeft = [];
+        var addClaimRight = [];
         var claimDeleteButton = [];
         var claimMoveButton = [];
         var supportButton = [];
@@ -734,6 +742,23 @@ var canvasController = {
                 id : myId,
                 stroke : 'black',
                 strokeWidth : 2,
+                drawFunc : function(canvas) {
+                    var context = canvas.getContext();
+                    var x = reason.x;
+                    var y = reason.y;
+                    var w = reason.width();
+                    var h = reason.height();
+
+                    context.beginPath();
+                    context.moveTo(x + o/3, y + h*1/2 );
+                    context.lineTo(x + o*2/3, y + h*1/3 );
+                    context.lineTo(x + o*2/3, y + h*2/3 );
+                    context.closePath();
+
+                    this.setFill('white');
+
+                    canvas.fillStroke(this);
+                },
                 drawHitFunc : function(canvas) {
                     var context = canvas.getContext();
                     var x = reason.x;
@@ -750,8 +775,20 @@ var canvasController = {
 
                     canvas.fillStroke(this);
                 },
-                opacity : 1
+                opacity : 0
             });
+
+            addClaimLeft.on( 'mouseenter',
+                    function( addClaimLeft ) { return function(canvas) {    // Show delete button on entering claim
+                        addClaimLeft.setAttr("opacity", 0.5);
+                        addClaimLeft.draw();
+                    }; }(addClaimLeft) );
+
+            addClaimLeft.on( 'mouseleave',
+                    function( addClaimLeft,reasonShape,deleteButton,textArea,complexText ) { return function(canvas) {    // Show delete button on entering claim
+                        addClaimLeft.setAttr("opacity", 0);
+                        layer.draw();
+                    }; }(addClaimLeft) );
 
             // A hit region for expanding a reason on the right edge with another claim.
             var addClaimRight = new Kinetic.Shape({
@@ -759,6 +796,23 @@ var canvasController = {
                 id : myId,
                 stroke : 'black',
                 strokeWidth : 2,
+                drawFunc : function(canvas) {
+                    var context = canvas.getContext();
+                    var x = reason.x;
+                    var y = reason.y;
+                    var w = reason.width();
+                    var h = reason.height();
+
+                    context.beginPath();
+                    context.moveTo(x + w - o/3, y + h*1/2 );
+                    context.lineTo(x + w - o*2/3, y + h*1/3 );
+                    context.lineTo(x + w - o*2/3, y + h*2/3 );
+                    context.closePath();
+
+                    this.setFill('white');
+
+                    canvas.fillStroke(this);
+                },
                 drawHitFunc : function(canvas) {
                     var context = canvas.getContext();
                     var x = reason.x;
@@ -775,10 +829,24 @@ var canvasController = {
 
                     canvas.fillStroke(this);
                 },
-                opacity : 1
+                opacity : 0
             });
 
+            addClaimRight.on( 'mouseenter',
+                    function( addClaimRight ) { return function(canvas) {    // Show delete button on entering claim
+                        addClaimRight.setAttr("opacity", 0.5);
+                        addClaimRight.draw();
+                    }; }(addClaimRight) );
+
+            addClaimRight.on( 'mouseleave',
+                    function( addClaimRight ) { return function(canvas) {    // Show delete button on entering claim
+                        addClaimRight.setAttr("opacity", 0);
+                        layer.draw();
+                    }; }(addClaimRight) );
+
             reason.ribbon = connector;
+            reason.addClaimLeft = addClaimLeft;
+            reason.addClaimRight = addClaimRight;
 		}
 
         reason.reasonShape = reasonShape;
